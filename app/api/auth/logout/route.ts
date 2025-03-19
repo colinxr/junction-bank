@@ -9,7 +9,7 @@ export async function POST() {
     await supabase.auth.signOut();
 
     // Clear cookies
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.delete("auth_token");
     cookieStore.delete("auth_user");
 

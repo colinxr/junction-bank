@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     // Set auth cookies
     if (data.session) {
       // Set cookies
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       
       cookieStore.set('auth_token', data.session.access_token, {
         maxAge: 60 * 60 * 24 * 7, // 7 days
