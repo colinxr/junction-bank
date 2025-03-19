@@ -1,6 +1,6 @@
 "use client"
 
-import * as React from "react"
+import { useState} from "react"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -37,8 +37,8 @@ interface CategoryFilterProps {
 }
 
 export function CategoryFilter({ onCategoryChange }: CategoryFilterProps) {
-  const [open, setOpen] = React.useState(false)
-  const [value, setValue] = React.useState("")
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState("")
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

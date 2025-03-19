@@ -1,6 +1,6 @@
 "use client"
 
-import * as React from "react"
+import {useState, useMemo} from "react"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -35,13 +35,13 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([
+  const [sorting, setSorting] = useState<SortingState>([
     { id: "date", desc: true } // Default sort newest first
   ])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [globalFilter, setGlobalFilter] = React.useState("")
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [globalFilter, setGlobalFilter] = useState("")
 
-  const allCategories = React.useMemo(() => {
+  const allCategories = useMemo(() => {
     // Get unique categories from data
     const categoriesSet = new Set((data as unknown as Transaction[]).map(item => item.category))
     return Array.from(categoriesSet).filter(Boolean) as string[]
