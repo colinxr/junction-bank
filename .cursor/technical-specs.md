@@ -128,6 +128,7 @@
   - `id` (serial, primary key)
   - `name` (varchar, not null, unique)
   - `type` (varchar, enum: 'expense', 'income') to differentiate usage
+  - `notes` (text, nullable)
   - `created_at` (timestamp, default current timestamp)
 - **Indexes:**
   Index on `name` for faster lookups.
@@ -156,7 +157,6 @@
   - `notes` (text, nullable)
   - `date` (date, not null)
   - `type` (varchar, enum: 'expense', 'income')
-  - `is_recurring` (boolean, default false)
   - `created_at` (timestamp, default current timestamp)
 - **Indexes:**
   Indexes on `user_id`, `month_id`, and `category_id`.
