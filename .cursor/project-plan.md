@@ -19,7 +19,7 @@
 
 ## 2. Database Schema & Supabase Integration
 
-- [ ] Step 3: Define and Deploy Database Schema on Supabase Using Prisma
+- [x] Step 3: Define and Deploy Database Schema on Supabase Using Prisma
   - **Task**: Create a Prisma schema file that defines the models for `users`, `categories`, `months`, `transactions`, and `monthly_templates` reflecting the necessary fields, indexes, and relationships. Then, run the Prisma migration to deploy the schema to the Postgres database on Supabase.
   - **Files**:
     - `prisma/schema.prisma`: Prisma schema file with model definitions for users, categories, months, transactions, and monthly_templates.
