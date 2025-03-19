@@ -30,7 +30,7 @@
 
 ## 3. Backend API Routes & Server Actions
 
-- [ ] Step 5: Implement Authentication API Route
+- [x] Step 5: Implement Authentication API Route
   - **Task**: Create API route for handling login using Supabase authentication for the two specific users.
   - **Files**:
     - `pages/api/auth/login.ts`: Login endpoint with validation.
