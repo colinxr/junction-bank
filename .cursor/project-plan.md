@@ -1,6 +1,6 @@
 ## 1. Core Project Setup & Configuration
 
-- [ ] Step 1: Initialize Next.js Project with Tailwind CSS and shadcn/ui
+- [x] Step 1: Initialize Next.js Project with Tailwind CSS and shadcn/ui
   - **Task**: Set up a new Next.js project; install and configure Tailwind CSS and shadcn/ui.
   - **Files**:
     - `package.json`: Add dependencies for Next.js, Tailwind CSS, shadcn/ui, Supabase client.
@@ -10,7 +10,7 @@
     - `styles/globals.css`: Global CSS with Tailwind directives.
   - **Step Dependencies**: None.
   - **User Instructions**: Run `npx create-next-app` and install required libraries using `npm install` or `yarn`.
-- [ ] Step 2: Set Up Project Folder Structure
+- [x] Step 2: Set Up Project Folder Structure
   - **Task**: Organize folders as per specification: `/pages`, `/components`, `/hooks`, `/lib`, `/styles`, `/api`.
   - **Files**:
     - Create empty directories: `pages/`, `components/`, `hooks/`, `lib/`, `styles/`, `api/`.
