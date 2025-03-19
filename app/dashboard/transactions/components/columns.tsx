@@ -83,7 +83,7 @@ export const columns: ColumnDef<Transaction>[] = [
     cell: ({ row }) => {
       const type = row.getValue("type") as string
       return (
-        <Badge variant={type === "income" ? "success" : "destructive"}>
+        <Badge variant={type === "income" ? "default" : "destructive"}>
           {type.charAt(0).toUpperCase() + type.slice(1)}
         </Badge>
       )
