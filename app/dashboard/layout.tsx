@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Home, Receipt, Calendar, User, LogOut } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { usePathname } from "next/navigation";
+import { Home, Receipt, Calendar, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LogoutButton } from "@/components/auth/logout-button";
 
 interface SidebarLinkProps {
   href: string;
@@ -35,29 +34,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   
-  const handleLogout = async () => {
-    try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to logout");
-      }
-
-      toast.success("Logged out successfully");
-      router.push("/auth/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast.error("Failed to logout");
-    }
-  };
-
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
@@ -93,14 +70,7 @@ export default function DashboardLayout({
             />
           </nav>
           <div className="border-t p-4">
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start text-slate-500 hover:text-slate-900"
-              onClick={handleLogout}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
-            </Button>
+            <LogoutButton />
           </div>
         </div>
       </aside>
