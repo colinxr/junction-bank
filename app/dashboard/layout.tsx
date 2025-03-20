@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { Home, Receipt, Calendar, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { Toaster } from "@/components/ui/sonner"
+
 
 interface SidebarLinkProps {
   href: string;
@@ -79,6 +81,7 @@ export default function DashboardLayout({
       <main className="ml-64 flex-1 p-6">
         {children}
       </main>
+      <Toaster />
     </div>
   );
 } 

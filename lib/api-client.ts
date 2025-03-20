@@ -1,5 +1,6 @@
 import axios from "axios";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 const supabase = createClient();
 
@@ -25,6 +26,19 @@ apiClient.interceptors.request.use(async (config) => {
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    const errorMessage = error.response?.data?.error || 
+                        error.response?.data?.message || 
+                        error.message || 
+                        "An unexpected error occurred";
+    
+    // Show toast notification for client-side errors
+    if (typeof window !== 'undefined') {
+      toast.error("Something went wrong", {
+        description: errorMessage,
+        duration: 3000,
+      });
+    }
+
     return Promise.reject(error.response?.data || error.message);
   }
 );
