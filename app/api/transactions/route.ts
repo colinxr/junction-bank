@@ -1,24 +1,69 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from "@prisma/client";
+import { createClient } from "@/lib/supabase/client";
+import { TransactionService } from '@/lib/services/transaction.service';
 
-export async function GET(request: Request) {
-  try {
-    // Example: Get all transactions (would need auth in real app)
-    // const transactions = await prisma.transaction.findMany();
-    
-    return NextResponse.json({ message: 'Transactions endpoint' });
-  } catch (error) {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+const prisma = new PrismaClient();
+const supabase = createClient();
+const transactionService = new TransactionService(prisma);
+
+async function getUserIdFromToken(authHeader: string | null): Promise<string | null> {
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null;
   }
+
+  const token = authHeader.split(' ')[1];
+  const { data: { user } } = await supabase.auth.getUser(token);
+  console.log(user);
+  
+  return user?.id || null;
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    // Handle transaction creation logic here
+    const authHeader = request.headers.get('authorization');
+    const userId = await getUserIdFromToken(authHeader);
+    console.log(userId);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     
-    return NextResponse.json({ message: 'Transaction created' });
+    const body = await request.json();
+
+    const transaction = await transactionService.createTransaction({
+      ...body,
+      userId,
+      categoryId: 11
+    });
+
+    console.log(transaction);
+    
+
+    return NextResponse.json(
+      { data: transaction },
+      { status: 200 }
+    );
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    console.error('Transaction creation error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to create transaction' },
+      { status: 400 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const authHeader = request.headers.get('authorization');
+    const userId = await getUserIdFromToken(authHeader);
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const transactions = await transactionService.getTransactions(userId);
+    return NextResponse.json(transactions);
+  } catch (error) {
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 } 

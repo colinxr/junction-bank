@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { createClient } from '@/lib/supabase/server';
 
 // Define protected routes that require authentication
 const protectedRoutes = ["/dashboard", "/transactions", "/categories"];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const authToken = request.cookies.get("auth_token");
+  const authToken = request.cookies.get("auth_token")?.value;
 
   // Check if the route is protected and user is not authenticated
   if (protectedRoutes.some(route => pathname.startsWith(route)) && !authToken) {
@@ -28,7 +29,30 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  // Only run this middleware for dashboard routes
+  if (!pathname.startsWith('/dashboard')) {
+    return NextResponse.next();
+  }
+
+  try {
+    // Get Supabase client
+    const supabase = createClient();
+    
+    // Verify token and get user
+    const { data: { user }, error } = await supabase.auth.getUser(authToken);
+    
+    if (error || !user) {
+      // Redirect to login if token is invalid
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+    
+    // User is authenticated with Supabase, continue
+    return NextResponse.next();
+    
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    return NextResponse.redirect(new URL('/auth/login', request.url));
+  }
 }
 
 // Configure matcher for middleware - it will only run on specified paths

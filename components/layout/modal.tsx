@@ -1,10 +1,7 @@
 "use client";
 import { Dialog, DialogTitle, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { useState } from "react";
 
-export function Modal({ children, trigger, title }: { children: React.ReactNode, trigger: React.ReactNode, title: string }) {
-  const [isOpen, setIsOpen] = useState(false);
-
+export function Modal({ children, trigger, title, isOpen = false, setIsOpen }: { children: React.ReactNode, trigger: React.ReactNode, title: string, isOpen?: boolean, setIsOpen?: (isOpen: boolean) => void }) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
