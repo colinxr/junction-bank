@@ -1,19 +1,4 @@
-// Mock transaction data based on schema from technical-specs.md
-export type Transaction = {
-  id: number
-  user_id: string
-  month_id: number
-  name: string
-  amount_cad: number
-  amount_usd: number | null
-  category_id: number
-  notes: string | null
-  date: Date
-  type: 'expense' | 'income'
-  created_at: Date
-  // For UI display purposes
-  category?: string
-}
+import { Transaction } from "@/app/types"
 
 // Categories for our mock data
 const CATEGORIES = [
@@ -48,12 +33,12 @@ const TRANSACTIONS_BY_CATEGORY: Record<number, string[]> = {
 }
 
 // Generate a random date within the last year
-function getRandomDate(months = 12): Date {
+function getRandomDate(months = 12): string {
   const today = new Date()
   const pastDate = new Date(today)
   pastDate.setMonth(today.getMonth() - Math.floor(Math.random() * months))
   pastDate.setDate(Math.floor(Math.random() * 28) + 1) // Random day 1-28
-  return pastDate
+  return pastDate.toISOString()
 }
 
 // Generate 100 random transactions
@@ -99,12 +84,13 @@ function generateMockTransactions(count = 100): Transaction[] {
     
     // Random date in the last 12 months
     const date = getRandomDate()
+    const dateObj = new Date(date)
     
     // Add transaction to array
     transactions.push({
       id: i,
       user_id,
-      month_id: date.getMonth() + 1, // 1-12 for month
+      month_id: dateObj.getMonth() + 1, // 1-12 for month
       name,
       amount_cad,
       amount_usd,
@@ -112,13 +98,13 @@ function generateMockTransactions(count = 100): Transaction[] {
       notes,
       date,
       type,
-      created_at: new Date(date.getTime() - Math.random() * 86400000), // Random time before date
+      created_at: new Date(dateObj.getTime() - Math.random() * 86400000).toISOString(),
       category: CATEGORIES.find(c => c.id === categoryId)?.name
     })
   }
 
   // Sort by date, newest first
-  return transactions.sort((a, b) => b.date.getTime() - a.date.getTime())
+  return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }
 
 export const mockTransactions = generateMockTransactions(100) 
