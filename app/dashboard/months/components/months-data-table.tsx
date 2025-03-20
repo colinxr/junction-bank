@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { ColumnDef } from "@tanstack/react-table"
-import { DataTable } from "@/components/table/data-table"
+import { DataTable } from "@/components/layout/data-table"
 import { MonthData } from "@/app/types"
 
 interface MonthsDataTableProps {

@@ -19,6 +19,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+// import { toast } from "@/components/hooks/use-toast";
 
 // Define Zod schema based on transaction structure
 const transactionSchema = z.object({
@@ -30,7 +32,8 @@ const transactionSchema = z.object({
   description: z.string().min(2, "Description must be at least 2 characters").optional(),
 });
 
-export function NewTransactionForm({ onSubmit }: { onSubmit: (data: any) => void }) {
+export function NewTransactionForm() {
+  const router = useRouter();
   const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
@@ -39,7 +42,7 @@ export function NewTransactionForm({ onSubmit }: { onSubmit: (data: any) => void
       amount_cad: undefined,
       amount_usd: undefined,
       date: undefined,
-      description: "",
+      description: undefined
     },
   });
 
@@ -49,8 +52,36 @@ export function NewTransactionForm({ onSubmit }: { onSubmit: (data: any) => void
     }
   }, [form]);
 
-  function handleSubmit(data: z.infer<typeof transactionSchema>) {
-    onSubmit(data);
+  async function handleSubmit(data: z.infer<typeof transactionSchema>) {
+    try {
+      // const response = await fetch('/api/transactions', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     ...data,
+      //     date: data.date.toISOString()
+      //   }),
+      // });
+
+      // if (!response.ok) throw new Error('Submission failed');
+
+      console.log(data)
+      // toast({
+      //   title: "Transaction created",
+      //   description: "Your new transaction has been recorded",
+      // });
+
+      form.reset();
+      router.refresh(); // Refresh the page to update the data table
+    } catch (error) {
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to create transaction",
+      //   variant: "destructive"
+      // });
+    }
   }
 
   return (
