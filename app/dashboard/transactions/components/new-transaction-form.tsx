@@ -14,14 +14,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { useEffect } from "react";
 
 // Define Zod schema based on transaction structure
 const transactionSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  amount_cad: z.number().min(0.01, "Amount must be at least 0.01"),
+  type: z.enum(["expense", "income"]),
+  amount_cad: z.number().min(0.01, "Amount must be at least 0.01").optional(),
   amount_usd: z.number().min(0.01, "Amount must be at least 0.01").optional(),
   date: z.date(),
   description: z.string().min(2, "Description must be at least 2 characters").optional(),
@@ -32,12 +35,19 @@ export function NewTransactionForm({ onSubmit }: { onSubmit: (data: any) => void
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       name: "",
+      type: "expense",
       amount_cad: undefined,
       amount_usd: undefined,
-      date: new Date(),
+      date: undefined,
       description: "",
     },
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      form.setValue('date', new Date());
+    }
+  }, [form]);
 
   function handleSubmit(data: z.infer<typeof transactionSchema>) {
     onSubmit(data);
@@ -45,23 +55,50 @@ export function NewTransactionForm({ onSubmit }: { onSubmit: (data: any) => void
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 p-4">
-      <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input
-                  type="text"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 p-2x">
+        <div className="flex flex-row gap-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Type</FormLabel>
+                <FormControl>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="income">Income</SelectItem>
+                      <SelectItem value="expense">Expense</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
           name="amount_cad"
@@ -81,7 +118,7 @@ export function NewTransactionForm({ onSubmit }: { onSubmit: (data: any) => void
           )}
         />
 
-<FormField
+        <FormField
           control={form.control}
           name="amount_usd"
           render={({ field }) => (
@@ -140,14 +177,14 @@ export function NewTransactionForm({ onSubmit }: { onSubmit: (data: any) => void
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} required={false} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <Button type="submit">Submit</Button>
+        <Button className="ml-auto" type="submit">Submit</Button>
       </form>
     </Form>
   );
