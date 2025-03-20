@@ -20,6 +20,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { TransactionService } from "@/services/transaction.service";
 // import { toast } from "@/components/hooks/use-toast";
 
 // Define Zod schema based on transaction structure
@@ -54,28 +55,18 @@ export function NewTransactionForm() {
 
   async function handleSubmit(data: z.infer<typeof transactionSchema>) {
     try {
-      // const response = await fetch('/api/transactions', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     ...data,
-      //     date: data.date.toISOString()
-      //   }),
-      // });
-
-      // if (!response.ok) throw new Error('Submission failed');
-
-      console.log(data)
+      await TransactionService.createTransaction(data);
+      
+      console.log('Transaction created successfully');
       // toast({
       //   title: "Transaction created",
       //   description: "Your new transaction has been recorded",
       // });
 
       form.reset();
-      router.refresh(); // Refresh the page to update the data table
+      router.refresh();
     } catch (error) {
+      console.error('Transaction creation failed:', error);
       // toast({
       //   title: "Error",
       //   description: "Failed to create transaction",
