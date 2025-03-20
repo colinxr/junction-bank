@@ -14,10 +14,18 @@ export function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
-export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }).format(date)
+export function formatDate(dateStr: string) {
+  try {
+    const date = new Date(dateStr)
+    if (isNaN(date.getTime())) {
+      return 'Invalid date'
+    }
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }).format(date)
+  } catch (error) {
+    return 'Invalid date'
+  }
 }

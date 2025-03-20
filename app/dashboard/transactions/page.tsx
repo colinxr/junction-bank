@@ -1,7 +1,7 @@
 "use client";
 
-import { DataTable } from "./components/data-table";
-import { columns } from "./components/columns";
+import { TransactionsDataTable } from "./components/transactions-data-table";
+import { columns } from "./components/transactions-columns";
 import { mockTransactions } from "./data/mock-transactions";
 
 export default function TransactionsPage() {
@@ -10,7 +10,7 @@ export default function TransactionsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Transactions</h1>
       </div>
-      <DataTable columns={columns} data={mockTransactions} />
+      <TransactionsDataTable columns={columns} data={mockTransactions} />
     </div>
   );
 } 
