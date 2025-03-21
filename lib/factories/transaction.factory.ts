@@ -1,0 +1,52 @@
+import { PrismaClient } from "@prisma/client";
+
+export class TransactionFactory {
+  constructor(private prisma: PrismaClient) {}
+
+  async createTransaction(data: {
+    name: string;
+    type: "expense" | "income";
+    amount_cad?: number;
+    amount_usd?: number;
+    date: Date;
+    notes?: string;
+    userId: string;
+  }) {
+    // Handle currency conversion
+    let { amount_cad, amount_usd } = data;
+    
+    if (!amount_cad && amount_usd) {
+      // to do: get the exchange rate from the api
+      amount_cad = Number((amount_usd * 1.3).toFixed(2));
+    } else if (!amount_cad) {
+      throw new Error("Either CAD or USD amount must be provided");
+    }
+
+    const transactionDate = new Date(data.date);
+    const monthRecord = await this.getMonth(transactionDate);
+
+    return {
+      ...data,
+      amount_cad,
+      amount_usd: amount_usd ? Number(amount_usd.toFixed(2)) : null,
+      date: transactionDate,
+      monthId: monthRecord.id,
+      userId: data.userId,
+    };
+  }
+
+  private async getMonth(transactionDate: Date) {
+    const month = transactionDate.getMonth() + 1; // JavaScript months are 0-based
+    const year = transactionDate.getFullYear();
+
+    const monthRecord = await this.prisma.month.findFirst({
+      where: { month, year },
+    });
+
+    if (!monthRecord) {
+      throw new Error("Create the month first before creating a transaction");
+    }
+
+    return monthRecord;
+  }
+}

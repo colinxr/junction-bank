@@ -7,7 +7,7 @@ export interface Transaction {
   amount_usd: number | null
   category_id: number
   notes: string | null
-  date: string
+  date: Date
   type: 'income' | 'expense'
   created_at: string
   category?: string

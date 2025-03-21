@@ -1,8 +1,14 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { toast } from "sonner";
+import { TransactionRepository } from "@/lib/repositories/transaction.repository";
+
 import {
   Form,
   FormControl,
@@ -16,72 +22,38 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-// import { toast } from "@/components/hooks/use-toast";
 
 // Define Zod schema based on transaction structure
 const transactionSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   type: z.enum(["expense", "income"]),
-  amount_cad: z.number().min(0.01, "Amount must be at least 0.01").optional(),
-  amount_usd: z.number().min(0.01, "Amount must be at least 0.01").optional(),
+  amount_cad: z.number().optional(),
+  amount_usd: z.number().optional(),
   date: z.date(),
-  description: z.string().min(2, "Description must be at least 2 characters").optional(),
+  notes: z.string().min(2, "Description must be at least 2 characters").optional(),
 });
 
-export function NewTransactionForm() {
+export function NewTransactionForm({ onSubmit }: { onSubmit: () => void }) {
   const router = useRouter();
   const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       name: "",
       type: "expense",
-      amount_cad: undefined,
-      amount_usd: undefined,
-      date: undefined,
-      description: undefined
+      amount_cad: 0,
+      amount_usd: 0,
+      date: new Date(),
+      notes: ""
     },
   });
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      form.setValue('date', new Date());
-    }
-  }, [form]);
-
   async function handleSubmit(data: z.infer<typeof transactionSchema>) {
-    try {
-      // const response = await fetch('/api/transactions', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     ...data,
-      //     date: data.date.toISOString()
-      //   }),
-      // });
-
-      // if (!response.ok) throw new Error('Submission failed');
-
-      console.log(data)
-      // toast({
-      //   title: "Transaction created",
-      //   description: "Your new transaction has been recorded",
-      // });
-
-      form.reset();
-      router.refresh(); // Refresh the page to update the data table
-    } catch (error) {
-      // toast({
-      //   title: "Error",
-      //   description: "Failed to create transaction",
-      //   variant: "destructive"
-      // });
-    }
+    const resp = await TransactionRepository.createTransaction(data);
+    
+    onSubmit();
+    toast.success('Transaction created successfully');
+    form.reset();
+    router.refresh();
   }
 
   return (
@@ -203,10 +175,10 @@ export function NewTransactionForm() {
 
         <FormField
           control={form.control}
-          name="description"
+          name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Notes</FormLabel>
               <FormControl>
                 <Input {...field} required={false} />
               </FormControl>

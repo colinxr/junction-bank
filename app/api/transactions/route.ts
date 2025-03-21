@@ -1,13 +1,43 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { createClient } from '@/lib/supabase/server';
+import { TransactionService } from '@/lib/services/transaction.service';
+
+const transactionService = new TransactionService(prisma);
+
+// Cache GET requests for 5 minutes (300 seconds)
+export const revalidate = 300;
 
 export async function GET(request: Request) {
   try {
-    // Example: Get all transactions (would need auth in real app)
-    // const transactions = await prisma.transaction.findMany();
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const startDate = url.searchParams.get('startDate') ? new Date(url.searchParams.get('startDate')!) : undefined;
+    const endDate = url.searchParams.get('endDate') ? new Date(url.searchParams.get('endDate')!) : undefined;
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     
-    return NextResponse.json({ message: 'Transactions endpoint' });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const result = await transactionService.getTransactions({
+      page,
+      limit,
+      startDate,
+      endDate
+    });
+    
+    // Set cache control headers
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'max-age=60, s-maxage=300, stale-while-revalidate=300',
+      }
+    });
   } catch (error) {
+    console.error('Error fetching transactions:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -15,10 +45,24 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    // Handle transaction creation logic here
-    
-    return NextResponse.json({ message: 'Transaction created' });
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const transaction = await transactionService.createTransaction({
+      ...body,
+      userId: user?.id,
+      categoryId: 11
+    });
+
+    return NextResponse.json(
+      { data: transaction },
+      { status: 200 }
+    );
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    console.error('Transaction creation error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to create transaction' },
+      { status: 400 }
+    );
   }
 } 
