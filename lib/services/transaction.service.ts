@@ -1,4 +1,3 @@
-
 import { TransactionFactory } from "../factories/transaction.factory";
 import { PrismaClient } from "@prisma/client";
 export class TransactionService {
@@ -11,8 +10,31 @@ export class TransactionService {
     this.transactionFactory = new TransactionFactory(prisma);
   }
 
-  async getTransactions() {
+  async getTransactions(options?: { 
+    page?: number, 
+    limit?: number, 
+    startDate?: Date,
+    endDate?: Date
+  }) {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const skip = (page - 1) * limit;
+    
+    // Build where clause for filtering
+    const where: any = {};
+    if (options?.startDate && options?.endDate) {
+      where.date = {
+        gte: options.startDate,
+        lte: options.endDate
+      };
+    }
+
+    // Get count for pagination
+    const totalCount = await this.prisma.transaction.count({ where });
+    
+    // Execute query with pagination and filtering
     const transactions = await this.prisma.transaction.findMany({
+      where,
       include: {
         category: {
           select: {
@@ -29,17 +51,36 @@ export class TransactionService {
       },
       orderBy: {
         date: 'desc'
-      }
+      },
+      skip,
+      take: limit
     });
 
-    // Transform the data - convert Decimal strings to numbers and add month names
-    return transactions.map(transaction => ({
-      ...transaction,
-      amount_cad: parseFloat(transaction.amountCAD.toString()),
-      amount_usd: transaction.amountUSD ? parseFloat(transaction.amountUSD.toString()) : null,
-      category: transaction.category.name,
-      month: this.getMonthName(transaction.month.month),
-    }));
+    // Transform using more direct property access for performance
+    const formattedTransactions = transactions.map(transaction => {
+      const amountCad = parseFloat(transaction.amountCAD.toString());
+      const amountUsd = transaction.amountUSD ? parseFloat(transaction.amountUSD.toString()) : null;
+      const categoryName = transaction.category.name;
+      const monthName = this.getMonthName(transaction.month.month);
+      
+      return {
+        ...transaction,
+        amount_cad: amountCad,
+        amount_usd: amountUsd,
+        category: categoryName,
+        month: monthName,
+      };
+    });
+
+    return {
+      data: formattedTransactions,
+      pagination: {
+        total: totalCount,
+        page,
+        limit,
+        pages: Math.ceil(totalCount / limit)
+      }
+    };
   }
 
   async createTransaction(data: {

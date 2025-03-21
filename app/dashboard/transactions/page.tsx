@@ -1,29 +1,22 @@
+'use client';
+
 import { TransactionsDataTable } from "./components/transactions-data-table";
-import { TransactionRepository } from "@/lib/repositories/transaction.repository";
 import { columns } from "./components/transactions-columns";
 import { NewTransactionModal } from "./components/new-transaction-modal";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import { Transaction } from "@/app/types";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useTransactions } from "@/app/hooks/useTransactions";
 
-export default async function TransactionsPage() {
-  // Get the session server-side
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  
-  // Redirect if not authenticated
-  if (!session) {
-    redirect('/login'); // Or wherever your login page is
-  }
-  
-  // Now fetch transactions
-  let transactions: Transaction[] = [];
-  try {
-    const response = await TransactionRepository.getTransactions();
-    
-    transactions = response.data || [];
-  } catch (error) {
-    console.error('Error fetching transactions:', error);
+function TransactionsContent() {
+  // Use our custom hook instead of direct SWR usage
+  const {
+    transactions,
+    isLoading,
+    error,
+  } = useTransactions();
+
+  if (error) {
+    return <div className="p-8 text-center">Failed to load transactions. Please try again.</div>;
   }
 
   return (
@@ -33,7 +26,30 @@ export default async function TransactionsPage() {
         <NewTransactionModal />
       </div>
 
-      <TransactionsDataTable columns={columns} data={transactions} />
+      {isLoading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      ) : (
+        <TransactionsDataTable columns={columns} data={transactions} />
+      )}
     </div>
+  );
+}
+
+export default function TransactionsPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-36" />
+        </div>
+        <Skeleton className="h-96 w-full" />
+      </div>
+    }>
+      <TransactionsContent />
+    </Suspense>
   );
 } 

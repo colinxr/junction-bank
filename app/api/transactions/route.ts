@@ -5,14 +5,37 @@ import { TransactionService } from '@/lib/services/transaction.service';
 
 const transactionService = new TransactionService(prisma);
 
+// Cache GET requests for 5 minutes (300 seconds)
+export const revalidate = 300;
+
 export async function GET(request: Request) {
   try {
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const startDate = url.searchParams.get('startDate') ? new Date(url.searchParams.get('startDate')!) : undefined;
+    const endDate = url.searchParams.get('endDate') ? new Date(url.searchParams.get('endDate')!) : undefined;
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-
-    const transactions = await transactionService.getTransactions();
     
-    return NextResponse.json({ data: transactions });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const result = await transactionService.getTransactions({
+      page,
+      limit,
+      startDate,
+      endDate
+    });
+    
+    // Set cache control headers
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'max-age=60, s-maxage=300, stale-while-revalidate=300',
+      }
+    });
   } catch (error) {
     console.error('Error fetching transactions:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
