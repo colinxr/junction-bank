@@ -1,4 +1,5 @@
 "use client"
+import { useState } from "react"
 
 import {
   ColumnDef,
@@ -11,7 +12,6 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
 } from "@tanstack/react-table"
-import { useState } from "react"
 
 import {
   Table,
@@ -63,7 +63,7 @@ export function DataTable<TData, TValue>({
       globalFilter,
     },
   })
-
+  
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -119,9 +119,9 @@ export function DataTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
                   ))}
                 </TableRow>
               ))

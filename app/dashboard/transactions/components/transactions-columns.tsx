@@ -9,21 +9,6 @@ import { Badge } from "@/components/ui/badge"
 
 export const columns: ColumnDef<Transaction>[] = [
   {
-    accessorKey: "date",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="pl-0"
-      >
-        Date
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => formatDate(row.getValue("date")),
-    sortingFn: "datetime"
-  },
-  {
     accessorKey: "name",
     header: "Description",
     cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
@@ -37,6 +22,21 @@ export const columns: ColumnDef<Transaction>[] = [
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id))
     },
+  },
+  {
+    accessorKey: "date",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="pl-0"
+      >
+        Date
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => formatDate(row.getValue("date")),
+    sortingFn: "datetime"
   },
   {
     accessorKey: "amount_cad",
@@ -55,8 +55,7 @@ export const columns: ColumnDef<Transaction>[] = [
       const type = row.original.type
       
       return (
-        <div className={type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-          {type === "income" ? "+" : "-"}
+        <div className={type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium text-right"}>
           {formatCurrency(amount)}
         </div>
       )
@@ -66,12 +65,12 @@ export const columns: ColumnDef<Transaction>[] = [
     accessorKey: "amount_usd",
     header: "Amount (USD)",
     cell: ({ row }) => {
+      if (!row.original.amount_usd) return '-';
       const amount = parseFloat(row.getValue("amount_usd"))
       const type = row.original.type
       
       return (
-        <div className={type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-          {type === "income" ? "+" : "-"}
+        <div className={type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium text-right"}>
           {formatCurrency(amount)}
         </div>
       )

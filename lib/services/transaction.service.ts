@@ -1,3 +1,4 @@
+
 import { TransactionFactory } from "../factories/transaction.factory";
 import { PrismaClient } from "@prisma/client";
 export class TransactionService {
@@ -5,8 +6,40 @@ export class TransactionService {
   private transactionFactory: TransactionFactory;
 
   constructor(prisma: PrismaClient) {
-    this.prisma = prisma
+    // Use the shared prisma client with middleware
+    this.prisma = prisma;
     this.transactionFactory = new TransactionFactory(prisma);
+  }
+
+  async getTransactions() {
+    const transactions = await this.prisma.transaction.findMany({
+      include: {
+        category: {
+          select: {
+            name: true,
+            id: true
+          } 
+        },
+        month: {
+          select: {
+            month: true,
+            id: true
+          }
+        },
+      },
+      orderBy: {
+        date: 'desc'
+      }
+    });
+
+    // Transform the data - convert Decimal strings to numbers and add month names
+    return transactions.map(transaction => ({
+      ...transaction,
+      amount_cad: parseFloat(transaction.amountCAD.toString()),
+      amount_usd: transaction.amountUSD ? parseFloat(transaction.amountUSD.toString()) : null,
+      category: transaction.category.name,
+      month: this.getMonthName(transaction.month.month),
+    }));
   }
 
   async createTransaction(data: {
@@ -21,9 +54,6 @@ export class TransactionService {
   }) {
     // Get the formatted transaction data from factory
     const transactionData = await this.transactionFactory.createTransaction(data);
-
-    console.log(transactionData);
-    
 
     // Create the transaction in the database
     try {
@@ -48,13 +78,8 @@ export class TransactionService {
     }
   }
 
-  async getTransactions(userId: string) {
-    return this.prisma.transaction.findMany({
-      where: { userId },
-      include: {
-        category: true,
-        month: true
-      }
-    });
+  getMonthName(month: number) {
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    return monthNames[month - 1];
   }
 }
