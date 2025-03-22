@@ -36,6 +36,8 @@ interface DataTableProps<TData, TValue> {
       value: string
     }[]
   }[]
+  onRowClick?: (row: TData) => void
+  resourceType?: 'transaction' | 'month' | 'category'
 }
 
 export function DataTable<TData, TValue>({
@@ -43,6 +45,8 @@ export function DataTable<TData, TValue>({
   data,
   searchPlaceholder = "Search...",
   filterableColumns = [],
+  onRowClick,
+  resourceType,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -117,6 +121,8 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  onClick={() => onRowClick && onRowClick(row.original)}
+                  className={onRowClick ? "cursor-pointer" : ""}
                 >
                   {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
