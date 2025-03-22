@@ -6,7 +6,10 @@ import { formatCurrency, formatDate } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { 
   Card, 
-  CardContent 
+  CardContent, 
+  CardDescription, 
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card"
 
 export interface TransactionDrawerContentProps extends ResourceDrawerContentProps<Transaction> {}
@@ -18,14 +21,14 @@ export function TransactionDrawerContent({
 }: TransactionDrawerContentProps) {
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold">{transaction.name}</h3>
-        <Badge variant={transaction.type === 'income' ? "outline" : "destructive"}>
-          {transaction.type === 'income' ? 'Income' : 'Expense'}
-        </Badge>
-      </div>
-      
       <Card>
+        <CardHeader>
+          <CardTitle>{transaction.name}</CardTitle>
+          <CardDescription>
+            {transaction.type === 'income' ? 'Income' : 'Expense'}
+          </CardDescription>
+        </CardHeader>
+        
         <CardContent className="p-4 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>

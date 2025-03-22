@@ -46,7 +46,7 @@ export function ResourceDrawer<T>({
   }
 
   return (
-    <Drawer open={isOpen} onOpenChange={onClose} direction="left">
+    <Drawer open={isOpen} onOpenChange={onClose} direction="right">
       <DrawerContent className="max-w-md">
         <DrawerHeader className="flex items-center justify-between">
           <DrawerTitle>{title}</DrawerTitle>
