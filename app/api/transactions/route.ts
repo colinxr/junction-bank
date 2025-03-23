@@ -65,4 +65,43 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    // Extract transaction ID from URL
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.length - 1];
+    
+    // Check if ID is present
+    if (!id || id === 'transactions') {
+      return NextResponse.json(
+        { error: 'Transaction ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Authenticate the user
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Delete the transaction
+    const result = await transactionService.deleteTransaction(id);
+    
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    console.error('Error deleting transaction:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to delete transaction' },
+      { status: 500 }
+    );
+  }
 } 

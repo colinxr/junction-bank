@@ -1,5 +1,8 @@
 import useSWR from 'swr';
 import { useState } from 'react';
+import { toast } from 'sonner';
+import { Transaction } from '@/app/types';
+import { TransactionRepository } from '@/lib/repositories/transaction.repository';
 
 const API_URL = '/api/transactions';
 
@@ -62,7 +65,7 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   };
   
   // Method to create a new transaction optimistically
-  const createTransaction = async (transactionData: any) => {
+  const createTransaction = async (transactionData: Partial<Transaction>) => {
     try {
       // Optimistically update the local data first
       const optimisticData = {
@@ -81,27 +84,87 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
       // Update the cache optimistically and revalidate
       mutate(optimisticData, false);
       
-      // Send the actual request
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(transactionData),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create transaction');
-      }
+      // Use the repository to create the transaction
+      const response = await TransactionRepository.createTransaction(transactionData);
       
       // Revalidate the data to get the actual server response
       mutate();
       
-      return await response.json();
+      toast.success('Transaction created successfully');
+      return response.data;
     } catch (error) {
       // If there was an error, revalidate to restore the correct data
       mutate();
+      console.error("Error creating transaction:", error);
+      toast.error("Failed to create transaction. Please try again.");
       throw error;
+    }
+  };
+  
+  // Method to edit a transaction
+  const editTransaction = async (transaction: Transaction) => {
+    try {
+      toast.success(`Editing transaction: ${transaction.name}`);
+      
+      // Create optimistic data update
+      const optimisticData = {
+        ...data,
+        data: data?.data?.map((item: Transaction) => 
+          item.id === transaction.id ? { ...item, ...transaction } : item
+        ) || [],
+      };
+      
+      // Update the cache optimistically
+      mutate(optimisticData, false);
+      
+      // Use the repository to update the transaction
+      await TransactionRepository.updateTransaction(
+        transaction.id.toString(),
+        transaction
+      );
+      
+      // Revalidate to get the server data
+      mutate();
+      
+      toast.success('Transaction updated successfully');
+      return transaction;
+    } catch (error) {
+      console.error("Error editing transaction:", error);
+      toast.error("Failed to edit transaction. Please try again.");
+      // Revalidate to restore the correct data
+      mutate();
+      throw error;
+    }
+  };
+  
+  // Method to delete a transaction
+  const deleteTransaction = async (id: string | number) => {
+    try {
+      toast.success(`Deleting transaction ID: ${id}`);
+      
+      // Optimistically update UI before the API call
+      const optimisticData = {
+        ...data,
+        data: data?.data?.filter((item: Transaction) => item.id !== id) || [],
+      };
+      
+      // Update the cache optimistically
+      mutate(optimisticData, false);
+      
+      // Use the repository to delete the transaction
+      await TransactionRepository.deleteTransaction(id.toString());
+      
+      // Revalidate to get the server data
+      mutate();
+      
+      toast.success('Transaction deleted successfully');
+      return true;
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
+      toast.error("Failed to delete transaction. Please try again.");
+      // Revalidate to restore the correct data
+      mutate();
+      return false;
     }
   };
   
@@ -114,6 +177,8 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
     setLimit,
     setDateRange,
     createTransaction,
+    editTransaction,
+    deleteTransaction,
     refresh: () => mutate(),
   };
 } 

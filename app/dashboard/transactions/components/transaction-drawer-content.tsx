@@ -16,8 +16,6 @@ export interface TransactionDrawerContentProps extends ResourceDrawerContentProp
 
 export function TransactionDrawerContent({ 
   resource: transaction,
-  onEdit,
-  onDelete 
 }: TransactionDrawerContentProps) {
   return (
     <div className="space-y-6">

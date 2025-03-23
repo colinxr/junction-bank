@@ -6,32 +6,20 @@ import { DataTable } from "@/components/layout/data-table"
 import { Transaction } from "@/app/types"
 import { ResourceDrawer } from "@/components/layout/resource-drawer"
 import { TransactionDrawerContent } from "./transaction-drawer-content"
+import { useTransactions } from "@/app/hooks/useTransactions"
 
 interface TransactionsDataTableProps {
   data: Transaction[]
   columns: ColumnDef<Transaction>[]
-  onEdit?: (transaction: Transaction) => void
-  onDelete?: (id: string | number) => void
 }
 
 export function TransactionsDataTable({ 
   data, 
   columns,
-  onEdit,
-  onDelete
 }: TransactionsDataTableProps) {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-
-  const categories = useMemo(() => {
-    const uniqueCategories = Array.from(new Set(data.map(item => item.category)))
-      .filter((category): category is string => category !== undefined && category !== null)
-    
-    return uniqueCategories.map((category, i) => ({
-      label: category,
-      value: `${category}-${i}`,
-    }))
-  }, [data])
+  const { editTransaction, deleteTransaction } = useTransactions()
 
   const handleRowClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction)
@@ -57,15 +45,9 @@ export function TransactionsDataTable({
           resource={selectedTransaction}
           isOpen={isDrawerOpen}
           onClose={handleDrawerClose}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          renderContent={(transaction) => (
-            <TransactionDrawerContent 
-              resource={transaction} 
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          )}
+          onEdit={editTransaction}
+          onDelete={deleteTransaction}
+          renderContent={(transaction) => <TransactionDrawerContent resource={transaction} />}
           title="Transaction Details"
         />
       )}
