@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { CurrencyService } from "../services/currency.service";
 
 export class TransactionFactory {
   constructor(private prisma: PrismaClient) {}
@@ -16,8 +17,8 @@ export class TransactionFactory {
     let { amount_cad, amount_usd } = data;
     
     if (!amount_cad && amount_usd) {
-      // to do: get the exchange rate from the api
-      amount_cad = Number((amount_usd * 1.3).toFixed(2));
+      // Use the currency service to convert USD to CAD
+      amount_cad = await CurrencyService.convertUsdToCad(amount_usd);
     } else if (!amount_cad) {
       throw new Error("Either CAD or USD amount must be provided");
     }
