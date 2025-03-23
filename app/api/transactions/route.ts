@@ -5,8 +5,8 @@ import { TransactionService } from '@/lib/services/transaction.service';
 
 const transactionService = new TransactionService(prisma);
 
-// Cache GET requests for 5 minutes (300 seconds)
-export const revalidate = 300;
+// Remove caching for transaction data as it changes frequently
+// export const revalidate = 300;
 
 export async function GET(request: Request) {
   try {
@@ -30,10 +30,10 @@ export async function GET(request: Request) {
       endDate
     });
     
-    // Set cache control headers
+    // Set no-cache headers to prevent stale data
     return NextResponse.json(result, {
       headers: {
-        'Cache-Control': 'max-age=60, s-maxage=300, stale-while-revalidate=300',
+        'Cache-Control': 'no-store, must-revalidate, max-age=0',
       }
     });
   } catch (error) {
@@ -65,4 +65,4 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-} 
+}

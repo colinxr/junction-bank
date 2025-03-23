@@ -119,6 +119,31 @@ export class TransactionService {
     }
   }
 
+  async deleteTransaction(id: string | number) {
+    try {
+      const transactionId = typeof id === 'string' ? parseInt(id, 10) : id;
+      
+      // Check if the transaction exists
+      const transaction = await this.prisma.transaction.findUnique({
+        where: { id: transactionId }
+      });
+
+      if (!transaction) {
+        throw new Error(`Transaction with ID ${id} not found`);
+      }
+
+      // Delete the transaction
+      await this.prisma.transaction.delete({
+        where: { id: transactionId }
+      });
+
+      return { success: true, message: 'Transaction deleted successfully' };
+    } catch (error) {
+      console.error('Transaction deletion error:', error);
+      throw new Error(error instanceof Error ? error.message : 'Failed to delete transaction');
+    }
+  }
+
   getMonthName(month: number) {
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     return monthNames[month - 1];
