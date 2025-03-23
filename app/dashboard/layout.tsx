@@ -19,6 +19,7 @@ function SidebarLink({ href, icon, label, isActive }: SidebarLinkProps) {
   return (
     <Link 
       href={href} 
+      prefetch={true} 
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-slate-100",
         isActive ? "bg-slate-100 font-medium text-slate-900" : "text-slate-500"
