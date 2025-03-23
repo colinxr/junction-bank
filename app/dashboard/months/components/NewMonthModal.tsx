@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { NewMonthForm } from "./new-month-form";
+import { NewMonthForm } from "./NewMonthForm";
 import { Modal } from "@/components/layout/modal";
 
 export function NewMonthModal() {

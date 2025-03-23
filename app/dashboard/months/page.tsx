@@ -1,8 +1,8 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { NewMonthModal } from "./components/new-month-modal";
-import { MonthsDataTable } from "./components/months-data-table";
+import { NewMonthModal } from "./components/NewMonthModal";
+import { MonthsDataTable } from "./components/MonthsDataTable";
 import { columns } from "./components/columns";
 import { useMonths } from "@/app/hooks/useMonths";
 
