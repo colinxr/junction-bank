@@ -3,22 +3,22 @@
 import { useMemo, useState } from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { DataTable } from "@/components/layout/data-table"
-import { MonthData, Month } from "@/app/types"
+import { Month } from "@/app/types"
 import { ResourceDrawer } from "@/components/layout/resource-drawer"
 import { MonthDrawerContent } from "./MonthDrawerContent"
 import { useMonths } from "@/app/hooks/useMonths"
 
 interface MonthsDataTableProps {
-  data: MonthData[]
-  columns: ColumnDef<MonthData>[]
+  data: Month[]
+  columns: ColumnDef<Month>[]
 }
 
 export function MonthsDataTable({ data, columns }: MonthsDataTableProps) {
-  const [selectedMonth, setSelectedMonth] = useState<MonthData | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState<Month | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const { editMonth, deleteMonth } = useMonths()
 
-  const handleRowClick = (month: MonthData) => {
+  const handleRowClick = (month: Month) => {
     setSelectedMonth(month)
     setIsDrawerOpen(true)
   }
@@ -66,7 +66,7 @@ export function MonthsDataTable({ data, columns }: MonthsDataTableProps) {
             // Convert MonthData to Month type
             const monthObj: Month = {
               id: 0, // We don't have an id in MonthData, this needs proper handling
-              name: month.month,
+              month: month.month,
               year: month.year,
               notes: month.notes
             };
@@ -75,6 +75,7 @@ export function MonthsDataTable({ data, columns }: MonthsDataTableProps) {
           onDelete={deleteMonth}
           renderContent={(month) => <MonthDrawerContent resource={month} />}
           title="Month Details"
+          className="!w-[67%] !max-w-none"
         />
       )}
     </>

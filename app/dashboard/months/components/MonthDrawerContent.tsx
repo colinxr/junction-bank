@@ -16,7 +16,7 @@ export function MonthDrawerContent({
   resource: month,
 }: MonthDrawerContentProps) {
   return (
-    <div className="space-y-6 w-[67vw]">
+    <div className="space-y-6">
       <div className="flex items-center">
         <CalendarIcon className="mr-2 h-5 w-5" />
         <h3 className="text-lg font-semibold">{getMonthName(month.month)} {month.year}</h3>
