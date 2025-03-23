@@ -16,8 +16,13 @@ export interface Transaction {
 export interface MonthData {
   month: string
   year: number
-  revenue: number
-  expenses: number
-  profit: number
+  notes: string | null
   transactionCount: number
 } 
+
+export interface Month {
+  id: number
+  name: string
+  year: number
+  notes: string | null
+}

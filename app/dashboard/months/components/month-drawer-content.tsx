@@ -28,24 +28,18 @@ export function MonthDrawerContent({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Revenue</p>
-              <p className="font-medium text-green-600">{formatCurrency(month.revenue)}</p>
+              <p className="font-medium text-green-600">{formatCurrency(month.year)}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Expenses</p>
-              <p className="font-medium text-red-600">{formatCurrency(month.expenses)}</p>
+              <p className="text-sm text-muted-foreground">Transactions</p>
+              <p className="font-medium">{month.transactionCount}</p>
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Profit</p>
-              <p className={`font-medium ${month.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(month.profit)}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Transactions</p>
-              <p className="font-medium">{month.transactionCount}</p>
+              <p className="text-sm text-muted-foreground">notes</p>
+              <p className="font-medium text-red-600">{month.notes}</p>
             </div>
           </div>
         </CardContent>

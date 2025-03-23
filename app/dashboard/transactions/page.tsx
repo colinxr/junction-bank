@@ -3,11 +3,9 @@
 import { TransactionsDataTable } from "./components/transactions-data-table";
 import { columns } from "./components/transactions-columns";
 import { NewTransactionModal } from "./components/new-transaction-modal";
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTransactions } from "@/app/hooks/useTransactions";
-import { Transaction } from "@/app/types";
-import { toast } from "sonner";
 
 function TransactionsContent() {
   // Use our custom hook instead of direct SWR usage
