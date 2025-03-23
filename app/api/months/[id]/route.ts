@@ -9,8 +9,42 @@ export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const month = await monthService.getMonth(params.id);
-  return NextResponse.json({data: month});
+  try {
+    const { id } = params;
+    
+    // Authenticate the user
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Get month with financial data
+    const month = await monthService.getMonth(id);
+    
+    if (!month) {
+      return NextResponse.json(
+        { error: 'Month not found' },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json(month, { 
+      headers: {
+        'Cache-Control': 'private, max-age=60'
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching month:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to fetch month' },
+      { status: 500 }
+    );
+  }
 }
 
 export async function PUT(
