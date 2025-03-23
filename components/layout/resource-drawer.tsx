@@ -28,6 +28,7 @@ export interface ResourceDrawerProps<T> {
   onDelete?: (id: string | number) => void
   renderContent: (resource: T) => React.ReactNode
   title?: string
+  className?: string
 }
 
 export interface ResourceDrawerContentProps<T> {
@@ -36,6 +37,9 @@ export interface ResourceDrawerContentProps<T> {
   onDelete?: (id: string | number) => void
 }
 
+const snapPoints = ['67vw'];
+
+
 export function ResourceDrawer<T>({
   resource,
   isOpen,
@@ -43,7 +47,8 @@ export function ResourceDrawer<T>({
   onEdit,
   onDelete,
   renderContent,
-  title = "Details"
+  title = "Details",
+  className,
 }: ResourceDrawerProps<T>) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   
@@ -68,7 +73,7 @@ export function ResourceDrawer<T>({
   return (
     <>
       <Drawer open={isOpen} onOpenChange={onClose} direction="right">
-        <DrawerContent className="max-w-md">
+        <DrawerContent className={`max-w-md data-[vaul-drawer-direction=right]:sm:max-w-sm ${className || ""}`}>
           <DrawerHeader className="flex items-center justify-between">
             <DrawerTitle>{title}</DrawerTitle>
             <DrawerClose asChild>

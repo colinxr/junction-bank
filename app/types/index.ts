@@ -13,11 +13,13 @@ export interface Transaction {
   category?: string
 }
 
-export interface MonthData {
+export interface Month {
+  id: number
   month: string
   year: number
-  revenue: number
-  expenses: number
-  profit: number
-  transactionCount: number
+  notes: string | null
+  transactionCount?: number
+  cashflow?: number
+  totalIncome?: number
+  totalExpenses?: number
 } 

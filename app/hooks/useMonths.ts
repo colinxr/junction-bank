@@ -1,38 +1,36 @@
 import useSWR, { mutate } from 'swr';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Transaction } from '@/app/types';
-import { TransactionRepository } from '@/lib/repositories/transaction.repository';
+import { Month } from '@/app/types';
+import { MonthRepository } from '@/lib/repositories/month.repository';
 
-const API_URL = '/api/transactions';
+const API_URL = '/api/months';
 
 // Fetcher function
 const fetcher = async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) {
-    const error = new Error('Failed to fetch transactions');
+    const error = new Error('Failed to fetch months');
     error.message = await res.text();
     throw error;
   }
   return res.json();
 };
 
-interface TransactionQueryParams {
-  monthId?: number;
+interface MonthQueryParams {
   page?: number;
   limit?: number;
   startDate?: Date;
   endDate?: Date;
 }
 
-export function useTransactions(initialParams: TransactionQueryParams = {}) {
+export function useMonths(initialParams: MonthQueryParams = {}) {
   // State for query parameters
-  const [queryParams, setQueryParams] = useState<TransactionQueryParams>({
+  const [queryParams, setQueryParams] = useState<MonthQueryParams>({
     page: initialParams.page || 1,
     limit: initialParams.limit || 20,
     startDate: initialParams.startDate,
     endDate: initialParams.endDate,
-    monthId: initialParams.monthId,
   });
   
   // Build query string
@@ -41,8 +39,7 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   if (queryParams.limit) queryString.append('limit', queryParams.limit.toString());
   if (queryParams.startDate) queryString.append('startDate', queryParams.startDate.toISOString());
   if (queryParams.endDate) queryString.append('endDate', queryParams.endDate.toISOString());
-  if (queryParams.monthId) queryString.append('monthId', queryParams.monthId.toString());
-
+  
   // SWR hook for data fetching
   const { data, error, isLoading, mutate } = useSWR(
     `${API_URL}?${queryString.toString()}`,
@@ -66,18 +63,9 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   const setDateRange = (startDate?: Date, endDate?: Date) => {
     setQueryParams(prev => ({ ...prev, startDate, endDate }));
   };
-
-  const setMonthId = (monthId: number) => {
-    setQueryParams(prev => ({ ...prev, monthId }));
-  };
-
-  const getTransactions = async () => {
-    const response = await fetch(`${API_URL}?${queryString.toString()}`);
-    return response.json();
-  };
   
   // Method to create a new transaction optimistically
-  const createTransaction = async (transactionData: Partial<Transaction>) => {
+  const createMonth = async (monthData: Partial<Month>) => {
     try {
       // Optimistically update the local data first
       const optimisticData = {
@@ -86,7 +74,7 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
           // Add optimistic transaction to the start of the array
           {
             id: 'temp-id-' + Date.now(),
-            ...transactionData,
+            ...monthData,
             // Add any default fields needed for rendering
           },
           ...(data?.data || []),
@@ -97,101 +85,107 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
       mutate(optimisticData, false);
       
       // Use the repository to create the transaction
-      const response = await TransactionRepository.createTransaction(transactionData);
+      const response = await MonthRepository.createMonth(monthData);
       
       // Revalidate the data to get the actual server response
       mutate();
       
-      toast.success('Transaction created successfully');
+      toast.success('Month created successfully');
       return response.data;
     } catch (error) {
       // If there was an error, revalidate to restore the correct data
       mutate();
-      console.error("Error creating transaction:", error);
-      toast.error("Failed to create transaction. Please try again.");
+      console.error("Error creating month:", error);
+      toast.error("Failed to create month. Please try again.");
       throw error;
     }
   };
   
-  // Method to edit a transaction
-  const editTransaction = async (transaction: Transaction) => {
+  // Method to edit a month
+  const editMonth = async (month: Month) => {
     try {
-      toast.success(`Editing transaction: ${transaction.name}`);
+      toast.success(`Editing month: ${month.month} ${month.year}`);
       
       // Create optimistic data update
       const optimisticData = {
         ...data,
-        data: data?.data?.map((item: Transaction) => 
-          item.id === transaction.id ? { ...item, ...transaction } : item
+        data: data?.data?.map((item: Month) => 
+          item.id === month.id ? { ...item, ...month } : item
         ) || [],
       };
       
       // Update the cache optimistically
       mutate(optimisticData, false);
       
-      // Use the repository to update the transaction
-      await TransactionRepository.updateTransaction(
-        transaction.id.toString(),
-        transaction
+      // Use the repository to update the month
+      await MonthRepository.updateMonth(
+        month.id.toString(),
+        month
       );
       
       // Revalidate to get the server data
       mutate();
       
-      toast.success('Transaction updated successfully');
-      return transaction;
+      toast.success('Month updated successfully');
+      return month;
     } catch (error) {
-      console.error("Error editing transaction:", error);
-      toast.error("Failed to edit transaction. Please try again.");
+      console.error("Error editing month:", error);
+      toast.error("Failed to edit month. Please try again.");
       // Revalidate to restore the correct data
       mutate();
       throw error;
     }
   };
   
-  // Method to delete a transaction
-  const deleteTransaction = async (id: string | number) => {
+  // Method to delete a month
+  const deleteMonth = async (id: string | number) => {
     try {
-      toast.success(`Deleting transaction ID: ${id}`);
+      toast.success(`Deleting month ID: ${id}`);
       
       // Optimistically update UI before the API call
       const optimisticData = {
         ...data,
-        data: data?.data?.filter((item: Transaction) => item.id !== id) || [],
+        data: data?.data?.filter((item: Month) => item.id !== id) || [],
       };
       
       // Update the cache optimistically
       mutate(optimisticData, false);
       
-      // Use the repository to delete the transaction
-      await TransactionRepository.deleteTransaction(id.toString());
+      // Use the repository to delete the month
+      await MonthRepository.deleteMonth(id.toString());
       
       // Revalidate to get the server data
       mutate((key: string) => key.startsWith(API_URL));
 
-      toast.success('Transaction deleted successfully');
+      toast.success('Month deleted successfully');
       return true;
     } catch (error) {
-      console.error("Error deleting transaction:", error);
-      toast.error("Failed to delete transaction. Please try again.");
+      console.error("Error deleting month:", error);
+      toast.error("Failed to delete month. Please try again.");
       // Revalidate to restore the correct data
       mutate();
       return false;
     }
   };
+
+  const getMonth = async (id: string | number) => {
+    const response = await MonthRepository.getMonth(id);
+    console.log(response);
+    return response.data;
+  };
   
   return {
-    transactions: data?.data || [],
+    months: data?.data || [],
     pagination: data?.pagination || { total: 0, page: 1, pages: 1 },
     isLoading,
     error,
     setPage,
     setLimit,
     setDateRange,
-    createTransaction,
-    editTransaction,
-    deleteTransaction,
-    getTransactions,
+    getMonth,
+    createMonth,
+    editMonth,
+    deleteMonth,
     refresh: () => mutate(),
   };
 } 

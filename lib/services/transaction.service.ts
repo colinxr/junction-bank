@@ -14,7 +14,8 @@ export class TransactionService {
     page?: number, 
     limit?: number, 
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    monthId?: number
   }) {
     const page = options?.page || 1;
     const limit = options?.limit || 20;
@@ -27,6 +28,10 @@ export class TransactionService {
         gte: options.startDate,
         lte: options.endDate
       };
+    }
+
+    if (options?.monthId) {
+      where.monthId = options.monthId;
     }
 
     // Get count for pagination
