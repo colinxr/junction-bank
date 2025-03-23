@@ -17,6 +17,21 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
+// Hook for fetching a single month with financial details
+export function useMonthDetail(id: number) {
+  const { data, error, isLoading } = useSWR(`${API_URL}/${id}`, fetcher, {
+    revalidateOnFocus: false,
+      dedupingInterval: 30000, // 30 seconds
+    }
+  );
+
+  return {
+    monthDetail: data,
+    error,
+    isLoading,
+  };
+}
+
 interface MonthQueryParams {
   page?: number;
   limit?: number;
@@ -126,6 +141,9 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
       // Revalidate to get the server data
       mutate();
       
+      // Also invalidate the specific month detail if it exists in cache
+      mutate(`${API_URL}/${month.id}`);
+      
       toast.success('Month updated successfully');
       return month;
     } catch (error) {
@@ -152,7 +170,7 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
       mutate(optimisticData, false);
       
       // Use the repository to delete the month
-      await MonthRepository.deleteMonth(id.toString());
+      await MonthRepository.deleteMonth(id);
       
       // Revalidate to get the server data
       mutate((key: string) => key.startsWith(API_URL));
