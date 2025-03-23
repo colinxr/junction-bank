@@ -1,6 +1,6 @@
 "use client"
 
-import { MonthData } from "@/app/types"
+import { Month } from "@/app/types"
 import { ResourceDrawerContentProps } from "@/components/layout/resource-drawer"
 import { formatCurrency, getMonthName } from "@/lib/utils"
 import { 
@@ -8,16 +8,15 @@ import {
   CardContent 
 } from "@/components/ui/card"
 import { CalendarIcon } from "lucide-react"
+import { TransactionsContent } from "@/app/dashboard/transactions/components/TransactionContent"
 
-export interface MonthDrawerContentProps extends ResourceDrawerContentProps<MonthData> {}
+export interface MonthDrawerContentProps extends ResourceDrawerContentProps<Month> {}
 
 export function MonthDrawerContent({ 
   resource: month,
-  onEdit,
-  onDelete 
 }: MonthDrawerContentProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-[67vw]">
       <div className="flex items-center">
         <CalendarIcon className="mr-2 h-5 w-5" />
         <h3 className="text-lg font-semibold">{getMonthName(month.month)} {month.year}</h3>
@@ -38,6 +37,12 @@ export function MonthDrawerContent({
               <p className="font-medium text-red-600">{month.notes}</p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <TransactionsContent month={month} />
         </CardContent>
       </Card>
     </div>

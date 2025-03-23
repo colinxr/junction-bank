@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { cn } from "@/lib/utils"
 
 export interface ResourceDrawerProps<T> {
   resource: T
@@ -43,7 +44,7 @@ export function ResourceDrawer<T>({
   onEdit,
   onDelete,
   renderContent,
-  title = "Details"
+  title = "Details",
 }: ResourceDrawerProps<T>) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   
@@ -68,7 +69,7 @@ export function ResourceDrawer<T>({
   return (
     <>
       <Drawer open={isOpen} onOpenChange={onClose} direction="right">
-        <DrawerContent className="max-w-md">
+        <DrawerContent className={"max-w-md"}>
           <DrawerHeader className="flex items-center justify-between">
             <DrawerTitle>{title}</DrawerTitle>
             <DrawerClose asChild>

@@ -13,16 +13,10 @@ export interface Transaction {
   category?: string
 }
 
-export interface MonthData {
+export interface Month {
+  id: number
   month: string
   year: number
   notes: string | null
-  transactionCount: number
+  transactionCount?: number
 } 
-
-export interface Month {
-  id: number
-  name: string
-  year: number
-  notes: string | null
-}

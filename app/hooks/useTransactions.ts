@@ -18,6 +18,7 @@ const fetcher = async (url: string) => {
 };
 
 interface TransactionQueryParams {
+  monthId?: number;
   page?: number;
   limit?: number;
   startDate?: Date;
@@ -31,6 +32,7 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
     limit: initialParams.limit || 20,
     startDate: initialParams.startDate,
     endDate: initialParams.endDate,
+    monthId: initialParams.monthId,
   });
   
   // Build query string
@@ -39,7 +41,8 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   if (queryParams.limit) queryString.append('limit', queryParams.limit.toString());
   if (queryParams.startDate) queryString.append('startDate', queryParams.startDate.toISOString());
   if (queryParams.endDate) queryString.append('endDate', queryParams.endDate.toISOString());
-  
+  if (queryParams.monthId) queryString.append('monthId', queryParams.monthId.toString());
+
   // SWR hook for data fetching
   const { data, error, isLoading, mutate } = useSWR(
     `${API_URL}?${queryString.toString()}`,
@@ -62,6 +65,15 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   
   const setDateRange = (startDate?: Date, endDate?: Date) => {
     setQueryParams(prev => ({ ...prev, startDate, endDate }));
+  };
+
+  const setMonthId = (monthId: number) => {
+    setQueryParams(prev => ({ ...prev, monthId }));
+  };
+
+  const getTransactions = async () => {
+    const response = await fetch(`${API_URL}?${queryString.toString()}`);
+    return response.json();
   };
   
   // Method to create a new transaction optimistically
@@ -179,6 +191,7 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
     createTransaction,
     editTransaction,
     deleteTransaction,
+    getTransactions,
     refresh: () => mutate(),
   };
 } 
