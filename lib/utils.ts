@@ -29,3 +29,22 @@ export function formatDate(dateStr: string) {
     return 'Invalid date'
   }
 }
+
+  // Helper function to get month name
+export function getMonthName(monthNum: number) {
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  return months[monthNum - 1] || null;
+}
+
+export function getMonthNumber(monthName: string) {
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  return months.indexOf(monthName) + 1 || null;
+}

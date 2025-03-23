@@ -4,10 +4,10 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { MonthRepository } from "@/lib/repositories/month.repository";
+import { getMonthName } from "@/lib/utils";
 
 import {
   Form,
@@ -19,30 +19,33 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Define Zod schema based on month structure
 const monthSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  month: z.number().min(1).max(12),
   year: z.number().min(2020, "Year must be at least 2020"),
-  notes: z.string().min(2, "Description must be at least 2 characters").optional(),
+  notes: z.string().optional(),
 });
 
 export function NewMonthForm({ onSubmit }: { onSubmit: () => void }) {
   const router = useRouter();
+
+  // Get current date for default values
+  const today = new Date();
+
   const form = useForm<z.infer<typeof monthSchema>>({
     resolver: zodResolver(monthSchema),
     defaultValues: {
-      name: "",
-      year: new Date().getFullYear(),
+      month: today.getMonth() + 1, // JavaScript months are 0-based
+      year: today.getFullYear(),
       notes: ""
     },
   });
 
   async function handleSubmit(data: z.infer<typeof monthSchema>) {
     const resp = await MonthRepository.createMonth(data);
-    
+
     onSubmit();
     toast.success('Month created successfully');
     form.reset();
@@ -55,53 +58,67 @@ export function NewMonthForm({ onSubmit }: { onSubmit: () => void }) {
         <div className="flex flex-row gap-4">
           <FormField
             control={form.control}
-            name="name"
+            name="month"
             render={({ field }) => (
               <FormItem className="flex-1">
-                <FormLabel>Name</FormLabel>
+                <FormLabel>Month</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button variant={"outline"}>
+                        {field.value ? (
+                          getMonthName(field.value)
+                        ) : (
+                          <span>Select month</span>
+                        )}
+                        <CalendarIcon className="ml-2 h-4 w-4" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2">
+                    <div className="grid grid-cols-3 gap-2">
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                        <Button
+                          key={month}
+                          variant={month === field.value ? "default" : "outline"}
+                          onClick={() => {
+                            field.onChange(month);
+                            form.setValue("month", month);
+                          }}
+                          className="w-full"
+                        >
+                          {getMonthName(month)?.substring(0, 3)}
+                        </Button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="year"
+            render={({ field: { onChange, value, ...rest } }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Year</FormLabel>
                 <FormControl>
                   <Input
-                    type="text"
-                    {...field}
+                    type="number"
+                    value={value}
+                    onChange={(e) => onChange(parseInt(e.target.value))}
+                    min={2020}
+                    max={2100}
+                    {...rest}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-
-        <FormField
-          control={form.control}
-          name="year"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Year</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button variant={"outline"}>
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-2 h-4 w-4" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        </div>
 
         <FormField
           control={form.control}
@@ -116,7 +133,6 @@ export function NewMonthForm({ onSubmit }: { onSubmit: () => void }) {
             </FormItem>
           )}
         />
-        </div>
 
         <Button className="ml-auto" type="submit">Submit</Button>
       </form>

@@ -44,15 +44,6 @@ export function MonthDrawerContent({
           </div>
         </CardContent>
       </Card>
-      
-      {/* Additional content specific to the MonthData type could be added here */}
-      <div className="mt-4">
-        <h4 className="text-sm font-medium mb-2">Monthly Overview</h4>
-        <p className="text-sm text-muted-foreground">
-          This month had {month.transactionCount} transactions with a total revenue of {formatCurrency(month.revenue)} and expenses of {formatCurrency(month.expenses)}, 
-          resulting in a {month.profit >= 0 ? 'profit' : 'loss'} of {formatCurrency(Math.abs(month.profit))}.
-        </p>
-      </div>
     </div>
   )
 } 
