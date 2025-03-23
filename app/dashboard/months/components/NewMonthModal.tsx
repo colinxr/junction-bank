@@ -7,12 +7,12 @@ import { Modal } from "@/components/layout/modal";
 export function NewMonthModal() {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <Modal 
-        isOpen={isOpen} 
-        setIsOpen={setIsOpen} 
-        trigger={<Button>Add Month</Button>} 
-        title="Add Month">
-        <NewMonthForm onSubmit={() => setIsOpen(false)}/>
+    <Modal
+      isOpen={isOpen}
+      setIsOpen={setIsOpen}
+      trigger={<Button>Add Month</Button>}
+      title="Add Month">
+      <NewMonthForm onSubmit={() => setIsOpen(false)} />
     </Modal>
   );
 } 

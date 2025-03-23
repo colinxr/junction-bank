@@ -101,6 +101,72 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
     }
   };
   
+  // Method to edit a month
+  const editMonth = async (month: Month) => {
+    try {
+      toast.success(`Editing month: ${month.name}`);
+      
+      // Create optimistic data update
+      const optimisticData = {
+        ...data,
+        data: data?.data?.map((item: Month) => 
+          item.id === month.id ? { ...item, ...month } : item
+        ) || [],
+      };
+      
+      // Update the cache optimistically
+      mutate(optimisticData, false);
+      
+      // Use the repository to update the month
+      await MonthRepository.updateMonth(
+        month.id.toString(),
+        month
+      );
+      
+      // Revalidate to get the server data
+      mutate();
+      
+      toast.success('Month updated successfully');
+      return month;
+    } catch (error) {
+      console.error("Error editing month:", error);
+      toast.error("Failed to edit month. Please try again.");
+      // Revalidate to restore the correct data
+      mutate();
+      throw error;
+    }
+  };
+  
+  // Method to delete a month
+  const deleteMonth = async (id: string | number) => {
+    try {
+      toast.success(`Deleting month ID: ${id}`);
+      
+      // Optimistically update UI before the API call
+      const optimisticData = {
+        ...data,
+        data: data?.data?.filter((item: Month) => item.id !== id) || [],
+      };
+      
+      // Update the cache optimistically
+      mutate(optimisticData, false);
+      
+      // Use the repository to delete the month
+      await MonthRepository.deleteMonth(id.toString());
+      
+      // Revalidate to get the server data
+      mutate((key: string) => key.startsWith(API_URL));
+
+      toast.success('Month deleted successfully');
+      return true;
+    } catch (error) {
+      console.error("Error deleting month:", error);
+      toast.error("Failed to delete month. Please try again.");
+      // Revalidate to restore the correct data
+      mutate();
+      return false;
+    }
+  };
   
   return {
     months: data?.data || [],
@@ -111,6 +177,8 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
     setLimit,
     setDateRange,
     createMonth,
+    editMonth,
+    deleteMonth,
     refresh: () => mutate(),
   };
 } 

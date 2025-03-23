@@ -1,6 +1,11 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -31,20 +36,12 @@ export function formatDate(dateStr: string) {
 }
 
   // Helper function to get month name
-export function getMonthName(monthNum: number) {
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
+export function getMonthName(monthNum: number | string) {
+  const index = typeof monthNum === 'string' ? parseInt(monthNum) - 1 : monthNum - 1;
 
-  return months[monthNum - 1] || null;
+  return MONTHS[index] || monthNum;
 }
 
 export function getMonthNumber(monthName: string) {
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
-
-  return months.indexOf(monthName) + 1 || null;
+  return MONTHS.indexOf(monthName) + 1 || monthName;
 }

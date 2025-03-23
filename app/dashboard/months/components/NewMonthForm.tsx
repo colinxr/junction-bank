@@ -87,7 +87,7 @@ export function NewMonthForm({ onSubmit }: { onSubmit: () => void }) {
                           }}
                           className="w-full"
                         >
-                          {getMonthName(month)?.substring(0, 3)}
+                          {getMonthName(month)}
                         </Button>
                       ))}
                     </div>
