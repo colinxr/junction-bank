@@ -104,7 +104,7 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
   // Method to edit a month
   const editMonth = async (month: Month) => {
     try {
-      toast.success(`Editing month: ${month.name}`);
+      toast.success(`Editing month: ${month.month} ${month.year}`);
       
       // Create optimistic data update
       const optimisticData = {
@@ -167,6 +167,12 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
       return false;
     }
   };
+
+  const getMonth = async (id: string | number) => {
+    const response = await MonthRepository.getMonth(id);
+    console.log(response);
+    return response.data;
+  };
   
   return {
     months: data?.data || [],
@@ -176,6 +182,7 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
     setPage,
     setLimit,
     setDateRange,
+    getMonth,
     createMonth,
     editMonth,
     deleteMonth,

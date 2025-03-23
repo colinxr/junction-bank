@@ -1,21 +1,35 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Month } from "@/app/types"
-import { ResourceDrawerContentProps } from "@/components/layout/resource-drawer"
 import { formatCurrency, getMonthName } from "@/lib/utils"
+import { CalendarIcon } from "lucide-react"
+import { ResourceDrawerContentProps } from "@/components/layout/resource-drawer"
 import { 
   Card, 
   CardContent 
 } from "@/components/ui/card"
-import { CalendarIcon } from "lucide-react"
 import { TransactionsContent } from "@/app/dashboard/transactions/components/TransactionContent"
+import { useMonths } from "@/app/hooks/useMonths"
 
 export interface MonthDrawerContentProps extends ResourceDrawerContentProps<Month> {}
 
 export function MonthDrawerContent({ 
   resource: month,
 }: MonthDrawerContentProps) {
-  return (
+  const { getMonth } = useMonths()
+  const [monthData, setMonthData] = useState<Month | null>(null)
+
+  useEffect(() => {
+    const fetchMonthData = async () => {
+      const data = await getMonth(month.id)
+      console.log(data)
+      setMonthData(data)
+    }
+    fetchMonthData()
+  }, [])
+
+    return (
     <div className="space-y-6">
       <div className="flex items-center">
         <CalendarIcon className="mr-2 h-5 w-5" />
@@ -26,8 +40,22 @@ export function MonthDrawerContent({
         <CardContent className="p-4 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
+              <p className="text-sm text-muted-foreground">Total Income</p>
+              <p className="font-medium">{monthData?.totalIncome}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Expenses</p>
+              <p className="font-medium">{monthData?.totalExpenses}</p>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">Cashflow</p>
+              <p className="font-medium">{monthData?.cashflow}</p>
+            </div>
+
+            <div>
               <p className="text-sm text-muted-foreground">Transactions</p>
-              <p className="font-medium">{month.transactionCount}</p>
+              <p className="font-medium">{monthData?.transactionCount}</p>
             </div>
           </div>
           

@@ -19,4 +19,7 @@ export interface Month {
   year: number
   notes: string | null
   transactionCount?: number
+  cashflow?: number
+  totalIncome?: number
+  totalExpenses?: number
 } 

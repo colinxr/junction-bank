@@ -8,15 +8,19 @@ export const MonthRepository = {
     });
   },
 
-  async getMonth() {
+  async getMonths() {
     return apiClient.get("/months");
   },
 
-async updateMonth(id: string, monthData: Partial<Month>) {
+  async getMonth(id: string | number) {
+    return apiClient.get(`/months/${id}`);
+  },
+
+  async updateMonth(id: string | number, monthData: Partial<Month>) {
     return apiClient.put(`/months/${id}`, monthData);
   },
 
-  async deleteMonth(id: string) {
+  async deleteMonth(id: string | number) {
     return apiClient.delete(`/months/${id}`);
   }
 };

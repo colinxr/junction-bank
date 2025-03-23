@@ -66,6 +66,56 @@ export class MonthService {
     };
   }
 
+  async getMonth(id: string | number) {
+    const monthId = typeof id === 'string' ? parseInt(id, 10) : id;
+
+    // Use Promise.all to run queries in parallel
+    const [month, transactionStats] = await Promise.all([
+      // Query 1: Fetch month details
+      this.prisma.month.findUnique({
+        where: { id: monthId }
+      }),
+      
+      // Query 2: Get transaction stats in a single query using groupBy
+      this.prisma.$queryRaw`
+        SELECT 
+          COUNT(*) AS "transactionCount",
+          COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cad::numeric ELSE 0 END), 0) AS "totalIncome",
+          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cad::numeric ELSE 0 END), 0) AS "totalExpenses"
+        FROM transactions
+        WHERE month_id = ${monthId}
+      ` as Promise<{ transactionCount: string; totalIncome: string; totalExpenses: string }[]>
+    ]);
+    
+    if (!month) {
+      return null;
+    }
+    
+    // Extract values from the raw query result (first element in the array)
+    const stats = transactionStats[0];
+    
+    // Extract and parse the totals
+    const totalIncome = parseFloat(stats.totalIncome);
+    const totalExpenses = parseFloat(stats.totalExpenses);
+    const transactionCount = parseInt(stats.transactionCount);
+
+    console.log(month);
+    console.log(totalIncome);
+    console.log(totalExpenses);
+    console.log(transactionCount);
+    
+    
+    
+    // Return the month with the calculated totals
+    return {
+      ...month,
+      totalIncome,
+      totalExpenses,
+      cashflow: totalIncome - totalExpenses,
+      transactionCount
+    };
+  }
+
   async getMonthForDate(date: Date) {
     const month = date.getMonth() + 1; // JavaScript months are 0-based
     const year = date.getFullYear();

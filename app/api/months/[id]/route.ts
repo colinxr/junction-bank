@@ -5,6 +5,14 @@ import { MonthService } from '@/lib/services/month.service';
 
 const monthService = new MonthService(prisma);
 
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const month = await monthService.getMonth(params.id);
+  return NextResponse.json({data: month});
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
