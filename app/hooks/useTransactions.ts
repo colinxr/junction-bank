@@ -1,4 +1,4 @@
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Transaction } from '@/app/types';
@@ -155,8 +155,8 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
       await TransactionRepository.deleteTransaction(id.toString());
       
       // Revalidate to get the server data
-      mutate();
-      
+      mutate((key: string) => key.startsWith(API_URL));
+
       toast.success('Transaction deleted successfully');
       return true;
     } catch (error) {

@@ -5,8 +5,8 @@ import { TransactionService } from '@/lib/services/transaction.service';
 
 const transactionService = new TransactionService(prisma);
 
-// Cache GET requests for 5 minutes (300 seconds)
-export const revalidate = 300;
+// Remove caching for transaction data as it changes frequently
+// export const revalidate = 300;
 
 export async function GET(request: Request) {
   try {
@@ -30,10 +30,10 @@ export async function GET(request: Request) {
       endDate
     });
     
-    // Set cache control headers
+    // Set no-cache headers to prevent stale data
     return NextResponse.json(result, {
       headers: {
-        'Cache-Control': 'max-age=60, s-maxage=300, stale-while-revalidate=300',
+        'Cache-Control': 'no-store, must-revalidate, max-age=0',
       }
     });
   } catch (error) {
@@ -66,42 +66,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
-export async function DELETE(request: Request) {
-  try {
-    // Extract transaction ID from URL
-    const url = new URL(request.url);
-    const pathParts = url.pathname.split('/');
-    const id = pathParts[pathParts.length - 1];
-    
-    // Check if ID is present
-    if (!id || id === 'transactions') {
-      return NextResponse.json(
-        { error: 'Transaction ID is required' },
-        { status: 400 }
-      );
-    }
-
-    // Authenticate the user
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Delete the transaction
-    const result = await transactionService.deleteTransaction(id);
-    
-    return NextResponse.json(result, { status: 200 });
-  } catch (error) {
-    console.error('Error deleting transaction:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to delete transaction' },
-      { status: 500 }
-    );
-  }
-} 
