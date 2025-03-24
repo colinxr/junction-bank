@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react"
 import { ColumnDef } from "@tanstack/react-table"
-import { DataTable } from "@/components/layout/data-table"
+import { DataTable } from "@/components/layout/DataTable"
 import { Month } from "@/app/types"
-import { ResourceDrawer } from "@/components/layout/resource-drawer"
+import { ResourceDrawer } from "@/components/layout/ResourceDrawer"
 import { MonthDrawerContent } from "./MonthDrawerContent"
 import { useMonths } from "@/app/hooks/useMonths"
 

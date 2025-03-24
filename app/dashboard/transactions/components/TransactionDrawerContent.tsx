@@ -1,9 +1,9 @@
 "use client"
 
 import { Transaction } from "@/app/types"
-import { ResourceDrawerContentProps } from "@/components/layout/resource-drawer"
+import { ResourceDrawerContentProps } from "@/components/layout/ResourceDrawer"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
+
 import { 
   Card, 
   CardContent, 

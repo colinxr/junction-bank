@@ -8,8 +8,9 @@ export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  try {
-    const transaction = await recurringTransactionService.show(params.id);
+  try { 
+    const { id } = await params;
+    const transaction = await recurringTransactionService.show(id);
     
     return NextResponse.json({ data: transaction });
   } catch (error) {
@@ -26,10 +27,11 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     
     const updatedTransaction = await recurringTransactionService.edit(
-      params.id, 
+      id, 
       body
     );
     
@@ -48,7 +50,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const result = await recurringTransactionService.destroy(params.id);
+    const { id } = await params;
+    const result = await recurringTransactionService.destroy(id);
     
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

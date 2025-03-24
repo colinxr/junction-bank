@@ -9,7 +9,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const result = await transactionService.deleteTransaction(params.id);
+    const { id } = await params;
+    const result = await transactionService.destroy(id);
     
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

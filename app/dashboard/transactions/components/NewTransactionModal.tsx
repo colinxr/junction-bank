@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { NewTransactionForm } from "./new-transaction-form";
-import { Modal } from "@/components/layout/modal";
+import { NewTransactionForm } from "./NewTransactionForm";
+import { Modal } from "@/components/layout/Modal";
 
 export function NewTransactionModal() {
   const [isOpen, setIsOpen] = useState(false);

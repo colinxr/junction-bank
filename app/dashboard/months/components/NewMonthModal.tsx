@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { NewMonthForm } from "./NewMonthForm";
-import { Modal } from "@/components/layout/modal";
+import { Modal } from "@/components/layout/Modal";
 
 export function NewMonthModal() {
   const [isOpen, setIsOpen] = useState(false);

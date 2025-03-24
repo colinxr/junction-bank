@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import { ColumnDef } from "@tanstack/react-table"
-import { DataTable } from "@/components/layout/data-table"
+import { DataTable } from "@/components/layout/DataTable"
 import { Transaction } from "@/app/types"
-import { ResourceDrawer } from "@/components/layout/resource-drawer"
-import { TransactionDrawerContent } from "./transaction-drawer-content"
+import { ResourceDrawer } from "@/components/layout/ResourceDrawer"
+import { TransactionDrawerContent } from "./TransactionDrawerContent"
 import { useTransactions } from "@/app/hooks/useTransactions"
 
 interface TransactionsDataTableProps {
