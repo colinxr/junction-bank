@@ -1,5 +1,7 @@
 import { TransactionFactory } from "../factories/transaction.factory";
 import { PrismaClient } from "@prisma/client";
+import { getMonthName } from "../utils";
+
 export class TransactionService {
   private prisma: PrismaClient;
   private transactionFactory: TransactionFactory;
@@ -63,10 +65,10 @@ export class TransactionService {
 
     // Transform using more direct property access for performance
     const formattedTransactions = transactions.map(transaction => {
-      const amountCad = parseFloat(transaction.amountCAD.toString());
-      const amountUsd = transaction.amountUSD ? parseFloat(transaction.amountUSD.toString()) : null;
+      const amountCad = transaction.amountCAD.toNumber();
+      const amountUsd = transaction.amountUSD ? transaction.amountUSD.toNumber() : null;
       const categoryName = transaction.category.name;
-      const monthName = this.getMonthName(transaction.month.month);
+      const monthName = getMonthName(transaction.month.month);
       
       return {
         ...transaction,
@@ -124,13 +126,11 @@ export class TransactionService {
     }
   }
 
-  async destroy(id: string | number) {
+  async destroy(id: number) {
     try {
-      const transactionId = typeof id === 'string' ? parseInt(id, 10) : id;
-      
       // Check if the transaction exists
       const transaction = await this.prisma.transaction.findUnique({
-        where: { id: transactionId }
+        where: { id }
       });
 
       if (!transaction) {
@@ -139,7 +139,7 @@ export class TransactionService {
 
       // Delete the transaction
       await this.prisma.transaction.delete({
-        where: { id: transactionId }
+        where: { id }
       });
 
       return { success: true, message: 'Transaction deleted successfully' };
@@ -147,10 +147,5 @@ export class TransactionService {
       console.error('Transaction deletion error:', error);
       throw new Error(error instanceof Error ? error.message : 'Failed to delete transaction');
     }
-  }
-
-  getMonthName(month: number) {
-    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    return monthNames[month - 1];
   }
 }
