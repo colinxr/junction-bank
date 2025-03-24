@@ -22,8 +22,8 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
 
   // Relations
-  transactions     Transaction[]
-  monthlyTemplates MonthlyTemplate[]
+  transactions         Transaction[]
+  recurringTransactions RecurringTransaction[]
 
   @@map("users")
 }
@@ -37,7 +37,8 @@ model Category {
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  transactions Transaction[]
+  transactions          Transaction[]
+  recurringTransactions RecurringTransaction[]
 
   @@index([name])
   @@map("categories")
@@ -80,7 +81,6 @@ model Transaction {
   user            User             @relation(fields: [userId], references: [id])
   month           Month            @relation(fields: [monthId], references: [id])
   category        Category         @relation(fields: [categoryId], references: [id])
-  monthlyTemplate MonthlyTemplate?
 
   @@index([userId])
   @@index([monthId])
@@ -88,17 +88,24 @@ model Transaction {
   @@map("transactions")
 }
 
-// Monthly recurring transaction templates
-model MonthlyTemplate {
-  id            Int      @id @default(autoincrement())
-  transactionId Int      @unique @map("transaction_id")
-  userId        String   @map("user_id") @db.Uuid
-  createdAt     DateTime @default(now()) @map("created_at")
+// Recurring Transaction records
+model RecurringTransaction {
+  id          Int      @id @default(autoincrement())
+  userId      String   @map("user_id") @db.Uuid
+  name        String
+  amountCAD   Decimal  @map("amount_cad") @db.Decimal(10, 2)
+  amountUSD   Decimal? @map("amount_usd") @db.Decimal(10, 2)
+  categoryId  Int      @map("category_id")
+  notes       String?
+  dayOfMonth  Int?     @map("day_of_month")
+  type        String // enum: 'expense', 'income'
+  createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations
-  transaction Transaction @relation(fields: [transactionId], references: [id])
-  user        User        @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+  category    Category @relation(fields: [categoryId], references: [id])
 
   @@index([userId])
-  @@map("monthly_templates")
+  @@index([categoryId])
+  @@map("recurring_transactions")
 }

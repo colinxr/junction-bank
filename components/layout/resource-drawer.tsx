@@ -37,9 +37,6 @@ export interface ResourceDrawerContentProps<T> {
   onDelete?: (id: string | number) => void
 }
 
-const snapPoints = ['67vw'];
-
-
 export function ResourceDrawer<T>({
   resource,
   isOpen,

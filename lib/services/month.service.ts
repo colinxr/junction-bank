@@ -1,11 +1,14 @@
 import { PrismaClient } from "@prisma/client";
+import { RecurringTransactionService } from "./recurringTransaction.service";
 
 export class MonthService {
   private prisma: PrismaClient;
+  private recurringTransactionService: RecurringTransactionService;
 
   constructor(prisma: PrismaClient) {
     // Use the shared prisma client with middleware
     this.prisma = prisma;
+    this.recurringTransactionService = new RecurringTransactionService(prisma);
   }
 
   async index(options?: { 
@@ -121,6 +124,19 @@ export class MonthService {
           notes: data.notes || null
         }
       });
+
+      // Apply recurring transactions to the newly created month
+      try {
+        await this.recurringTransactionService.applyRecurringTransactionsToMonth(
+          month.id,
+          data.month,
+          data.year
+        );
+        console.log(`Applied recurring transactions to month ${data.month}/${data.year}`);
+      } catch (error) {
+        console.error('Error applying recurring transactions:', error);
+        // Continue even if recurring transactions fail - the month is still created
+      }
 
       return month;
     } catch (error) {

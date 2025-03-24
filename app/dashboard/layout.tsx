@@ -65,6 +65,12 @@ export default function DashboardLayout({
               label="Months" 
               isActive={pathname.startsWith("/dashboard/months")} 
             />
+             <SidebarLink 
+              href="/dashboard/recurring-transactions" 
+              icon={<Receipt className="h-4 w-4" />} 
+              label="Recurring Transactions" 
+              isActive={pathname.startsWith("/dashboard/recurring-transactions")} 
+            />
             <SidebarLink 
               href="/dashboard/account" 
               icon={<User className="h-4 w-4" />} 
