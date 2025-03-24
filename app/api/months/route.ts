@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     }
 
     // Get months with transaction count using MonthService
-    const result = await monthService.getMonths({
+    const result = await monthService.index({
       page,
       limit,
       year
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     }
     
     // Create month using MonthService
-    const newMonth = await monthService.createMonth({
+    const newMonth = await monthService.create({
       month: monthData.month,
       year: monthData.year,
       notes: monthData.notes

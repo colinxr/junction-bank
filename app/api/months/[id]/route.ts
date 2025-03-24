@@ -24,7 +24,7 @@ export async function GET(
     }
 
     // Get month with financial data
-    const month = await monthService.getMonth(id);
+    const month = await monthService.show(id);
     
     if (!month) {
       return NextResponse.json(
@@ -67,7 +67,7 @@ export async function PUT(
     }
 
     // Update the month
-    const updatedMonth = await monthService.updateMonth(id, {
+    const updatedMonth = await monthService.edit(id, {
       month: monthData.month,
       year: monthData.year,
       notes: monthData.notes
@@ -102,7 +102,7 @@ export async function DELETE(
     }
 
     // Delete the transaction
-    const result = await monthService.deleteMonth(id);
+    const result = await monthService.destroy(id);
     
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
