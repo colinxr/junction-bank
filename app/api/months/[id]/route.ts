@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { createClient } from '@/lib/supabase/server';
 import { MonthService } from '@/lib/services/month.service';
 
 const monthService = new MonthService(prisma);
