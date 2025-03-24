@@ -1,7 +1,6 @@
-import { TransactionsDataTable } from "./transactions-data-table";
-import { columns } from "./transactions-columns";
-import { NewTransactionModal } from "./new-transaction-modal";
-import { Suspense } from "react";
+import { TransactionsDataTable } from "./TransactionsDataTable";
+import { columns } from "./TransactionsColumns";
+import { NewTransactionModal } from "./NewTransactionModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTransactions } from "@/app/hooks/useTransactions";
 import { Month } from "@/app/types";
