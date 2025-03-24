@@ -16,13 +16,6 @@ export async function GET(request: Request) {
     const startDate = url.searchParams.get('startDate') ? new Date(url.searchParams.get('startDate')!) : undefined;
     const endDate = url.searchParams.get('endDate') ? new Date(url.searchParams.get('endDate')!) : undefined;
 
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const result = await transactionService.getTransactions({
       page,
       limit,
@@ -45,12 +38,12 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const headers = request.headers;
+    const userId = headers.get('x-user-id');
 
     const transaction = await transactionService.createTransaction({
       ...body,
-      userId: user?.id,
+      userId: userId,
       categoryId: 11
     });
 

@@ -45,11 +45,14 @@ model Category {
 
 // Month records
 model Month {
-  id        Int      @id @default(autoincrement())
-  month     Int // 1-12
-  year      Int
-  notes     String?
-  createdAt DateTime @default(now()) @map("created_at")
+  id               Int      @id @default(autoincrement())
+  month            Int
+  year             Int
+  notes            String?
+  totalIncome      Decimal  @default(0) @map("total_income") @db.Decimal(10, 2)
+  totalExpenses    Decimal  @default(0) @map("total_expenses") @db.Decimal(10, 2)
+  transactionCount Int      @default(0) @map("transaction_count")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   // Relations
   transactions Transaction[]
