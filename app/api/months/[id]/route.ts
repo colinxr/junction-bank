@@ -10,7 +10,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const month = await monthService.show(params.id);
+    const { id } = await params;
+    const month = await monthService.show(id);
     
     if (!month) {
       return NextResponse.json(
@@ -39,8 +40,8 @@ export async function PUT(
 ) {
   try {
     const {month, year, notes} = await request.json();
-  
-    const updatedMonth = await monthService.edit(params.id, { month, year, notes });
+    const { id } = await params;
+    const updatedMonth = await monthService.edit(id, { month, year, notes });
     
     return NextResponse.json({ data: updatedMonth }, { status: 200 });
   } catch (error) {
@@ -57,7 +58,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const result = await monthService.destroy(params.id);
+    const { id } = await params;
+    const result = await monthService.destroy(id);
     
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

@@ -7,6 +7,8 @@ import { Month } from "@/app/types";
 
 export function TransactionsContent({ month }: { month?: Month }) {
   // Use our custom hook instead of direct SWR usage
+  console.log('month', month);
+  
   const {
     transactions,
     isLoading,

@@ -10,7 +10,7 @@ export class TransactionService {
     this.transactionFactory = new TransactionFactory(prisma);
   }
 
-  async getTransactions(options?: { 
+  async index(options?: { 
     page?: number, 
     limit?: number, 
     startDate?: Date,
@@ -88,7 +88,7 @@ export class TransactionService {
     };
   }
 
-  async createTransaction(data: {
+  async create(data: {
     name: string;
     type: "expense" | "income";
     amount_cad?: number;
@@ -124,7 +124,7 @@ export class TransactionService {
     }
   }
 
-  async deleteTransaction(id: string | number) {
+  async destroy(id: string | number) {
     try {
       const transactionId = typeof id === 'string' ? parseInt(id, 10) : id;
       

@@ -15,12 +15,14 @@ export async function GET(request: Request) {
     const limit = parseInt(url.searchParams.get('limit') || '20');
     const startDate = url.searchParams.get('startDate') ? new Date(url.searchParams.get('startDate')!) : undefined;
     const endDate = url.searchParams.get('endDate') ? new Date(url.searchParams.get('endDate')!) : undefined;
+    const monthId = url.searchParams.get('monthId') ? parseInt(url.searchParams.get('monthId')!) : undefined;
 
-    const result = await transactionService.getTransactions({
+    const result = await transactionService.index({
       page,
       limit,
       startDate,
-      endDate
+      endDate,
+      monthId
     });
     
     // Set no-cache headers to prevent stale data
@@ -41,7 +43,7 @@ export async function POST(request: Request) {
     const headers = request.headers;
     const userId = headers.get('x-user-id');
 
-    const transaction = await transactionService.createTransaction({
+    const transaction = await transactionService.create({
       ...body,
       userId: userId,
       categoryId: 11
