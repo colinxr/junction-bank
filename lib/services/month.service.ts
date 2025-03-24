@@ -47,19 +47,8 @@ export class MonthService {
       }
     });
 
-    // Format the data for the client
-    const formattedMonths = months.map(month => {
-      return {
-        id: month.id,
-        month: month.month,
-        year: month.year,
-        notes: month.notes,
-        transactionCount: month.transactions.length || 0
-      };
-    });
-
     return {
-      data: formattedMonths,
+      data: months,
       pagination: {
         total: totalCount,
         page,
@@ -69,13 +58,11 @@ export class MonthService {
     };
   }
 
-  async show(id: string | number) {
-    const monthId = typeof id === 'string' ? parseInt(id, 10) : id;
-
+  async show(id: number) {
     const month = await this.prisma.month.findUnique({
-      where: { id: monthId }
+      where: { id }
     });
-    
+    // 
     if (!month) {
       return null;
     }
@@ -145,17 +132,15 @@ export class MonthService {
     }
   }
 
-  async edit(id: string | number, data: {
+  async edit(id: number, data: {
     month?: number;
     year?: number;
     notes?: string | null;
   }) {
     try {
-      const monthId = typeof id === 'string' ? parseInt(id, 10) : id;
-      
       // Check if the month exists
       const month = await this.prisma.month.findUnique({
-        where: { id: monthId }
+        where: { id }
       });
 
       if (!month) {
@@ -169,9 +154,7 @@ export class MonthService {
           where: {
             month: data.month || month.month,
             year: data.year || month.year,
-            NOT: {
-              id: monthId
-            }
+            NOT: { id }
           }
         });
 
@@ -182,7 +165,7 @@ export class MonthService {
 
       // Update the month
       const updatedMonth = await this.prisma.month.update({
-        where: { id: monthId },
+        where: { id },
         data: {
           month: data.month || month.month,
           year: data.year || month.year,
@@ -197,13 +180,11 @@ export class MonthService {
     }
   }
 
-  async destroy(id: string | number) {
+  async destroy(id: number) {
     try {
-      const monthId = typeof id === 'string' ? parseInt(id, 10) : id;
-      
       // Check if the month exists
       const month = await this.prisma.month.findUnique({
-        where: { id: monthId },
+        where: { id },
         include: {
           transactions: {
             select: { id: true }
@@ -222,7 +203,7 @@ export class MonthService {
 
       // Delete the month
       await this.prisma.month.delete({
-        where: { id: monthId }
+        where: { id }
       });
 
       return { success: true, message: 'Month deleted successfully' };

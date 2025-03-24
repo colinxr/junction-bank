@@ -6,7 +6,7 @@ const monthService = new MonthService(prisma);
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: number } }
 ) {
   try {
     const { id } = await params;
@@ -35,7 +35,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: number } }
 ) {
   try {
     const {month, year, notes} = await request.json();
@@ -54,7 +54,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: number } }
 ) {
   try {
     const { id } = await params;
