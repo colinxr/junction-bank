@@ -1,13 +1,10 @@
 import { PrismaClient } from "@prisma/client";
-import { RecurringTransactionFactory } from "../factories/recurringTransaction.factory";
 
 export class RecurringTransactionService {
   private prisma: PrismaClient;
-  private recurringTransactionFactory: RecurringTransactionFactory;
 
   constructor(prisma: PrismaClient) {
     this.prisma = prisma;
-    this.recurringTransactionFactory = new RecurringTransactionFactory(prisma);
   }
 
   async index(options?: { 
@@ -40,8 +37,8 @@ export class RecurringTransactionService {
 
     // Transform data for the client
     const formattedRecurringTransactions = recurringTransactions.map(transaction => {
-      const amountCad = parseFloat(transaction.amountCAD.toString());
-      const amountUsd = transaction.amountUSD ? parseFloat(transaction.amountUSD.toString()) : null;
+      const amountCad = transaction.amountCAD.toNumber();
+      const amountUsd = transaction.amountUSD ? transaction.amountUSD.toNumber() : null;
       const categoryName = transaction.category.name;
       
       return {
@@ -104,12 +101,10 @@ export class RecurringTransactionService {
     }
   }
 
-  async show(id: string | number) {
+  async show(id: number) {
     try {
-      const transactionId = typeof id === 'string' ? parseInt(id, 10) : id;
-      
       const transaction = await this.prisma.recurringTransaction.findUnique({
-        where: { id: transactionId },
+        where: { id },
         include: {
           category: true
         }
@@ -126,7 +121,7 @@ export class RecurringTransactionService {
     }
   }
 
-  async edit(id: string | number, data: {
+  async edit(id: number, data: {
     name?: string;
     type?: "expense" | "income";
     amount_cad?: number;
@@ -136,11 +131,9 @@ export class RecurringTransactionService {
     categoryId?: number;
   }) {
     try {
-      const transactionId = typeof id === 'string' ? parseInt(id, 10) : id;
-      
       // Check if the transaction exists
       const transaction = await this.prisma.recurringTransaction.findUnique({
-        where: { id: transactionId }
+        where: { id }
       });
 
       if (!transaction) {
@@ -154,7 +147,7 @@ export class RecurringTransactionService {
 
       // Update the transaction
       const updatedTransaction = await this.prisma.recurringTransaction.update({
-        where: { id: transactionId },
+        where: { id },
         data: {
           name: data.name,
           type: data.type,
@@ -176,13 +169,11 @@ export class RecurringTransactionService {
     }
   }
 
-  async destroy(id: string | number) {
+  async destroy(id: number) {
     try {
-      const transactionId = typeof id === 'string' ? parseInt(id, 10) : id;
-      
       // Check if the transaction exists
       const transaction = await this.prisma.recurringTransaction.findUnique({
-        where: { id: transactionId }
+        where: { id }
       });
 
       if (!transaction) {
@@ -191,7 +182,7 @@ export class RecurringTransactionService {
 
       // Delete the transaction
       await this.prisma.recurringTransaction.delete({
-        where: { id: transactionId }
+        where: { id }
       });
 
       return { success: true, message: 'Recurring transaction deleted successfully' };
@@ -244,10 +235,5 @@ export class RecurringTransactionService {
       console.error('Error applying recurring transactions:', error);
       throw new Error('Failed to apply recurring transactions to month');
     }
-  }
-
-  getMonthName(month: number) {
-    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    return monthNames[month - 1];
   }
 } 
