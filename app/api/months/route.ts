@@ -46,25 +46,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const monthData = await request.json();
-    
-    // Authenticate user via Supabase
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    // Create month using MonthService
-    const newMonth = await monthService.create({
-      month: monthData.month,
-      year: monthData.year,
-      notes: monthData.notes
-    });
+    const {month, year, notes} = await request.json();
+  
+    const newMonth = await monthService.create({month, year, notes});
     
     return NextResponse.json({ data: newMonth });
   } catch (error: any) {

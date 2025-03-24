@@ -10,21 +10,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
-    
-    // Authenticate the user
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Get month with financial data
-    const month = await monthService.show(id);
+    const month = await monthService.show(params.id);
     
     if (!month) {
       return NextResponse.json(
@@ -52,26 +38,9 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
-    const monthData = await request.json();
-    
-    // Authenticate the user
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Update the month
-    const updatedMonth = await monthService.edit(id, {
-      month: monthData.month,
-      year: monthData.year,
-      notes: monthData.notes
-    });
+    const {month, year, notes} = await request.json();
+  
+    const updatedMonth = await monthService.edit(params.id, { month, year, notes });
     
     return NextResponse.json({ data: updatedMonth }, { status: 200 });
   } catch (error) {
@@ -88,21 +57,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
-    
-    // Authenticate the user
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Delete the transaction
-    const result = await monthService.destroy(id);
+    const result = await monthService.destroy(params.id);
     
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
