@@ -2,15 +2,9 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { getMonthName } from "@/lib/utils"
+import { Month } from "@/app/types"
 
-interface MonthData {
-  month: string
-  year: number
-  notes: string | null
-  transactionCount: number
-}
-
-export const columns: ColumnDef<MonthData>[] = [
+export const columns: ColumnDef<Month>[] = [
   {
     accessorKey: "month",
     header: "Month",

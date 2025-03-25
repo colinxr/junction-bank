@@ -9,8 +9,9 @@ export async function GET(
   { params }: { params: { id: number } }
 ) {
   try {
-    const { id } = await params;
-    const month = await monthService.show(id);
+    const { id } = await params
+    const parsedId = Number(id);
+    const month = await monthService.show(parsedId);
     
     if (!month) {
       return NextResponse.json(
@@ -39,8 +40,9 @@ export async function PUT(
 ) {
   try {
     const {month, year, notes} = await request.json();
-    const { id } = await params;
-    const updatedMonth = await monthService.edit(id, { month, year, notes });
+    const { id } = await params
+    const parsedId = Number(id);
+    const updatedMonth = await monthService.edit(parsedId, { month, year, notes });
     
     return NextResponse.json({ data: updatedMonth }, { status: 200 });
   } catch (error) {
@@ -57,8 +59,9 @@ export async function DELETE(
   { params }: { params: { id: number } }
 ) {
   try {
-    const { id } = await params;
-    const result = await monthService.destroy(id);
+    const { id } = await params
+    const parsedId = Number(id);
+    const result = await monthService.destroy(parsedId);
     
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

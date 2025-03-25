@@ -62,7 +62,7 @@ export class MonthService {
     const month = await this.prisma.month.findUnique({
       where: { id }
     });
-    // 
+    
     if (!month) {
       return null;
     }
@@ -203,7 +203,7 @@ export class MonthService {
 
       // Delete the month
       await this.prisma.month.delete({
-        where: { id }
+        where: { id: Number(id) }
       });
 
       return { success: true, message: 'Month deleted successfully' };
