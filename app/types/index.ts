@@ -23,3 +23,17 @@ export interface Month {
   totalIncome?: number
   totalExpenses?: number
 } 
+
+// Define our recurring transaction type
+export interface RecurringTransaction {
+  id: number;
+  name: string;
+  type: "expense" | "income";
+  amount_cad: number;
+  amount_usd?: number;
+  day_of_month?: number;
+  notes?: string;
+  categoryId: number;
+  category?: string;
+  createdAt: Date;
+}

@@ -133,10 +133,7 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
       mutate(optimisticData, false);
       
       // Use the repository to update the month
-      await MonthRepository.updateMonth(
-        month.id.toString(),
-        month
-      );
+      await MonthRepository.updateMonth(month.id, month);
       
       // Revalidate to get the server data
       mutate();
@@ -156,7 +153,7 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
   };
   
   // Method to delete a month
-  const deleteMonth = async (id: string | number) => {
+  const deleteMonth = async (id: number) => {
     try {
       toast.success(`Deleting month ID: ${id}`);
       
@@ -186,7 +183,7 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
     }
   };
 
-  const getMonth = async (id: string | number) => {
+  const getMonth = async (id: number) => {
     const response = await MonthRepository.getMonth(id);
     console.log(response);
     return response.data;

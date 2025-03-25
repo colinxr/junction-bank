@@ -6,7 +6,7 @@ const transactionService = new TransactionService(prisma);
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: number } }
 ) {
   try {
     const { id } = await params;

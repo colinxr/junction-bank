@@ -137,7 +137,7 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
       
       // Use the repository to update the transaction
       await TransactionRepository.updateTransaction(
-        transaction.id.toString(),
+        transaction.id,
         transaction
       );
       
@@ -156,7 +156,7 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   };
   
   // Method to delete a transaction
-  const deleteTransaction = async (id: string | number) => {
+  const deleteTransaction = async (id: number) => {
     try {
       toast.success(`Deleting transaction ID: ${id}`);
       
@@ -170,7 +170,7 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
       mutate(optimisticData, false);
       
       // Use the repository to delete the transaction
-      await TransactionRepository.deleteTransaction(id.toString());
+      await TransactionRepository.deleteTransaction(id);
       
       // Revalidate to get the server data
       mutate((key: string) => key.startsWith(API_URL));

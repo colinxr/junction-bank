@@ -2,22 +2,8 @@ import useSWR, { mutate } from 'swr';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { RecurringTransactionRepository } from '@/lib/repositories/recurringTransaction.repository';
-
+import { RecurringTransaction } from '@/app/types';
 const API_URL = '/api/recurring-transactions';
-
-// Define our recurring transaction type
-interface RecurringTransaction {
-  id: number;
-  name: string;
-  type: "expense" | "income";
-  amount_cad: number;
-  amount_usd?: number;
-  day_of_month?: number;
-  notes?: string;
-  categoryId: number;
-  category?: string;
-  createdAt: Date;
-}
 
 // Fetcher function
 const fetcher = async (url: string) => {
@@ -122,7 +108,7 @@ export function useRecurringTransactions(initialParams: RecurringTransactionQuer
       
       // Use the repository to update the transaction
       await RecurringTransactionRepository.updateRecurringTransaction(
-        transaction.id.toString(),
+        transaction.id,
         transaction
       );
       
@@ -141,7 +127,7 @@ export function useRecurringTransactions(initialParams: RecurringTransactionQuer
   };
   
   // Method to delete a recurring transaction
-  const deleteRecurringTransaction = async (id: string | number) => {
+  const deleteRecurringTransaction = async (id: number) => {
     try {
       toast.success(`Deleting recurring transaction ID: ${id}`);
       
@@ -155,7 +141,7 @@ export function useRecurringTransactions(initialParams: RecurringTransactionQuer
       mutate(optimisticData, false);
       
       // Use the repository to delete the transaction
-      await RecurringTransactionRepository.deleteRecurringTransaction(id.toString());
+      await RecurringTransactionRepository.deleteRecurringTransaction(id);
       
       // Revalidate to get the server data
       mutate((key: string) => key.startsWith(API_URL));

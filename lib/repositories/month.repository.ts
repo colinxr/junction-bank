@@ -12,15 +12,15 @@ export const MonthRepository = {
     return apiClient.get("/months");
   },
 
-  async getMonth(id: string | number) {
+  async getMonth(id: number) {
     return apiClient.get(`/months/${id}`);
   },
 
-  async updateMonth(id: string | number, monthData: Partial<Month>) {
+  async updateMonth(id: number, monthData: Partial<Month>) {
     return apiClient.put(`/months/${id}`, monthData);
   },
 
-  async deleteMonth(id: string | number) {
+  async deleteMonth(id: number) {
     return apiClient.delete(`/months/${id}`);
   }
 };

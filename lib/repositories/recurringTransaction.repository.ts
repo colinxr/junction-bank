@@ -1,19 +1,8 @@
 import apiClient from "@/lib/api-client";
-
-// Define interface for recurring transaction data
-interface RecurringTransaction {
-  id?: number;
-  name: string;
-  type: "expense" | "income";
-  amount_cad?: number;
-  amount_usd?: number;
-  day_of_month?: number;
-  notes?: string;
-  categoryId?: number;
-}
+import { RecurringTransaction } from "@/app/types";
 
 export const RecurringTransactionRepository = {
-  async createRecurringTransaction(transactionData: RecurringTransaction) {
+  async createRecurringTransaction(transactionData: Partial<RecurringTransaction>) {
     return apiClient.post("/recurring-transactions", {
       ...transactionData
     });
@@ -23,15 +12,15 @@ export const RecurringTransactionRepository = {
     return apiClient.get("/recurring-transactions", { params });
   },
 
-  async getRecurringTransaction(id: string) {
+  async getRecurringTransaction(id: number) {
     return apiClient.get(`/recurring-transactions/${id}`);
   },
 
-  async updateRecurringTransaction(id: string, transactionData: Partial<RecurringTransaction>) {
+  async updateRecurringTransaction(id: number, transactionData: Partial<RecurringTransaction>) {
     return apiClient.put(`/recurring-transactions/${id}`, transactionData);
   },
 
-  async deleteRecurringTransaction(id: string) {
+  async deleteRecurringTransaction(id: number) {
     return apiClient.delete(`/recurring-transactions/${id}`);
   }
 }; 

@@ -12,11 +12,11 @@ export const TransactionRepository = {
     return apiClient.get("/transactions");
   },
 
-  async updateTransaction(id: string, transactionData: Partial<Transaction>) {
+  async updateTransaction(id: number, transactionData: Partial<Transaction>) {
     return apiClient.put(`/transactions/${id}`, transactionData);
   },
 
-  async deleteTransaction(id: string) {
+  async deleteTransaction(id: number) {
     return apiClient.delete(`/transactions/${id}`);
   }
 };
