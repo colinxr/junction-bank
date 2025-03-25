@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
+import { CategoryComboBox } from "@/app/components/CategoryComboBox";
 
 // Define the form schema with validation
 const formSchema = z.object({
@@ -41,36 +42,14 @@ const formSchema = z.object({
   }).optional(),
   day_of_month: z.coerce.number().int().min(1).max(31).optional(),
   notes: z.string().optional(),
-  categoryId: z.coerce.number().int().positive().default(2),
+  categoryId: z.number({
+    required_error: "Please select a category",
+  }),
 });
-
-// Interface for categories from the API
-interface Category {
-  id: number;
-  name: string;
-  type: string;
-}
 
 export function NewRecurringTransactionForm() {
   const { createRecurringTransaction } = useRecurringTransactions();
-  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Fetch categories on component mount
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const response = await fetch("/api/categories");
-        const data = await response.json();
-        setCategories(data.data || []);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        toast.error("Failed to load categories");
-      }
-    }
-
-    fetchCategories();
-  }, []);
 
   // Initialize the form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -81,10 +60,13 @@ export function NewRecurringTransactionForm() {
       amount_cad: undefined,
       amount_usd: undefined,
       day_of_month: undefined,
+      categoryId: undefined,
       notes: "",
-      categoryId: 2,
     },
   });
+
+  // Get current transaction type for filtering categories
+  const transactionType = form.watch("type") as "expense" | "income";
 
   // Form submission handler
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -100,11 +82,6 @@ export function NewRecurringTransactionForm() {
       setIsLoading(false);
     }
   }
-
-  // Filter categories based on selected transaction type
-  const filteredCategories = categories.filter(
-    (category) => category.type === form.watch("type")
-  );
 
   return (
     <Form {...form}>
@@ -213,24 +190,10 @@ export function NewRecurringTransactionForm() {
             <FormItem>
               <FormLabel>Category</FormLabel>
               <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value?.toString()}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredCategories.map((category) => (
-                      <SelectItem
-                        key={category.id}
-                        value={category.id.toString()}
-                      >
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CategoryComboBox
+                  value={field.value}
+                  onChange={field.onChange}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

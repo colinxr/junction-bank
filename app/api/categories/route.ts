@@ -7,9 +7,9 @@ const categoryService = new CategoryService(prisma);
 export async function GET(request: Request) {
   try {
     // Get categories using CategoryService
-    const result = await categoryService.index();
+    const { data } = await categoryService.index();
 
-    return NextResponse.json(result, {
+    return NextResponse.json(data, {
       headers: {
         'Cache-Control': 'no-store, must-revalidate, max-age=0',
       }
