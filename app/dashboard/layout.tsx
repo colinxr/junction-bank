@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Receipt, Calendar, User } from "lucide-react";
+import { Home, Receipt, Calendar, User, CalendarClock, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { Toaster } from "@/components/ui/sonner"
@@ -67,9 +67,15 @@ export default function DashboardLayout({
             />
              <SidebarLink 
               href="/dashboard/recurring-transactions" 
-              icon={<Receipt className="h-4 w-4" />} 
+              icon={<CalendarClock className="h-4 w-4" />} 
               label="Recurring Transactions" 
               isActive={pathname.startsWith("/dashboard/recurring-transactions")} 
+            />
+             <SidebarLink 
+              href="/dashboard/categories" 
+              icon={<LayoutGrid className="h-4 w-4" />} 
+              label="Categories" 
+              isActive={pathname.startsWith("/dashboard/categories")} 
             />
             <SidebarLink 
               href="/dashboard/account" 
