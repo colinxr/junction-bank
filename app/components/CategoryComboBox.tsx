@@ -22,7 +22,6 @@ export function CategoryComboBox({
   // Filter categories based on transaction type and convert to ComboboxOption format
   const categoryOptions: ComboboxOption[] = React.useMemo(() => {
     if (!categories) return [];
-    console.log(categories);
     
     return categories
       .map((category: Category) => ({

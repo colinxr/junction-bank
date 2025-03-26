@@ -19,10 +19,7 @@ const fetcher = async (url: string) => {
 
 // Hook for fetching a single month with financial details
 export function useMonthDetail(id: number) {
-  console.log('hook');
-  
-  console.log(typeof id);
-  
+
   const { data, error, isLoading } = useSWR(`${API_URL}/${id}`, fetcher, {
     revalidateOnFocus: false,
       dedupingInterval: 30000, // 30 seconds
@@ -188,10 +185,7 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
   };
 
   const getMonth = async (id: number) => {
-    console.log(id);
-    
     const response = await MonthRepository.getMonth(id);
-    console.log(response);
     return response.data;
   };
   

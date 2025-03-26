@@ -63,7 +63,6 @@ export class RecurringTransactionService {
 
   async create(data: {
     name: string;
-    type: "expense" | "income";
     amount_cad?: number;
     amount_usd?: number;
     notes?: string;
@@ -81,7 +80,6 @@ export class RecurringTransactionService {
       const transaction = await this.prisma.recurringTransaction.create({
         data: {
           name: data.name,
-          type: data.type,
           amountCAD: data.amount_cad || 0,
           amountUSD: data.amount_usd || null,
           notes: data.notes || null,
@@ -123,7 +121,6 @@ export class RecurringTransactionService {
 
   async edit(id: number, data: {
     name?: string;
-    type?: "expense" | "income";
     amount_cad?: number;
     amount_usd?: number;
     notes?: string | null;
@@ -150,7 +147,6 @@ export class RecurringTransactionService {
         where: { id },
         data: {
           name: data.name,
-          type: data.type,
           amountCAD: data.amount_cad,
           amountUSD: data.amount_usd,
           notes: data.notes,
@@ -213,7 +209,6 @@ export class RecurringTransactionService {
         const transaction = await this.prisma.transaction.create({
           data: {
             name: recurringTx.name,
-            type: recurringTx.type,
             amountCAD: recurringTx.amountCAD,
             amountUSD: recurringTx.amountUSD,
             notes: `Auto-generated from recurring transaction: ${recurringTx.notes || ''}`,

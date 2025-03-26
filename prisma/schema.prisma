@@ -74,7 +74,6 @@ model Transaction {
   categoryId Int      @map("category_id")
   notes      String?
   date       DateTime @db.Date
-  type       String // enum: 'expense', 'income'
   createdAt  DateTime @default(now()) @map("created_at")
 
   // Relations
@@ -98,7 +97,6 @@ model RecurringTransaction {
   categoryId  Int      @map("category_id")
   notes       String?
   dayOfMonth  Int?     @map("day_of_month")
-  type        String // enum: 'expense', 'income'
   createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations

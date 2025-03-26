@@ -52,10 +52,9 @@ export const columns: ColumnDef<Transaction>[] = [
     ),
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("amount_cad"))
-      const type = row.original.type
-      
+
       return (
-        <div className={type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium text-right"}>
+        <div className={row.original.type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium text-right"}>
           {formatCurrency(amount)}
         </div>
       )
@@ -67,28 +66,12 @@ export const columns: ColumnDef<Transaction>[] = [
     cell: ({ row }) => {
       if (!row.original.amount_usd) return '-';
       const amount = parseFloat(row.getValue("amount_usd"))
-      const type = row.original.type
-      
+
       return (
-        <div className={type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium text-right"}>
+        <div className={row.original.type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium text-right"}>
           {formatCurrency(amount)}
         </div>
       )
-    },
-  },
-  {
-    accessorKey: "type",
-    header: "Type",
-    cell: ({ row }) => {
-      const type = row.getValue("type") as string
-      return (
-        <Badge variant={type === "income" ? "default" : "destructive"}>
-          {type.charAt(0).toUpperCase() + type.slice(1)}
-        </Badge>
-      )
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id))
     },
   },
   {

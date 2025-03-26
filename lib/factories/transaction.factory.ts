@@ -6,7 +6,6 @@ export class TransactionFactory {
 
   async createTransaction(data: {
     name: string;
-    type: "expense" | "income";
     amount_cad?: number;
     amount_usd?: number;
     date: Date;

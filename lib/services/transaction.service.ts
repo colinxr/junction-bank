@@ -92,7 +92,6 @@ export class TransactionService {
 
   async create(data: {
     name: string;
-    type: "expense" | "income";
     amount_cad?: number;
     amount_usd?: number;
     date: Date;
@@ -108,7 +107,6 @@ export class TransactionService {
       const transaction = await this.prisma.transaction.create({
         data: {
           name: transactionData.name,
-          type: transactionData.type,
           amountCAD: transactionData.amount_cad,
           amountUSD: transactionData.amount_usd,
           date: transactionData.date,
