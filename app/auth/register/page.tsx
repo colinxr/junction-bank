@@ -37,9 +37,15 @@ const formSchema = z.object({
     .string()
     .min(1, { message: "Password is required" })
     .min(6, { message: "Password must be at least 6 characters" }),
+  confirmPassword: z
+    .string()
+    .min(1, { message: "Please confirm your password" })
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -49,48 +55,47 @@ export default function LoginPage() {
     defaultValues: {
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
-  // Form submission handler
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-
     try {
-      const response = await fetch("/api/auth/login", {
+      setIsLoading(true);
+
+      const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          email: values.email,
+          password: values.password,
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to login");
+        throw new Error(data.error || "Something went wrong");
       }
 
-      // Success - redirect to dashboard
-      toast.success("Login successful");
-      router.push("/dashboard");
+      toast.success("Registration successful! Please log in.");
+      router.push("/auth/login");
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error(error instanceof Error ? error.message : "Login failed");
+      toast.error(error instanceof Error ? error.message : "Failed to register");
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
-            Junction Bank
-          </CardTitle>
-          <CardDescription className="text-center">
-            Enter your credentials to access your account
+    <div className="container flex h-screen w-screen flex-col items-center justify-center">
+      <Card className="w-[350px]">
+        <CardHeader>
+          <CardTitle>Create an account</CardTitle>
+          <CardDescription>
+            Enter your email below to create your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -104,7 +109,7 @@ export default function LoginPage() {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="user@example.com"
+                        placeholder="name@example.com"
                         type="email"
                         disabled={isLoading}
                         {...field}
@@ -122,7 +127,7 @@ export default function LoginPage() {
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="••••••••"
+                        placeholder="Enter your password"
                         type="password"
                         disabled={isLoading}
                         {...field}
@@ -132,24 +137,38 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? "Logging in..." : "Login"}
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Confirm your password"
+                        type="password"
+                        disabled={isLoading}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Creating account..." : "Create account"}
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-muted-foreground text-center">
-            Don't have an account?{" "}
+            Already have an account?{" "}
             <Link
-              href="/auth/register"
+              href="/auth/login"
               className="text-primary hover:underline"
             >
-              Sign up
+              Sign in
             </Link>
           </div>
         </CardFooter>
