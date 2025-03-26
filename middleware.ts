@@ -6,13 +6,16 @@ const ROUTES = {
   home: "/",
   api: "/api",
   login: "/auth/login",
+  register: "/auth/register",
   dashboard: "/dashboard",
   protected: ["/dashboard", "/transactions", "/categories"],
+  publicApi: ["/api/auth/login", "/api/auth/register", "/api/auth/logout"], // Add public API routes
 };
 
 export async function middleware(request: NextRequest) {
   // Get current pathname
   const { pathname } = request.nextUrl;
+  console.log(pathname);
   
   // Create Supabase client with middleware helper
   const { supabase, response } = createClient(request)
@@ -23,7 +26,7 @@ export async function middleware(request: NextRequest) {
 
   // Handle API routes
   if (pathname.startsWith(ROUTES.api)) {
-    return handleApiRoute(request, user);
+    return handleApiRoute(request, user, pathname);
   }
   
   // Handle frontend routes
@@ -33,8 +36,16 @@ export async function middleware(request: NextRequest) {
 /**
  * Handle API route authentication
  */
-function handleApiRoute(request: NextRequest, user: any) {
-  // Reject unauthenticated requests to API routes
+function handleApiRoute(request: NextRequest, user: any, pathname: string) {
+  // Check if the current API route is public
+  const isPublicRoute = ROUTES.publicApi.some(route => pathname.startsWith(route));
+  
+  // Allow public routes without authentication
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
+  // Reject unauthenticated requests to protected API routes
   if (!user) {
     return NextResponse.json(
       { error: 'Unauthorized' },
