@@ -1,6 +1,6 @@
 import { TransactionFactory } from "../factories/transaction.factory";
 import { PrismaClient } from "@prisma/client";
-import { getMonthName } from "../utils";
+import { getMonthName, formatCurrency } from "../utils";
 
 export class TransactionService {
   private prisma: PrismaClient;
@@ -148,7 +148,7 @@ export class TransactionService {
   }
 
   private async getTotalSpendingByCategory(monthId: number, year: number) {
-    return await this.prisma.transaction.groupBy({
+    const spending = await this.prisma.transaction.groupBy({
       by: ['categoryId'],
       where: {
         monthId,
@@ -157,6 +157,20 @@ export class TransactionService {
       _sum: { amountCAD: true },
       _count: { amountUSD: true }
     });
+
+    // Get category names in a separate query
+    const categories = await this.prisma.category.findMany({
+      where: {
+        id: { in: spending.map(s => s.categoryId) }
+      },
+      select: { id: true, name: true }
+    });
+
+    // Merge category names with spending data
+    return spending.map(s => ({
+      ...s,
+      categoryName: categories.find(c => c.id === s.categoryId)?.name || ''
+    }));
   }
 
   private async getUSDSpendingByCategory(monthId: number, year: number) {
@@ -181,7 +195,7 @@ export class TransactionService {
   }
 
   private formatCategorySpending(
-    spendingData: { categoryId: number; _sum: { amountCAD: any }; _count: any },
+    spendingData: { categoryId: number; categoryName: string; _sum: { amountCAD: any }; _count: any },
     usdTotalsByCategory: Map<number, number>
   ) {
     const usdTotal = usdTotalsByCategory.get(spendingData.categoryId) || 0;
@@ -189,8 +203,9 @@ export class TransactionService {
 
     return {
       categoryId: spendingData.categoryId,
-      totalAmountCAD: cadOnlyTotal,
-      totalAmountUSD: usdTotal
+      categoryName: spendingData.categoryName,
+      totalAmountCAD: formatCurrency(cadOnlyTotal),
+      totalAmountUSD: formatCurrency(usdTotal)
     };
   }
 
