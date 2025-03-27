@@ -205,7 +205,8 @@ export class TransactionService {
       categoryId: spendingData.categoryId,
       categoryName: spendingData.categoryName,
       totalAmountCAD: formatCurrency(cadOnlyTotal),
-      totalAmountUSD: formatCurrency(usdTotal)
+      totalAmountUSD: formatCurrency(Number(usdTotal)),
+      total: cadOnlyTotal + Number(usdTotal)
     };
   }
 
@@ -214,8 +215,11 @@ export class TransactionService {
     const usdSpending = await this.getUSDSpendingByCategory(monthId, year);
     const usdTotalsByCategory = this.createUSDTotalsMap(usdSpending);
 
-    return spendingByCategory.map(spending => 
+    const formattedSpending = spendingByCategory.map(spending => 
       this.formatCategorySpending(spending, usdTotalsByCategory)
     );
+
+    // Sort by total amount in descending order
+    return formattedSpending.sort((a, b) => b.total - a.total);
   }
 }

@@ -75,7 +75,7 @@ export function MonthsDataTable({ data, columns }: MonthsDataTableProps) {
           onDelete={deleteMonth}
           renderContent={(month) => <MonthDrawerContent resource={month} />}
           title="Month Details"
-          className="!w-[67%] !max-w-none"
+          className="!w-[90%] !max-w-none"
         />
       )}
     </>
