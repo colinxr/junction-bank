@@ -3,9 +3,8 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import {  formatDate } from "@/lib/utils"
 import { Transaction } from "@/app/types"
-import { Badge } from "@/components/ui/badge"
 
 export const columns: ColumnDef<Transaction>[] = [
   {
@@ -15,9 +14,15 @@ export const columns: ColumnDef<Transaction>[] = [
   },
   {
     accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => (
-      <div>{row.original.category}</div>
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="pl-0"
+      >
+        Category
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
     ),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id))
