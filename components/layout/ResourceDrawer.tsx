@@ -34,7 +34,7 @@ export interface ResourceDrawerProps<T> {
 export interface ResourceDrawerContentProps<T> {
   resource: T
   onEdit?: (resource: T) => void
-  onDelete?: (id: string | number) => void
+  onDelete?: (id: number) => void
 }
 
 export function ResourceDrawer<T>({

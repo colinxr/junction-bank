@@ -51,11 +51,15 @@ export const columns: ColumnDef<Transaction>[] = [
       </Button>
     ),
     cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount_cad"))
-
+      const amount = parseFloat(row.getValue("amount_cad"));
+      const formatted = new Intl.NumberFormat("en-CA", {
+        style: "currency",
+        currency: "CAD",
+      }).format(amount);
+      
       return (
-        <div className={row.original.type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium text-right"}>
-          {formatCurrency(amount)}
+        <div className={`text-center ${row.original.transaction_type === 'income' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
+          {formatted}
         </div>
       )
     },
@@ -65,11 +69,15 @@ export const columns: ColumnDef<Transaction>[] = [
     header: "Amount (USD)",
     cell: ({ row }) => {
       if (!row.original.amount_usd) return '-';
-      const amount = parseFloat(row.getValue("amount_usd"))
-
+      const amount = parseFloat(row.getValue("amount_cad"));
+      const formatted = new Intl.NumberFormat("en-CA", {
+        style: "currency",
+        currency: "CAD",
+      }).format(amount);
+      
       return (
-        <div className={row.original.type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium text-right"}>
-          {formatCurrency(amount)}
+        <div className={`text-center ${row.original.transaction_type === 'income' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
+          {formatted}
         </div>
       )
     },

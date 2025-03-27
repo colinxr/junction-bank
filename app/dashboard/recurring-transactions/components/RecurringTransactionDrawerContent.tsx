@@ -32,7 +32,6 @@ interface RecurringTransactionDrawerContentProps {
   transaction: {
     id: number;
     name: string;
-    type: "expense" | "income";
     amount_cad: number;
     amount_usd?: number;
     day_of_month?: number;
@@ -53,7 +52,6 @@ const formSchema = z.object({
   name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
-  type: z.enum(["expense", "income"]),
   amount_cad: z.coerce.number().min(0.01, {
     message: "Amount must be greater than 0.",
   }),
@@ -76,7 +74,6 @@ export function RecurringTransactionDrawerContent({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: transaction.name,
-      type: transaction.type,
       amount_cad: transaction.amount_cad,
       day_of_month: transaction.day_of_month,
       notes: transaction.notes || "",
@@ -118,11 +115,6 @@ export function RecurringTransactionDrawerContent({
     }
   }
 
-  // Filter categories based on selected transaction type
-  const filteredCategories = categories.filter(
-    (category) => category.type === form.watch("type")
-  );
-
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
@@ -143,31 +135,6 @@ export function RecurringTransactionDrawerContent({
                     <FormLabel>Name</FormLabel>
                     <FormControl>
                       <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Type</FormLabel>
-                    <FormControl>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="expense">Expense</SelectItem>
-                          <SelectItem value="income">Income</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -231,7 +198,7 @@ export function RecurringTransactionDrawerContent({
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          {filteredCategories.map((category) => (
+                          {categories.map((category) => (
                             <SelectItem
                               key={category.id}
                               value={category.id.toString()}

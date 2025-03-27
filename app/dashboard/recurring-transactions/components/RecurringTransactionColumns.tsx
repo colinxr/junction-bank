@@ -15,18 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { useRecurringTransactions } from "@/app/hooks/useRecurringTransactions";
 import { toast } from "sonner";
 import { RecurringTransactionDrawerContent } from "./RecurringTransactionDrawerContent";
-
-// This type contains the data we'll display in the table
-interface RecurringTransaction {
-  id: number;
-  name: string;
-  type: "expense" | "income";
-  amount_cad: number;
-  amount_usd?: number;
-  day_of_month?: number;
-  category: string;
-  notes?: string;
-}
+import { RecurringTransaction } from "@/app/types";
 
 export const columns: ColumnDef<RecurringTransaction>[] = [
   {
@@ -49,7 +38,7 @@ export const columns: ColumnDef<RecurringTransaction>[] = [
     cell: ({ row }) => {
       const type = row.getValue("type") as string;
       const isExpense = type === "expense";
-      
+
       return (
         <Badge variant={isExpense ? "destructive" : "outline"}>
           {isExpense ? 'Expense' : 'Income'}
@@ -77,7 +66,11 @@ export const columns: ColumnDef<RecurringTransaction>[] = [
         currency: "CAD",
       }).format(amount);
 
-      return <div className="font-medium">{formatted}</div>;
+      return (
+        <div className={`text-center ${row.original.transaction_type === 'income' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
+          {formatted}
+        </div>
+      )
     },
   },
   {
@@ -94,13 +87,19 @@ export const columns: ColumnDef<RecurringTransaction>[] = [
       );
     },
     cell: ({ row }) => {
+      if (!row.original.amount_usd) return '-';
+
       const amount = parseFloat(row.getValue("amount_usd"));
       const formatted = new Intl.NumberFormat("en-CA", {
         style: "currency",
         currency: "USD",
       }).format(amount);
 
-      return <div className="font-medium">{formatted}</div>;
+      return (
+        <div className={`text-center ${row.original.transaction_type === 'income' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
+          {formatted}
+        </div>
+      )
     },
   },
   {
@@ -118,11 +117,11 @@ export const columns: ColumnDef<RecurringTransaction>[] = [
     },
     cell: ({ row }) => {
       const day = row.getValue("day_of_month") as number | null;
-      
+
       if (!day) {
         return <div className="text-muted-foreground">1st (default)</div>;
       }
-      
+
       // Format the day with suffix (1st, 2nd, 3rd, etc.)
       const suffix = (day: number) => {
         if (day > 3 && day < 21) return 'th';
@@ -133,7 +132,7 @@ export const columns: ColumnDef<RecurringTransaction>[] = [
           default: return "th";
         }
       };
-      
+
       return <div>{day}<sup>{suffix(day)}</sup></div>;
     },
   },
