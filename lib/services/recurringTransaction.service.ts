@@ -77,6 +77,7 @@ export class RecurringTransactionService {
 
     // Prepare data for creation
     try {
+      // Type will be automatically set by database trigger based on the category
       const transaction = await this.prisma.recurringTransaction.create({
         data: {
           name: data.name,
@@ -191,7 +192,11 @@ export class RecurringTransactionService {
   async applyRecurringTransactionsToMonth(monthId: number, month: number, year: number) {
     try {
       // Get all recurring transactions
-      const recurringTransactions = await this.prisma.recurringTransaction.findMany();
+      const recurringTransactions = await this.prisma.recurringTransaction.findMany({
+        include: {
+          category: true
+        }
+      });
       
       if (recurringTransactions.length === 0) {
         return { applied: 0 };
@@ -206,6 +211,7 @@ export class RecurringTransactionService {
         const date = new Date(year, month - 1, day);
         
         // Create a regular transaction from the recurring template
+        // The type will be automatically set by the database trigger based on the category
         const transaction = await this.prisma.transaction.create({
           data: {
             name: recurringTx.name,
