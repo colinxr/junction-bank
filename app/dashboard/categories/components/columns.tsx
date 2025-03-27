@@ -18,19 +18,6 @@ export const columns: ColumnDef<Category>[] = [
     },
   },
   {
-    accessorKey: "type",
-    header: "Type",
-    cell: ({ row }) => {
-      const type = row.original.type
-      
-      return (
-        <div className="capitalize">
-          {type}
-        </div>
-      )
-    },
-  },
-  {
     accessorKey: "notes",
     header: "Notes",
     cell: ({ row }) => {

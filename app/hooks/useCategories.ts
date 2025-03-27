@@ -17,20 +17,6 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-// Hook for fetching a single category
-export function useCategoryDetail(id: number) {
-  const { data, error, isLoading } = useSWR(`${API_URL}/${id}`, fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 30000, // 30 seconds
-  });
-
-  return {
-    categoryDetail: data,
-    error,
-    isLoading,
-  };
-}
-
 export function useCategories() {
   // SWR hook for data fetching
   const { data, error, isLoading, mutate } = useSWR(
@@ -42,6 +28,9 @@ export function useCategories() {
       dedupingInterval: 60000, // 1 minute
     }
   );
+
+  console.log(data);
+  
   
   // Method to create a new category
   const createCategory = async (categoryData: Partial<Category>) => {
@@ -117,7 +106,7 @@ export function useCategories() {
   };
   
   return {
-    categories: data?.data || [],
+    categories: data || [],
     isLoading,
     error,
     getCategory,
@@ -126,3 +115,17 @@ export function useCategories() {
     refresh: () => mutate(),
   };
 } 
+
+// Hook for fetching a single category
+export function useCategoryDetail(id: number) {
+  const { data, error, isLoading } = useSWR(`${API_URL}/${id}`, fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000, // 30 seconds
+  });
+
+  return {
+    categoryDetail: data,
+    error,
+    isLoading,
+  };
+}

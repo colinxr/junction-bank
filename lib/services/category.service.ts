@@ -16,7 +16,7 @@ export class CategoryService {
           name: 'asc'
         }
       });
-
+      
       return {
         data: categories
       };
