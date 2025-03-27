@@ -46,7 +46,6 @@ export async function POST(request: Request) {
     const transaction = await transactionService.create({
       ...body,
       userId: userId,
-      categoryId: 11
     });
 
     return NextResponse.json(

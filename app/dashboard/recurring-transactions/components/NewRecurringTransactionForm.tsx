@@ -17,14 +17,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { DialogClose } from "@/components/ui/dialog";
 import { useRecurringTransactions } from "@/app/hooks/useRecurringTransactions";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { CategoryComboBox } from "@/app/components/CategoryComboBox";
 
@@ -33,7 +26,6 @@ const formSchema = z.object({
   name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
-  type: z.enum(["expense", "income"]),
   amount_cad: z.coerce.number().min(0.01, {
     message: "Amount must be greater than 0.",
   }).optional(),
@@ -56,7 +48,6 @@ export function NewRecurringTransactionForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      type: "expense",
       amount_cad: undefined,
       amount_usd: undefined,
       day_of_month: undefined,
@@ -64,9 +55,6 @@ export function NewRecurringTransactionForm() {
       notes: "",
     },
   });
-
-  // Get current transaction type for filtering categories
-  const transactionType = form.watch("type") as "expense" | "income";
 
   // Form submission handler
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -86,46 +74,19 @@ export function NewRecurringTransactionForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="flex flex-row gap-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Rent, Salary, etc." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Type</FormLabel>
-                <FormControl>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="expense">Expense</SelectItem>
-                      <SelectItem value="income">Income</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem className="flex-1">
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Rent, Salary, etc." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}

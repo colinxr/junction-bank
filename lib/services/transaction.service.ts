@@ -1,6 +1,7 @@
 import { TransactionFactory } from "../factories/transaction.factory";
 import { PrismaClient } from "@prisma/client";
 import { getMonthName } from "../utils";
+import { Prisma } from "@prisma/client";
 
 export class TransactionService {
   private prisma: PrismaClient;
@@ -92,7 +93,6 @@ export class TransactionService {
 
   async create(data: {
     name: string;
-    type: "expense" | "income";
     amount_cad?: number;
     amount_usd?: number;
     date: Date;
@@ -100,24 +100,27 @@ export class TransactionService {
     userId: string;
     categoryId: number;
   }) {
+    console.log(data);
+    
     // Get the formatted transaction data from factory
     const transactionData = await this.transactionFactory.createTransaction(data);
-
+    console.log(transactionData);
+    
     // Create the transaction in the database
     try {
       const transaction = await this.prisma.transaction.create({
         data: {
           name: transactionData.name,
-          type: transactionData.type,
           amountCAD: transactionData.amount_cad,
-          amountUSD: transactionData.amount_usd,
+          amountUSD: transactionData.amount_usd ? transactionData.amount_usd : null,
           date: transactionData.date,
           notes: transactionData.notes || null,
           userId: transactionData.userId,
           monthId: transactionData.monthId,
-          categoryId: data.categoryId
+          categoryId: transactionData.categoryId
         }
       });
+      console.log(transaction);
 
       return transaction;
     } catch (error) {

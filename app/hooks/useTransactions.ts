@@ -8,8 +8,6 @@ const API_URL = '/api/transactions';
 
 // Fetcher function
 const fetcher = async (url: string) => {
-  console.log(url);
-  
   const res = await fetch(url);
   if (!res.ok) {
     const error = new Error('Failed to fetch transactions');
@@ -46,8 +44,7 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   if (queryParams.monthId) queryString.append('monthId', queryParams.monthId.toString());
 
   // SWR hook for data fetching
-  console.log("queryString", queryString.toString());
-  
+
   const { data, error, isLoading, mutate } = useSWR(
     `${API_URL}?${queryString.toString()}`,
     fetcher,
@@ -76,8 +73,6 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   };
 
   const getTransactions = async () => {
-    console.log(queryString.toString());
-    
     const response = await fetch(`${API_URL}?${queryString.toString()}`);
     return response.json();
   };
