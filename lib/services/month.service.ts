@@ -1,13 +1,16 @@
 import { PrismaClient } from "@prisma/client";
+import { TransactionService } from "../services/transaction.service";
 import { RecurringTransactionService } from "./recurringTransaction.service";
 
 export class MonthService {
   private prisma: PrismaClient;
   private recurringTransactionService: RecurringTransactionService;
-
+  private transactionService: TransactionService;
+  
   constructor(prisma: PrismaClient) {
     // Use the shared prisma client with middleware
     this.prisma = prisma;
+    this.transactionService = new TransactionService(prisma);
     this.recurringTransactionService = new RecurringTransactionService(prisma);
   }
 
@@ -70,7 +73,8 @@ export class MonthService {
     // Return the month with the pre-calculated totals
     return {
       ...month,
-      cashflow: parseFloat(month.totalIncome.toString()) - parseFloat(month.totalExpenses.toString())
+      cashflow: parseFloat(month.totalIncome.toString()) - parseFloat(month.totalExpenses.toString()),
+      spendingByCategory: await this.transactionService.getSpendingByCategory(month.id, month.year)
     };
   }
 

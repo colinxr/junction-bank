@@ -5,7 +5,9 @@ import { useMonthDetail } from "@/app/hooks/useMonths"
 import { Skeleton } from "@/components/ui/skeleton"
 import { 
   Card, 
-  CardContent 
+  CardContent,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card"
 
 interface MonthSummaryProps {
@@ -23,54 +25,76 @@ export function MonthSummaryCard({ monthId, className }: MonthSummaryProps) {
   const formattedCashflow = monthDetail ? formatCurrency(monthDetail.cashflow) : null;
 
   return (
-    <Card className={className}>
-      <CardContent className="p-4 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Total Income</p>
-            {isLoading ? (
-              <Skeleton className="h-6 w-24" />
-            ) : (
-              <p className="font-medium text-green-600">{formattedIncome}</p>
-            )}
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Expenses</p>
-            {isLoading ? (
-              <Skeleton className="h-6 w-24" />
-            ) : (
-              <p className="font-medium text-red-600">{formattedExpenses}</p>
-            )}
+    <>
+      <Card className={className}>
+          <CardContent className="p-4 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Income</p>
+              {isLoading ? (
+                <Skeleton className="h-6 w-24" />
+              ) : (
+                <p className="font-medium text-green-600">{formattedIncome}</p>
+              )}
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Expenses</p>
+              {isLoading ? (
+                <Skeleton className="h-6 w-24" />
+              ) : (
+                <p className="font-medium text-red-600">{formattedExpenses}</p>
+              )}
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">Cashflow</p>
+              {isLoading ? (
+                <Skeleton className="h-6 w-24" />
+              ) : (
+                <p className={`font-medium ${monthDetail?.cashflow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formattedCashflow}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">Transactions</p>
+              {isLoading ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                <p className="font-medium">{monthDetail?.transactionCount}</p>
+              )}
+            </div>
           </div>
 
-          <div>
-            <p className="text-sm text-muted-foreground">Cashflow</p>
-            {isLoading ? (
-              <Skeleton className="h-6 w-24" />
-            ) : (
-              <p className={`font-medium ${monthDetail?.cashflow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formattedCashflow}
-              </p>
-            )}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Notes</p>
+              <p className="font-medium">{monthDetail?.notes}</p>
+            </div>
           </div>
+        </CardContent>
+      </Card>
 
-          <div>
-            <p className="text-sm text-muted-foreground">Transactions</p>
-            {isLoading ? (
-              <Skeleton className="h-6 w-12" />
-            ) : (
-              <p className="font-medium">{monthDetail?.transactionCount}</p>
-            )}
+      <Card>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">Spending by Category</p>
+          <div className="grid grid-cols-2 gap-4">
+            {monthDetail?.spendingByCategory.map((category: { categoryId: number, categoryName: string, totalAmountCAD: string, totalAmountUSD: string }) => (
+              <Card key={category.categoryId} className="p-1">
+                <CardHeader>
+                <CardTitle>{category.categoryName}</CardTitle>
+                </CardHeader>
+                <CardContent> 
+                  <p className="font-medium">{category.totalAmountCAD} CAD</p>
+                  <p className="font-small text-muted-foreground">{category.totalAmountUSD} USD</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </div>
+        </CardContent>
+      </Card>
+    </>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Notes</p>
-            <p className="font-medium">{monthDetail?.notes}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   )
 } 

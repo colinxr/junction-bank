@@ -26,6 +26,8 @@ export function useMonthDetail(id: number) {
     }
   );
 
+  console.log(data);
+  
   return {
     monthDetail: data,
     error,

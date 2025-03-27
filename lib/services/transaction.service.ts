@@ -1,6 +1,6 @@
 import { TransactionFactory } from "../factories/transaction.factory";
 import { PrismaClient } from "@prisma/client";
-import { getMonthName } from "../utils";
+import { getMonthName, formatCurrency } from "../utils";
 
 export class TransactionService {
   private prisma: PrismaClient;
@@ -145,5 +145,77 @@ export class TransactionService {
       console.error('Transaction deletion error:', error);
       throw new Error(error instanceof Error ? error.message : 'Failed to delete transaction');
     }
+  }
+
+  private async getTotalSpendingByCategory(monthId: number, year: number) {
+    const spending = await this.prisma.transaction.groupBy({
+      by: ['categoryId'],
+      where: {
+        monthId,
+        month: { year }
+      },
+      _sum: { amountCAD: true },
+      _count: { amountUSD: true }
+    });
+
+    // Get category names in a separate query
+    const categories = await this.prisma.category.findMany({
+      where: {
+        id: { in: spending.map(s => s.categoryId) }
+      },
+      select: { id: true, name: true }
+    });
+
+    // Merge category names with spending data
+    return spending.map(s => ({
+      ...s,
+      categoryName: categories.find(c => c.id === s.categoryId)?.name || ''
+    }));
+  }
+
+  private async getUSDSpendingByCategory(monthId: number, year: number) {
+    return await this.prisma.transaction.groupBy({
+      by: ['categoryId'],
+      where: {
+        monthId,
+        month: { year },
+        amountUSD: { not: null }
+      },
+      _sum: { amountCAD: true }
+    });
+  }
+
+  private createUSDTotalsMap(usdSpending: any[]) {
+    return new Map(
+      usdSpending.map(({ categoryId, _sum }) => [
+        categoryId,
+        _sum.amountCAD || 0
+      ])
+    );
+  }
+
+  private formatCategorySpending(
+    spendingData: { categoryId: number; categoryName: string; _sum: { amountCAD: any }; _count: any },
+    usdTotalsByCategory: Map<number, number>
+  ) {
+    const usdTotal = usdTotalsByCategory.get(spendingData.categoryId) || 0;
+    const cadOnlyTotal = (Number(spendingData._sum.amountCAD) || 0) - Number(usdTotal);
+
+    return {
+      categoryId: spendingData.categoryId,
+      categoryName: spendingData.categoryName,
+      totalAmountCAD: formatCurrency(cadOnlyTotal),
+      totalAmountUSD: formatCurrency(usdTotal)
+    };
+  }
+
+  async getSpendingByCategory(monthId: number, year: number) {
+    const spendingByCategory = await this.getTotalSpendingByCategory(monthId, year);
+    const usdSpending = await this.getUSDSpendingByCategory(monthId, year);
+    const usdTotalsByCategory = this.createUSDTotalsMap(usdSpending);
+
+    return spendingByCategory.map(spending => 
+      this.formatCategorySpending(spending, usdTotalsByCategory)
+    );
   }
 }
