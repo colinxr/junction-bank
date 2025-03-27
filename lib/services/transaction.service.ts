@@ -146,4 +146,61 @@ export class TransactionService {
       throw new Error(error instanceof Error ? error.message : 'Failed to delete transaction');
     }
   }
+
+  private async getTotalSpendingByCategory(monthId: number, year: number) {
+    return await this.prisma.transaction.groupBy({
+      by: ['categoryId'],
+      where: {
+        monthId,
+        month: { year }
+      },
+      _sum: { amountCAD: true },
+      _count: { amountUSD: true }
+    });
+  }
+
+  private async getUSDSpendingByCategory(monthId: number, year: number) {
+    return await this.prisma.transaction.groupBy({
+      by: ['categoryId'],
+      where: {
+        monthId,
+        month: { year },
+        amountUSD: { not: null }
+      },
+      _sum: { amountCAD: true }
+    });
+  }
+
+  private createUSDTotalsMap(usdSpending: any[]) {
+    return new Map(
+      usdSpending.map(({ categoryId, _sum }) => [
+        categoryId,
+        _sum.amountCAD || 0
+      ])
+    );
+  }
+
+  private formatCategorySpending(
+    spendingData: { categoryId: number; _sum: { amountCAD: any }; _count: any },
+    usdTotalsByCategory: Map<number, number>
+  ) {
+    const usdTotal = usdTotalsByCategory.get(spendingData.categoryId) || 0;
+    const cadOnlyTotal = (Number(spendingData._sum.amountCAD) || 0) - Number(usdTotal);
+
+    return {
+      categoryId: spendingData.categoryId,
+      totalAmountCAD: cadOnlyTotal,
+      totalAmountUSD: usdTotal
+    };
+  }
+
+  async getSpendingByCategory(monthId: number, year: number) {
+    const spendingByCategory = await this.getTotalSpendingByCategory(monthId, year);
+    const usdSpending = await this.getUSDSpendingByCategory(monthId, year);
+    const usdTotalsByCategory = this.createUSDTotalsMap(usdSpending);
+
+    return spendingByCategory.map(spending => 
+      this.formatCategorySpending(spending, usdTotalsByCategory)
+    );
+  }
 }
