@@ -81,13 +81,13 @@ export function MonthSummaryCard({ monthId, className }: MonthSummaryProps) {
           <p className="text-sm text-muted-foreground">Spending by Category</p>
           <div className="grid grid-cols-2 gap-4">
             {monthDetail?.spendingByCategory.map((category: { categoryId: number, categoryName: string, totalAmountCAD: string, totalAmountUSD: string }) => (
-              <Card key={category.categoryId} className="p-4">
+              <Card key={category.categoryId} className="p-1">
                 <CardHeader>
                 <CardTitle>{category.categoryName}</CardTitle>
                 </CardHeader>
                 <CardContent> 
-                  <p className="font-medium">CAD: {category.totalAmountCAD}</p>
-                  <p className="font-small text-muted-foreground">USD: {category.totalAmountUSD}</p>
+                  <p className="font-medium">{category.totalAmountCAD} CAD</p>
+                  <p className="font-small text-muted-foreground">{category.totalAmountUSD} USD</p>
                 </CardContent>
               </Card>
             ))}
