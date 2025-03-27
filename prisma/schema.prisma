@@ -8,6 +8,14 @@ datasource db {
   directUrl = env("NEXT_PUBLIC_DIRECT_URL")
 }
 
+// Define the TransactionType enum
+enum TransactionType {
+  Income  @map("Income")
+  Expense @map("Expense")
+
+  @@map("transaction_type")
+}
+
 model User {
   id                    String                 @id @db.Uuid
   email                 String                 @unique
@@ -49,19 +57,20 @@ model Month {
 }
 
 model Transaction {
-  id         Int      @id @default(autoincrement())
-  userId     String   @map("user_id") @db.Uuid
-  monthId    Int      @map("month_id")
+  id         Int             @id @default(autoincrement())
+  userId     String          @map("user_id") @db.Uuid
+  monthId    Int             @map("month_id")
   name       String
-  amountCAD  Decimal  @map("amount_cad") @db.Decimal(10, 2)
-  amountUSD  Decimal? @map("amount_usd") @db.Decimal(10, 2)
-  categoryId Int      @map("category_id")
+  amountCAD  Decimal         @map("amount_cad") @db.Decimal(10, 2)
+  amountUSD  Decimal?        @map("amount_usd") @db.Decimal(10, 2)
+  categoryId Int             @map("category_id")
   notes      String?
-  date       DateTime @db.Date
-  createdAt  DateTime @default(now()) @map("created_at")
-  category   Category @relation(fields: [categoryId], references: [id])
-  month      Month    @relation(fields: [monthId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  date       DateTime        @db.Date
+  type       TransactionType @default(Expense)
+  createdAt  DateTime        @default(now()) @map("created_at")
+  category   Category        @relation(fields: [categoryId], references: [id])
+  month      Month           @relation(fields: [monthId], references: [id])
+  user       User            @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([monthId])
@@ -70,17 +79,18 @@ model Transaction {
 }
 
 model RecurringTransaction {
-  id         Int      @id @default(autoincrement())
-  userId     String   @map("user_id") @db.Uuid
+  id         Int             @id @default(autoincrement())
+  userId     String          @map("user_id") @db.Uuid
   name       String
-  amountCAD  Decimal  @map("amount_cad") @db.Decimal(10, 2)
-  amountUSD  Decimal? @map("amount_usd") @db.Decimal(10, 2)
-  categoryId Int      @map("category_id")
+  amountCAD  Decimal         @map("amount_cad") @db.Decimal(10, 2)
+  amountUSD  Decimal?        @map("amount_usd") @db.Decimal(10, 2)
+  categoryId Int             @map("category_id")
   notes      String?
-  dayOfMonth Int?     @map("day_of_month")
-  createdAt  DateTime @default(now()) @map("created_at")
-  category   Category @relation(fields: [categoryId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  dayOfMonth Int?            @map("day_of_month")
+  type       TransactionType @default(Expense)
+  createdAt  DateTime        @default(now()) @map("created_at")
+  category   Category        @relation(fields: [categoryId], references: [id])
+  user       User            @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([categoryId])

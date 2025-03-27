@@ -8,7 +8,7 @@ export interface Transaction {
   category_id: number
   notes: string | null
   date: Date
-  type: 'income' | 'expense'
+  type: 'Income' | 'Expense'
   created_at: string
   category?: string
 }
@@ -28,7 +28,7 @@ export interface Month {
 export interface RecurringTransaction {
   id: number;
   name: string;
-  type: "expense" | "income";
+  type: "Income" | "Expense";
   amount_cad: number;
   amount_usd?: number;
   day_of_month?: number;
