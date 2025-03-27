@@ -15,8 +15,7 @@ const ROUTES = {
 export async function middleware(request: NextRequest) {
   // Get current pathname
   const { pathname } = request.nextUrl;
-  console.log(pathname);
-  
+
   // Create Supabase client with middleware helper
   const { supabase, response } = createClient(request)
   

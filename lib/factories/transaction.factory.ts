@@ -9,11 +9,12 @@ export class TransactionFactory {
     amount_cad?: number;
     amount_usd?: number;
     date: Date;
+    categoryId: number;
     notes?: string;
     userId: string;
   }) {
     // Handle currency conversion
-    let { amount_cad, amount_usd } = data;
+    let { amount_cad, amount_usd, categoryId } = data;
     
     if (!amount_cad && amount_usd) {
       // Use the currency service to convert USD to CAD
@@ -31,6 +32,7 @@ export class TransactionFactory {
       amount_usd: amount_usd ? Number(amount_usd.toFixed(2)) : null,
       date: transactionDate,
       monthId: monthRecord.id,
+      categoryId,
       userId: data.userId,
     };
   }

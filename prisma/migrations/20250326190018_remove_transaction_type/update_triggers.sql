@@ -1,12 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to drop the column `type` on the `recurring_transactions` table. All the data in the column will be lost.
-
-*/
--- AlterTable
-ALTER TABLE "recurring_transactions" DROP COLUMN "type";
-
 -- Drop existing triggers
 DROP TRIGGER IF EXISTS transaction_insert_trigger ON transactions;
 DROP TRIGGER IF EXISTS transaction_update_trigger ON transactions;
@@ -97,4 +88,4 @@ SET
     SELECT COUNT(*)
     FROM transactions t
     WHERE t.month_id = m.id
-  ), 0);
+  ), 0); 

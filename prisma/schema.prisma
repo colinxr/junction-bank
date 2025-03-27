@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,56 +8,46 @@ datasource db {
   directUrl = env("NEXT_PUBLIC_DIRECT_URL")
 }
 
-// User model for authentication
 model User {
-  id           String   @id @db.Uuid
-  email        String   @unique
-  passwordHash String?  @map("password_hash")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  // Relations
-  transactions         Transaction[]
+  id                    String                 @id @db.Uuid
+  email                 String                 @unique
+  passwordHash          String?                @map("password_hash")
+  createdAt             DateTime               @default(now()) @map("created_at")
   recurringTransactions RecurringTransaction[]
+  transactions          Transaction[]
 
   @@map("users")
 }
 
-// Categories for expenses and income
 model Category {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  type      String // enum: 'expense', 'income'
-  notes     String?
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relations
-  transactions          Transaction[]
+  id                    Int                    @id @default(autoincrement())
+  name                  String                 @unique
+  type                  String
+  notes                 String?
+  createdAt             DateTime               @default(now()) @map("created_at")
   recurringTransactions RecurringTransaction[]
+  transactions          Transaction[]
 
   @@index([name])
   @@map("categories")
 }
 
-// Month records
 model Month {
-  id               Int      @id @default(autoincrement())
+  id               Int           @id @default(autoincrement())
   month            Int
   year             Int
   notes            String?
-  totalIncome      Decimal  @default(0) @map("total_income") @db.Decimal(10, 2)
-  totalExpenses    Decimal  @default(0) @map("total_expenses") @db.Decimal(10, 2)
-  transactionCount Int      @default(0) @map("transaction_count")
-  createdAt        DateTime @default(now()) @map("created_at")
-
-  // Relations
-  transactions Transaction[]
+  createdAt        DateTime      @default(now()) @map("created_at")
+  totalExpenses    Decimal       @default(0) @map("total_expenses") @db.Decimal(10, 2)
+  totalIncome      Decimal       @default(0) @map("total_income") @db.Decimal(10, 2)
+  transactionCount Int           @default(0) @map("transaction_count")
+  transactions     Transaction[]
 
   @@unique([month, year])
   @@index([month, year])
   @@map("months")
 }
 
-// Transaction records
 model Transaction {
   id         Int      @id @default(autoincrement())
   userId     String   @map("user_id") @db.Uuid
@@ -75,11 +59,9 @@ model Transaction {
   notes      String?
   date       DateTime @db.Date
   createdAt  DateTime @default(now()) @map("created_at")
-
-  // Relations
-  user            User             @relation(fields: [userId], references: [id])
-  month           Month            @relation(fields: [monthId], references: [id])
-  category        Category         @relation(fields: [categoryId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
+  month      Month    @relation(fields: [monthId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([monthId])
@@ -87,21 +69,18 @@ model Transaction {
   @@map("transactions")
 }
 
-// Recurring Transaction records
 model RecurringTransaction {
-  id          Int      @id @default(autoincrement())
-  userId      String   @map("user_id") @db.Uuid
-  name        String
-  amountCAD   Decimal  @map("amount_cad") @db.Decimal(10, 2)
-  amountUSD   Decimal? @map("amount_usd") @db.Decimal(10, 2)
-  categoryId  Int      @map("category_id")
-  notes       String?
-  dayOfMonth  Int?     @map("day_of_month")
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  // Relations
-  user        User     @relation(fields: [userId], references: [id])
-  category    Category @relation(fields: [categoryId], references: [id])
+  id         Int      @id @default(autoincrement())
+  userId     String   @map("user_id") @db.Uuid
+  name       String
+  amountCAD  Decimal  @map("amount_cad") @db.Decimal(10, 2)
+  amountUSD  Decimal? @map("amount_usd") @db.Decimal(10, 2)
+  categoryId Int      @map("category_id")
+  notes      String?
+  dayOfMonth Int?     @map("day_of_month")
+  createdAt  DateTime @default(now()) @map("created_at")
+  category   Category @relation(fields: [categoryId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([categoryId])
