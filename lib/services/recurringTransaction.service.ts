@@ -24,7 +24,8 @@ export class RecurringTransactionService {
         category: {
           select: {
             name: true,
-            id: true
+            id: true,
+            type: true
           } 
         }
       },
@@ -40,13 +41,15 @@ export class RecurringTransactionService {
       const amountCad = transaction.amountCAD.toNumber();
       const amountUsd = transaction.amountUSD ? transaction.amountUSD.toNumber() : null;
       const categoryName = transaction.category.name;
-      
+      const transactionType = transaction.category.type;
+
       return {
         ...transaction,
         amount_cad: amountCad,
         amount_usd: amountUsd,
         category: categoryName,
-        day_of_month: transaction.dayOfMonth
+        day_of_month: transaction.dayOfMonth,
+        transaction_type: transactionType
       };
     });
 
