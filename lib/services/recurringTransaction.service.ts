@@ -1,23 +1,20 @@
 import { PrismaClient } from "@prisma/client";
 import { CurrencyService } from "./currency.service";
+import { BaseTransactionService } from "./baseTransaction.service";
 
-export class RecurringTransactionService {
-  private prisma: PrismaClient;
-
+export class RecurringTransactionService extends BaseTransactionService {
   constructor(prisma: PrismaClient) {
-    this.prisma = prisma;
+    super(prisma);
   }
 
   async index(options?: { 
     page?: number, 
     limit?: number
   }) {
-    const page = options?.page || 1;
-    const limit = options?.limit || 20;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = this.getPaginationParams(options);
     
     // Get count for pagination
-    const totalCount = await this.prisma.recurringTransaction.count();
+    const totalCount = await this.getTotalCount('recurringTransaction');
     
     // Execute query with pagination
     const recurringTransactions = await this.prisma.recurringTransaction.findMany({
@@ -37,32 +34,8 @@ export class RecurringTransactionService {
       take: limit
     });
 
-    // Transform data for the client
-    const formattedRecurringTransactions = recurringTransactions.map(transaction => {
-      const amountCad = transaction.amountCAD.toNumber();
-      const amountUsd = transaction.amountUSD ? transaction.amountUSD.toNumber() : null;
-      const categoryName = transaction.category.name;
-      const transactionType = transaction.category.type;
-
-      return {
-        ...transaction,
-        amount_cad: amountCad,
-        amount_usd: amountUsd,
-        category: categoryName,
-        day_of_month: transaction.dayOfMonth,
-        transaction_type: transactionType
-      };
-    });
-
-    return {
-      data: formattedRecurringTransactions,
-      pagination: {
-        total: totalCount,
-        page,
-        limit,
-        pages: Math.ceil(totalCount / limit)
-      }
-    };
+    const formattedRecurringTransactions = await this.formatTransactions(recurringTransactions, 'recurring');
+    return this.formatPaginationResponse(formattedRecurringTransactions, totalCount, page, limit);
   }
 
   async create(data: {
@@ -82,11 +55,10 @@ export class RecurringTransactionService {
      // Handle currency conversion
      let { amount_cad, amount_usd } = data;
     
-     amount_cad = await CurrencyService.convertAmount(amount_cad, amount_usd);
+     amount_cad = await this.handleCurrencyConversion(amount_cad, amount_usd);
 
     // Prepare data for creation
     try {
-      // Type will be automatically set by database trigger based on the category
       const transaction = await this.prisma.recurringTransaction.create({
         data: {
           name: data.name,
@@ -218,13 +190,15 @@ export class RecurringTransactionService {
         // Calculate the date for the transaction
         const day = recurringTx.dayOfMonth || 1; // Default to the 1st if not specified
         const date = new Date(year, month - 1, day);
+
+        const amountCAD = await this.handleCurrencyConversion(recurringTx.amountCAD.toNumber(), recurringTx.amountUSD?.toNumber());
         
         // Create a regular transaction from the recurring template
         // The type will be automatically set by the database trigger based on the category
         const transaction = await this.prisma.transaction.create({
           data: {
             name: recurringTx.name,
-            amountCAD: recurringTx.amountCAD,
+            amountCAD: amountCAD,
             amountUSD: recurringTx.amountUSD,
             notes: `Auto-generated from recurring transaction: ${recurringTx.notes || ''}`,
             date: date,
