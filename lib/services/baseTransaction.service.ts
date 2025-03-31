@@ -55,8 +55,8 @@ export class BaseTransactionService {
     };
   }
 
-  protected async handleCurrencyConversion(amount_cad?: number, amount_usd?: number) {
-    return await this.currencyService.convertAmount(amount_cad, amount_usd);
+  protected async handleCurrencyConversion(amountCAD?: number, amountUSD?: number) {
+    return await this.currencyService.convertAmount(amountCAD, amountUSD);
   }
 
 protected async handleEntityDestroy(entity: PrismaEntityName, id: number) {
