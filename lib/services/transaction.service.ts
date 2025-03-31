@@ -8,7 +8,7 @@ export class TransactionService extends BaseTransactionService {
 
   constructor(prisma: PrismaClient) {
     super(prisma);
-    this.transactionFactory = new TransactionFactory(prisma);
+    this.transactionFactory = new TransactionFactory(prisma, this.currencyService);
   }
 
   async index(options?: { 
@@ -79,16 +79,7 @@ export class TransactionService extends BaseTransactionService {
     
     try {
       const transaction = await this.prisma.transaction.create({
-        data: {
-          name: transactionData.name,
-          amountCAD: transactionData.amount_cad,
-          amountUSD: transactionData.amount_usd || null,
-          date: transactionData.date,
-          notes: transactionData.notes || null,
-          userId: transactionData.userId,
-          monthId: transactionData.monthId,
-          categoryId: transactionData.categoryId,
-        }
+        data: {...transactionData}
       });
 
       return transaction;

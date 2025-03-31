@@ -1,53 +1,51 @@
 import { PrismaClient } from "@prisma/client";
 import { CurrencyService } from "../services/currency.service";
 
+interface TransactionData {
+  name: string;
+  amount_cad?: number;
+  amount_usd?: number;
+  date: Date;
+  categoryId: number;
+  notes?: string;
+  userId: string;
+}
+
 export class TransactionFactory {
-  private currencyService: CurrencyService;
-  constructor(private prisma: PrismaClient) {
-    this.currencyService = new CurrencyService();
-  }
+  constructor(
+    private prisma: PrismaClient,
+    private currencyService: CurrencyService
+  ) {}
 
-  async create(data: {
-    name: string;
-    amount_cad?: number;
-    amount_usd?: number;
-    date: Date;
-    categoryId: number;
-    notes?: string;
-    userId: string;
-  }) {
-    // Handle currency conversion
-    let { amount_cad, amount_usd } = data;
-    console.log(this.currencyService);
-    
-    amount_cad = await this.currencyService.convertAmount(amount_cad, amount_usd);
-
-    const transactionDate = new Date(data.date);
-    const monthRecord = await this.getMonth(transactionDate);
+  async create(data: TransactionData) {
+    const [monthRecord, convertedAmount] = await Promise.all([
+      this.getOrCreateMonth(data.date),
+      this.currencyService.convertAmount(data.amount_cad, data.amount_usd)
+    ]);
 
     return {
       ...data,
-      amount_cad,
-      amount_usd: amount_usd ? Number(amount_usd.toFixed(2)) : null,
-      date: transactionDate,
-      monthId: monthRecord.id,
-      userId: data.userId,
-      categoryId: data.categoryId,
+      amountCAD: convertedAmount,
+      amountUSD: data.amount_usd ? Number(data.amount_usd.toFixed(2)) : null,
+      date: new Date(data.date),
+      monthId: monthRecord.id
     };
   }
 
-  private async getMonth(transactionDate: Date) {
-    const month = transactionDate.getMonth() + 1; // JavaScript months are 0-based
+  private async getOrCreateMonth(transactionDate: Date) {
+    const month = transactionDate.getMonth() + 1;
     const year = transactionDate.getFullYear();
 
+    // Try to find existing month
     const monthRecord = await this.prisma.month.findFirst({
-      where: { month, year },
+      where: { month, year }
     });
 
-    if (!monthRecord) {
-      throw new Error("Create the month first before creating a transaction");
+    if (monthRecord) {
+      return monthRecord;
     }
 
-    return monthRecord;
+    // If month doesn't exist, throw error as months should be created through a different process
+    throw new Error(`Month ${month}/${year} not found. Please create the month first before creating a transaction.`);
   }
 }
