@@ -14,14 +14,9 @@ export class TransactionFactory {
     userId: string;
   }) {
     // Handle currency conversion
-    let { amount_cad, amount_usd, categoryId } = data;
+    let { amount_cad, amount_usd } = data;
     
-    if (!amount_cad && amount_usd) {
-      // Use the currency service to convert USD to CAD
-      amount_cad = await CurrencyService.convertUsdToCad(amount_usd);
-    } else if (!amount_cad) {
-      throw new Error("Either CAD or USD amount must be provided");
-    }
+    amount_cad = await CurrencyService.convertAmount(amount_cad, amount_usd);
 
     const transactionDate = new Date(data.date);
     const monthRecord = await this.getMonth(transactionDate);
@@ -32,8 +27,8 @@ export class TransactionFactory {
       amount_usd: amount_usd ? Number(amount_usd.toFixed(2)) : null,
       date: transactionDate,
       monthId: monthRecord.id,
-      categoryId,
       userId: data.userId,
+      categoryId: data.categoryId,
     };
   }
 

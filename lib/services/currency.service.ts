@@ -58,4 +58,13 @@ export class CurrencyService {
     const exchangeRate = await CurrencyService.getUsdToCadExchangeRate();
     return Number((usdAmount * exchangeRate).toFixed(2));
   }
+
+  static async convertAmount(amount_cad?: number, amount_usd?: number): Promise<number> {
+    if (!amount_cad && amount_usd) {
+      return await this.convertUsdToCad(amount_usd);
+    } else if (!amount_cad) {
+      throw new Error("Either CAD or USD amount must be provided");
+    }
+    return amount_cad;
+  }
 } 
