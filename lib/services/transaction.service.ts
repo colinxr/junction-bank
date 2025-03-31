@@ -1,14 +1,13 @@
 import { TransactionFactory } from "../factories/transaction.factory";
 import { PrismaClient } from "@prisma/client";
-import { getMonthName, formatCurrency } from "../utils";
+import { formatCurrency } from "../utils";
+import { BaseTransactionService } from "./baseTransaction.service";
 
-export class TransactionService {
-  private prisma: PrismaClient;
+export class TransactionService extends BaseTransactionService {
   private transactionFactory: TransactionFactory;
 
   constructor(prisma: PrismaClient) {
-    // Use the shared prisma client with middleware
-    this.prisma = prisma;
+    super(prisma);
     this.transactionFactory = new TransactionFactory(prisma);
   }
 
@@ -19,9 +18,7 @@ export class TransactionService {
     endDate?: Date,
     monthId?: number
   }) {
-    const page = options?.page || 1;
-    const limit = options?.limit || 20;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = this.getPaginationParams(options);
     
     // Build where clause for filtering
     const where: any = {};
@@ -37,7 +34,7 @@ export class TransactionService {
     }
 
     // Get count for pagination
-    const totalCount = await this.prisma.transaction.count({ where });
+    const totalCount = await this.getTotalCount('transaction', where);
     
     // Execute query with pagination and filtering
     const transactions = await this.prisma.transaction.findMany({
@@ -60,34 +57,12 @@ export class TransactionService {
       orderBy: {
         date: 'desc'
       },
+      skip,
+      take: limit
     });
 
-    // Transform using more direct property access for performance
-    const formattedTransactions = transactions.map(transaction => {
-      const amountCad = transaction.amountCAD.toNumber();
-      const amountUsd = transaction.amountUSD ? transaction.amountUSD.toNumber() : null;
-      const categoryName = transaction.category.name;
-      const monthName = getMonthName(transaction.month.month);
-      
-      return {
-        ...transaction,
-        amount_cad: amountCad,
-        amount_usd: amountUsd,
-        category: categoryName,
-        month: monthName,
-        transaction_type: transaction.category.type
-      };
-    });
-
-    return {
-      data: formattedTransactions,
-      pagination: {
-        total: totalCount,
-        page,
-        limit,
-        pages: Math.ceil(totalCount / limit)
-      }
-    };
+    const formattedTransactions = await this.formatTransactions(transactions, 'transaction');
+    return this.formatPaginationResponse(formattedTransactions, totalCount, page, limit);
   }
 
   async create(data: {
@@ -100,14 +75,14 @@ export class TransactionService {
     categoryId: number;
   }) {
     // Get the formatted transaction data from factory
-    const transactionData = await this.transactionFactory.createTransaction(data);
-    // Create the transaction in the database
+    const transactionData = await this.transactionFactory.create(data);
+    
     try {
       const transaction = await this.prisma.transaction.create({
         data: {
           name: transactionData.name,
           amountCAD: transactionData.amount_cad,
-          amountUSD: transactionData.amount_usd ? transactionData.amount_usd : null,
+          amountUSD: transactionData.amount_usd || null,
           date: transactionData.date,
           notes: transactionData.notes || null,
           userId: transactionData.userId,
@@ -115,7 +90,6 @@ export class TransactionService {
           categoryId: transactionData.categoryId,
         }
       });
-      console.log(transaction);
 
       return transaction;
     } catch (error) {
@@ -125,26 +99,7 @@ export class TransactionService {
   }
 
   async destroy(id: number) {
-    try {
-      // Check if the transaction exists
-      const transaction = await this.prisma.transaction.findUnique({
-        where: { id }
-      });
-
-      if (!transaction) {
-        throw new Error(`Transaction with ID ${id} not found`);
-      }
-
-      // Delete the transaction
-      await this.prisma.transaction.delete({
-        where: { id }
-      });
-
-      return { success: true, message: 'Transaction deleted successfully' };
-    } catch (error) {
-      console.error('Transaction deletion error:', error);
-      throw new Error(error instanceof Error ? error.message : 'Failed to delete transaction');
-    }
+    return await this.handleEntityDestroy('transaction', id);
   }
 
   private async getTotalSpendingByCategory(monthId: number, year: number) {

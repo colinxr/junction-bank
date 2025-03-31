@@ -12,13 +12,12 @@ export class CurrencyService {
    * Gets the current USD to CAD exchange rate, using a cached value if available
    * @returns The exchange rate as a number
    */
-  static async getUsdToCadExchangeRate(): Promise<number> {
+  private async getUsdToCadExchangeRate(): Promise<number> {
     // Check if we have a cached rate that hasn't expired
     if (
       CurrencyService.exchangeRateCache && 
       CurrencyService.exchangeRateCache.expiresAt > Date.now()
     ) {
-      console.log("Using cached exchange rate:", CurrencyService.exchangeRateCache.rate);
       return CurrencyService.exchangeRateCache.rate;
     }
 
@@ -40,31 +39,32 @@ export class CurrencyService {
         expiresAt: Date.now() + CurrencyService.CACHE_TTL
       };
       
-      console.log("Fetched new exchange rate:", rate);
       return rate;
     } catch (error) {
       console.error("Failed to fetch exchange rate:", error);
-      // Fallback to a reasonable default rate if API fails
       return 1.35; // Approximate CAD/USD rate
     }
   }
 
   /**
    * Converts USD amount to CAD using current exchange rate
-   * @param usdAmount Amount in USD
+   * @param amount_usd Amount in USD
    * @returns Equivalent amount in CAD
    */
-  static async convertUsdToCad(usdAmount: number): Promise<number> {
-    const exchangeRate = await CurrencyService.getUsdToCadExchangeRate();
-    return Number((usdAmount * exchangeRate).toFixed(2));
+  private async convertUsdToCad(amount_usd: number): Promise<number> {
+    const exchangeRate = await this.getUsdToCadExchangeRate();
+    return Number((amount_usd * exchangeRate).toFixed(2));
   }
 
-  static async convertAmount(amount_cad?: number, amount_usd?: number): Promise<number> {
+  async convertAmount(amount_cad?: number, amount_usd?: number): Promise<number> {
     if (!amount_cad && amount_usd) {
       return await this.convertUsdToCad(amount_usd);
-    } else if (!amount_cad) {
+    }
+    
+    if (!amount_cad) {
       throw new Error("Either CAD or USD amount must be provided");
     }
+    
     return amount_cad;
   }
 } 

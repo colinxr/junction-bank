@@ -2,9 +2,12 @@ import { PrismaClient } from "@prisma/client";
 import { CurrencyService } from "../services/currency.service";
 
 export class TransactionFactory {
-  constructor(private prisma: PrismaClient) {}
+  private currencyService: CurrencyService;
+  constructor(private prisma: PrismaClient) {
+    this.currencyService = new CurrencyService();
+  }
 
-  async createTransaction(data: {
+  async create(data: {
     name: string;
     amount_cad?: number;
     amount_usd?: number;
@@ -15,8 +18,9 @@ export class TransactionFactory {
   }) {
     // Handle currency conversion
     let { amount_cad, amount_usd } = data;
+    console.log(this.currencyService);
     
-    amount_cad = await CurrencyService.convertAmount(amount_cad, amount_usd);
+    amount_cad = await this.currencyService.convertAmount(amount_cad, amount_usd);
 
     const transactionDate = new Date(data.date);
     const monthRecord = await this.getMonth(transactionDate);
