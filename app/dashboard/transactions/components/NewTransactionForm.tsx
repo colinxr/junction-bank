@@ -24,6 +24,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CategoryComboBox } from "@/app/components/CategoryComboBox";
 
+import { useTransactions } from "@/app/hooks/useTransactions";
+
 // Define Zod schema based on transaction structure
 const transactionSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -46,6 +48,7 @@ export function NewTransactionForm({
   isEditing?: boolean;
 }) {
   const router = useRouter();
+  const {editTransaction, createTransaction, mutate} = useTransactions();
   const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
     defaultValues: defaultValues ? {
@@ -66,10 +69,15 @@ export function NewTransactionForm({
 
   async function handleSubmit(data: z.infer<typeof transactionSchema>) {
     if (isEditing && defaultValues?.id) {
-      const resp = await TransactionRepository.updateTransaction(defaultValues.id, data);
+      const formData = {
+        ...data,
+        id: defaultValues.id
+      }
+      
+      const resp = await editTransaction(formData);
       toast.success('Transaction updated successfully');
     } else {
-      const resp = await TransactionRepository.createTransaction(data);
+      const resp = await createTransaction(data);
       toast.success('Transaction created successfully');
     }
 
