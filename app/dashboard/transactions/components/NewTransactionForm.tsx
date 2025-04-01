@@ -7,8 +7,8 @@ import * as z from "zod";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
-import { TransactionRepository } from "@/lib/repositories/transaction.repository";
 import { Transaction } from "@/app/types";
+import { useState } from "react";
 
 import {
   Form,
@@ -48,7 +48,9 @@ export function NewTransactionForm({
   isEditing?: boolean;
 }) {
   const router = useRouter();
-  const {editTransaction, createTransaction, mutate} = useTransactions();
+  const {editTransaction, createTransaction} = useTransactions();
+  const [isLoading, setIsLoading] = useState(false);
+  
   const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
     defaultValues: defaultValues ? {
@@ -68,22 +70,30 @@ export function NewTransactionForm({
   });
 
   async function handleSubmit(data: z.infer<typeof transactionSchema>) {
-    if (isEditing && defaultValues?.id) {
-      const formData = {
-        ...data,
-        id: defaultValues.id
+    setIsLoading(true);
+    try {
+      if (isEditing && defaultValues?.id) {
+        const formData = {
+          ...data,
+          id: defaultValues.id
+        }
+        
+        await editTransaction(formData);
+        toast.success('Transaction updated successfully');
+      } else {
+        await createTransaction(data);
+        toast.success('Transaction created successfully');
       }
-      
-      const resp = await editTransaction(formData);
-      toast.success('Transaction updated successfully');
-    } else {
-      const resp = await createTransaction(data);
-      toast.success('Transaction created successfully');
-    }
 
-    onSubmit();
-    form.reset();
-    router.refresh();
+      onSubmit();
+      form.reset();
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to process transaction:", error);
+      toast.error("An error occurred while processing the transaction");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -212,7 +222,9 @@ export function NewTransactionForm({
           )}
         />
 
-        <Button className="ml-auto" type="submit">Submit</Button>
+        <Button className="ml-auto" type="submit" disabled={isLoading}>
+          {isLoading ? "Submitting..." : "Submit"}
+        </Button>
       </form>
     </Form>
   );
