@@ -22,3 +22,15 @@ export async function DELETE(
     );
   }
 } 
+
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: number } }
+) {
+  const { id } = await params;
+  const { name, amountCAD, amountUSD, date, category: categoryId, notes } = await request.json();
+  const parsedId = Number(id);
+
+  const result = await transactionService.update(parsedId, { name, amountCAD, amountUSD, date, categoryId, notes });
+  return NextResponse.json(result, { status: 200 });
+}

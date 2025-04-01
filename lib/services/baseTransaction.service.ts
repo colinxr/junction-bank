@@ -82,4 +82,17 @@ protected async handleEntityDestroy(entity: PrismaEntityName, id: number) {
       throw new Error(error instanceof Error ? error.message : `Failed to delete ${entity}`);
     }
   }
+
+  protected async handleEntityUpdate(entity: PrismaEntityName, id: number, data: any) {
+    try {
+      const model = this.prisma[entity] as any;
+       
+      await model.update({ where: { id }, data });
+
+      return { success: true, message: `${entity} deleted successfully` };
+    } catch (error) {
+      console.error(`${entity} update error:`, error);
+      throw new Error(error instanceof Error ? error.message : `Failed to update ${entity}`);
+    }
+  } 
 } 

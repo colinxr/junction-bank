@@ -92,6 +92,17 @@ export class TransactionService extends BaseTransactionService {
     return await this.handleEntityDestroy('transaction', id);
   }
 
+  async update(id: number, data: {
+    name?: string;
+    amountCAD?: number;
+    amountUSD?: number;
+    date?: Date;
+    notes?: string;
+    categoryId?: number;
+  }) {
+    return await this.handleEntityUpdate('transaction', id, data);
+  } 
+
   private async getTotalSpendingByCategory(monthId: number, year: number) {
     const spending = await this.prisma.transaction.groupBy({
       by: ['categoryId'],
