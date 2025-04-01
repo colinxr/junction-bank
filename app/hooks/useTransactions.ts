@@ -35,12 +35,11 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
     monthId: initialParams.monthId,
   });
   
+
+  console.log(queryParams);
   // Build query string
   const queryString = new URLSearchParams();
-  if (queryParams.page) queryString.append('page', queryParams.page.toString());
-  if (queryParams.limit) queryString.append('limit', queryParams.limit.toString());
-  if (queryParams.startDate) queryString.append('startDate', queryParams.startDate.toISOString());
-  if (queryParams.endDate) queryString.append('endDate', queryParams.endDate.toISOString());
+
   if (queryParams.monthId) queryString.append('monthId', queryParams.monthId.toString());
 
   // SWR hook for data fetching
