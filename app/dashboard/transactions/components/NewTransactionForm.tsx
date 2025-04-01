@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { TransactionRepository } from "@/lib/repositories/transaction.repository";
+import { Transaction } from "@/app/types";
 
 import {
   Form,
@@ -35,11 +36,26 @@ const transactionSchema = z.object({
   }),
 });
 
-export function NewTransactionForm({ onSubmit }: { onSubmit: () => void }) {
+export function NewTransactionForm({ 
+  onSubmit, 
+  defaultValues,
+  isEditing = false 
+}: { 
+  onSubmit: () => void;
+  defaultValues?: Partial<Transaction>;
+  isEditing?: boolean;
+}) {
   const router = useRouter();
   const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: {
+    defaultValues: defaultValues ? {
+      name: defaultValues.name || "",
+      amountCAD: defaultValues.amount_cad || 0,
+      amountUSD: defaultValues.amount_usd || 0,
+      date: defaultValues.date ? new Date(defaultValues.date) : new Date(),
+      notes: defaultValues.notes || "",
+      categoryId: defaultValues.category_id
+    } : {
       name: "",
       amountCAD: 0,
       amountUSD: 0,
@@ -49,10 +65,15 @@ export function NewTransactionForm({ onSubmit }: { onSubmit: () => void }) {
   });
 
   async function handleSubmit(data: z.infer<typeof transactionSchema>) {
-    const resp = await TransactionRepository.createTransaction(data);
+    if (isEditing && defaultValues?.id) {
+      const resp = await TransactionRepository.updateTransaction(defaultValues.id, data);
+      toast.success('Transaction updated successfully');
+    } else {
+      const resp = await TransactionRepository.createTransaction(data);
+      toast.success('Transaction created successfully');
+    }
 
     onSubmit();
-    toast.success('Transaction created successfully');
     form.reset();
     router.refresh();
   }

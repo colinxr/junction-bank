@@ -25,16 +25,17 @@ export interface ResourceDrawerProps<T> {
   isOpen: boolean
   onClose: () => void
   onEdit?: (resource: T) => void
-  onDelete?: (id: string | number) => void
+  onDelete?: (id: string | number) => Promise<boolean> | void
   renderContent: (resource: T) => React.ReactNode
   title?: string
   className?: string
+  EditModal?: React.ComponentType<{resource: T, onClose: () => void}>
 }
 
 export interface ResourceDrawerContentProps<T> {
   resource: T
   onEdit?: (resource: T) => void
-  onDelete?: (id: number) => void
+  onDelete?: (id: number | string) => void
 }
 
 export function ResourceDrawer<T>({
@@ -46,8 +47,10 @@ export function ResourceDrawer<T>({
   renderContent,
   title = "Details",
   className,
+  EditModal,
 }: ResourceDrawerProps<T>) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   
   // Cast id to string or number, assuming T has an 'id' property
   const handleDelete = () => {
@@ -86,7 +89,7 @@ export function ResourceDrawer<T>({
           
           <DrawerFooter className="flex flex-row justify-between">
             {onEdit && (
-              <Button variant="outline" onClick={() => onEdit(resource)}>
+              <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </Button>
@@ -120,6 +123,14 @@ export function ResourceDrawer<T>({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Modal */}
+      {EditModal && isEditModalOpen && (
+        <EditModal 
+          resource={resource} 
+          onClose={() => setIsEditModalOpen(false)} 
+        />
+      )}
     </>
   )
 } 
