@@ -34,13 +34,13 @@ export class TransactionFactory {
 
   private async getOrCreateMonth(transactionDate: Date) {
     try {
-      console.log('transactionDate', new Date(transactionDate));
-      const date = new Date(transactionDate);
-      
-      const month = date.getMonth() + 1;
-      console.log('month', month);
-      
-      const year = date.getFullYear();
+      // Ensure we have a valid Date object
+      const dateObj = transactionDate instanceof Date 
+        ? transactionDate 
+        : new Date(transactionDate);
+        
+      const month = dateObj.getMonth() + 1;
+      const year = dateObj.getFullYear();
 
     const monthRecord = await this.prisma.month.findFirst({
       where: { month, year }
