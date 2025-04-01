@@ -67,8 +67,8 @@ export class TransactionService extends BaseTransactionService {
 
   async create(data: {
     name: string;
-    amount_cad?: number;
-    amount_usd?: number;
+    amountCAD?: number;
+    amountUSD?: number;
     date: Date;
     notes?: string;
     userId: string;
@@ -76,7 +76,6 @@ export class TransactionService extends BaseTransactionService {
   }) {
     // Get the formatted transaction data from factory
     const transactionData = await this.transactionFactory.create(data);
-    
     try {
       const transaction = await this.prisma.transaction.create({
         data: {...transactionData}

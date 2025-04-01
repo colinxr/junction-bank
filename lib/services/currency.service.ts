@@ -51,20 +51,20 @@ export class CurrencyService {
    * @param amount_usd Amount in USD
    * @returns Equivalent amount in CAD
    */
-  private async convertUsdToCad(amount_usd: number): Promise<number> {
+  private async convertUsdToCad(amountUSD: number): Promise<number> {
     const exchangeRate = await this.getUsdToCadExchangeRate();
-    return Number((amount_usd * exchangeRate).toFixed(2));
+    return Number((amountUSD * exchangeRate).toFixed(2));
   }
 
-  async convertAmount(amount_cad?: number, amount_usd?: number): Promise<number> {
-    if (!amount_cad && amount_usd) {
-      return await this.convertUsdToCad(amount_usd);
+  async convertAmount(amountCAD?: number, amountUSD?: number): Promise<number> {
+    if (!amountCAD && amountUSD) {
+      return await this.convertUsdToCad(amountUSD);
     }
     
-    if (!amount_cad) {
+    if (!amountCAD) {
       throw new Error("Either CAD or USD amount must be provided");
     }
     
-    return amount_cad;
+    return amountCAD;
   }
 } 

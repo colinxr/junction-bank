@@ -20,15 +20,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CategoryComboBox } from "@/app/components/CategoryComboBox";
 
 // Define Zod schema based on transaction structure
 const transactionSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  amount_cad: z.number().optional(),
-  amount_usd: z.number().optional(),
+  amountCAD: z.number().optional(),
+  amountUSD: z.number().optional(),
   date: z.date(),
   notes: z.string().optional(),
   categoryId: z.number({
@@ -42,8 +41,8 @@ export function NewTransactionForm({ onSubmit }: { onSubmit: () => void }) {
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       name: "",
-      amount_cad: 0,
-      amount_usd: 0,
+      amountCAD: 0,
+      amountUSD: 0,
       date: new Date(),
       notes: ""
     },
@@ -81,7 +80,7 @@ export function NewTransactionForm({ onSubmit }: { onSubmit: () => void }) {
         <div className="flex flex-row gap-4">
           <FormField
             control={form.control}
-            name="amount_cad"
+            name="amountCAD"
             render={({ field }) => (
               <FormItem className="flex-1">
                 <FormLabel>Amount</FormLabel>
@@ -100,7 +99,7 @@ export function NewTransactionForm({ onSubmit }: { onSubmit: () => void }) {
 
           <FormField
             control={form.control}
-            name="amount_usd"
+            name="amountUSD"
             render={({ field }) => (
               <FormItem className="flex-1">
                 <FormLabel>Amount (USD)</FormLabel>

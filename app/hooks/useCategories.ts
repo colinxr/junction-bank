@@ -29,8 +29,6 @@ export function useCategories() {
     }
   );
 
-  console.log(data);
-  
   
   // Method to create a new category
   const createCategory = async (categoryData: Partial<Category>) => {

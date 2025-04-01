@@ -25,8 +25,6 @@ export function useMonthDetail(id: number) {
       dedupingInterval: 30000, // 30 seconds
     }
   );
-
-  console.log(data);
   
   return {
     monthDetail: data,
