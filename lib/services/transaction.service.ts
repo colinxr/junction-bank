@@ -14,20 +14,14 @@ export class TransactionService extends BaseTransactionService {
   async index(options?: { 
     page?: number, 
     limit?: number, 
-    startDate?: Date,
-    endDate?: Date,
+    // startDate?: Date,
+    // endDate?: Date,
     monthId?: number
   }) {
-    const { page, limit, skip } = this.getPaginationParams(options);
+    const { page, limit } = this.getPaginationParams(options);
     
     // Build where clause for filtering
     const where: any = {};
-    if (options?.startDate && options?.endDate) {
-      where.date = {
-        gte: options.startDate,
-        lte: options.endDate
-      };
-    }
 
     if (options?.monthId) {
       where.monthId = options.monthId;
@@ -57,8 +51,6 @@ export class TransactionService extends BaseTransactionService {
       orderBy: {
         date: 'desc'
       },
-      skip,
-      take: limit
     });
 
     const formattedTransactions = await this.formatTransactions(transactions, 'transaction');

@@ -10,17 +10,17 @@ const transactionService = new TransactionService(prisma);
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '20');
-    const startDate = url.searchParams.get('startDate') ? new Date(url.searchParams.get('startDate')!) : undefined;
-    const endDate = url.searchParams.get('endDate') ? new Date(url.searchParams.get('endDate')!) : undefined;
+    // const page = parseInt(url.searchParams.get('page'));
+    // const limit = parseInt(url.searchParams.get('limit') || '20');  
+    // const startDate = url.searchParams.get('startDate') ? new Date(url.searchParams.get('startDate')!) : undefined;
+    // const endDate = url.searchParams.get('endDate') ? new Date(url.searchParams.get('endDate')!) : undefined;
     const monthId = url.searchParams.get('monthId') ? parseInt(url.searchParams.get('monthId')!) : undefined;
 
     const result = await transactionService.index({
-      page,
-      limit,
-      startDate,
-      endDate,
+      // page,
+      // limit,
+      // startDate,
+      // endDate,
       monthId
     });
     
