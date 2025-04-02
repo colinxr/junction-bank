@@ -22,9 +22,6 @@ export function TransactionDrawerContent({
       <Card>
         <CardHeader>
           <CardTitle>{transaction.name}</CardTitle>
-          <CardDescription>
-            {transaction.type === 'income' ? 'Income' : 'Expense'}
-          </CardDescription>
         </CardHeader>
         
         <CardContent className="p-4 space-y-4">
@@ -42,14 +39,14 @@ export function TransactionDrawerContent({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Amount (CAD)</p>
-              <p className={`font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+              <p className={`font-medium`}>
                 {formatCurrency(transaction.amount_cad)}
               </p>
             </div>
             {transaction.amount_usd !== null && (
               <div>
                 <p className="text-sm text-muted-foreground">Amount (USD)</p>
-                <p className={`font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`font-medium`}>
                   {formatCurrency(transaction.amount_usd)}
                 </p>
               </div>

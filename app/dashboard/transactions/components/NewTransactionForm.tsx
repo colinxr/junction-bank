@@ -7,7 +7,8 @@ import * as z from "zod";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
-import { TransactionRepository } from "@/lib/repositories/transaction.repository";
+import { Transaction } from "@/app/types";
+import { useState } from "react";
 
 import {
   Form,
@@ -23,6 +24,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CategoryComboBox } from "@/app/components/CategoryComboBox";
 
+import { useTransactions } from "@/app/hooks/useTransactions";
+
 // Define Zod schema based on transaction structure
 const transactionSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -35,11 +38,29 @@ const transactionSchema = z.object({
   }),
 });
 
-export function NewTransactionForm({ onSubmit }: { onSubmit: () => void }) {
+export function NewTransactionForm({ 
+  onSubmit, 
+  defaultValues,
+  isEditing = false 
+}: { 
+  onSubmit: () => void;
+  defaultValues?: Partial<Transaction>;
+  isEditing?: boolean;
+}) {
   const router = useRouter();
+  const {editTransaction, createTransaction} = useTransactions();
+  const [isLoading, setIsLoading] = useState(false);
+  
   const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: {
+    defaultValues: defaultValues ? {
+      name: defaultValues.name || "",
+      amountCAD: defaultValues.amount_cad || 0,
+      amountUSD: defaultValues.amount_usd || 0,
+      date: defaultValues.date ? new Date(defaultValues.date) : new Date(),
+      notes: defaultValues.notes || "",
+      categoryId: defaultValues.category_id
+    } : {
       name: "",
       amountCAD: 0,
       amountUSD: 0,
@@ -49,12 +70,30 @@ export function NewTransactionForm({ onSubmit }: { onSubmit: () => void }) {
   });
 
   async function handleSubmit(data: z.infer<typeof transactionSchema>) {
-    const resp = await TransactionRepository.createTransaction(data);
+    setIsLoading(true);
+    try {
+      if (isEditing && defaultValues?.id) {
+        const formData = {
+          ...data,
+          id: defaultValues.id
+        }
+        
+        await editTransaction(formData);
+        toast.success('Transaction updated successfully');
+      } else {
+        await createTransaction(data);
+        toast.success('Transaction created successfully');
+      }
 
-    onSubmit();
-    toast.success('Transaction created successfully');
-    form.reset();
-    router.refresh();
+      onSubmit();
+      form.reset();
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to process transaction:", error);
+      toast.error("An error occurred while processing the transaction");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -183,7 +222,9 @@ export function NewTransactionForm({ onSubmit }: { onSubmit: () => void }) {
           )}
         />
 
-        <Button className="ml-auto" type="submit">Submit</Button>
+        <Button className="ml-auto" type="submit" disabled={isLoading}>
+          {isLoading ? "Submitting..." : "Submit"}
+        </Button>
       </form>
     </Form>
   );

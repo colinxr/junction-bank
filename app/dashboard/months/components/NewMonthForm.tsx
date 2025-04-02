@@ -1,5 +1,6 @@
 "use client";
 
+import {useState} from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +9,7 @@ import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { MonthRepository } from "@/lib/repositories/month.repository";
 import { getMonthName } from "@/lib/utils";
+import { useMonths } from "@/app/hooks/useMonths";
 
 import {
   Form,
@@ -30,7 +32,8 @@ const monthSchema = z.object({
 
 export function NewMonthForm({ onSubmit }: { onSubmit: () => void }) {
   const router = useRouter();
-
+  const [isLoading, setIsLoading] = useState(false);    
+  const { createMonth } = useMonths();
   // Get current date for default values
   const today = new Date();
 
@@ -44,12 +47,20 @@ export function NewMonthForm({ onSubmit }: { onSubmit: () => void }) {
   });
 
   async function handleSubmit(data: z.infer<typeof monthSchema>) {
-    const resp = await MonthRepository.createMonth(data);
-
-    onSubmit();
-    toast.success('Month created successfully');
-    form.reset();
-    router.refresh();
+    setIsLoading(true);
+    
+    try {
+      await createMonth(data);
+      onSubmit();
+      toast.success('Month created successfully');
+      form.reset();
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to create month:", error);
+      toast.error("An error occurred while creating the month");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -134,7 +145,9 @@ export function NewMonthForm({ onSubmit }: { onSubmit: () => void }) {
           )}
         />
 
-        <Button className="ml-auto" type="submit">Submit</Button>
+        <Button className="ml-auto" type="submit" disabled={isLoading}>
+          {isLoading ? "Submitting..." : "Submit"}
+        </Button>
       </form>
     </Form>
   );

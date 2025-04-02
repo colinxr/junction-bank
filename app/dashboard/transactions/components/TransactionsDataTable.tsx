@@ -7,6 +7,7 @@ import { Transaction } from "@/app/types"
 import { ResourceDrawer } from "@/components/layout/ResourceDrawer"
 import { TransactionDrawerContent } from "./TransactionDrawerContent"
 import { useTransactions } from "@/app/hooks/useTransactions"
+import { EditTransactionModal } from "./EditTransactionModal"
 
 interface TransactionsDataTableProps {
   data: Transaction[]
@@ -69,6 +70,7 @@ export function TransactionsDataTable({
           onDelete={deleteTransaction}
           renderContent={(transaction) => <TransactionDrawerContent resource={transaction} />}
           title="Transaction Details"
+          EditModal={EditTransactionModal}
         />
       )}
     </>

@@ -15,7 +15,7 @@ export interface Transaction {
 
 export interface Month {
   id: number
-  month: string
+  month: number
   year: number
   notes: string | null
   transactionCount?: number

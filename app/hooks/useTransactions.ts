@@ -39,7 +39,6 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   console.log(queryParams);
   // Build query string
   const queryString = new URLSearchParams();
-
   if (queryParams.monthId) queryString.append('monthId', queryParams.monthId.toString());
 
   // SWR hook for data fetching
@@ -114,8 +113,12 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   };
   
   // Method to edit a transaction
-  const editTransaction = async (transaction: Transaction) => {
+  const editTransaction = async (transaction: Partial<Transaction>) => {
     try {
+      if (!transaction.id) {
+        throw new Error('Transaction ID is required');
+      }
+
       toast.success(`Editing transaction: ${transaction.name}`);
       
       // Create optimistic data update
