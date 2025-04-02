@@ -50,7 +50,7 @@ export class TransactionService extends BaseTransactionService {
       },
       orderBy: {
         date: 'desc'
-      },
+      }
     });
 
     const formattedTransactions = await this.formatTransactions(transactions, 'transaction');
