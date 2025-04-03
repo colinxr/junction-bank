@@ -60,8 +60,6 @@ export class TransactionService extends BaseTransactionService {
       orderBy: {
         date: 'desc',
       },
-      skip: (page - 1) * limit,
-      take: limit,
     });
 
     // Format transactions
@@ -74,7 +72,7 @@ export class TransactionService extends BaseTransactionService {
       transaction_type: transaction.category.type
     }));
 
-    return this.formatPaginationResponse(formattedTransactions, totalCount, page, limit);
+    return this.formatPaginationResponse(formattedTransactions);
   }
 
   async create(data: {
