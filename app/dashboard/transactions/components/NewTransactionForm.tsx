@@ -61,7 +61,7 @@ export function NewTransactionForm({
       amountUSD: defaultValues?.amount_usd || undefined,
       date: defaultValues?.date ? new Date(defaultValues.date) : new Date(),
       notes: defaultValues?.notes || "",
-      categoryId: defaultValues?.category_id,
+      categoryId: defaultValues?.categoryId,
     },
   });
 
@@ -71,7 +71,7 @@ export function NewTransactionForm({
       if (isEditing && defaultValues?.id) {
         const formData = {
           ...data,
-          id: defaultValues.id
+          id: defaultValues.id,
         }
         
         await editTransaction(formData);
@@ -92,6 +92,12 @@ export function NewTransactionForm({
     }
   }
 
+  console.log(defaultValues);
+  
+
+  console.log(form.formState.defaultValues);
+
+  
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 p-2x">
@@ -185,7 +191,6 @@ export function NewTransactionForm({
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="categoryId"

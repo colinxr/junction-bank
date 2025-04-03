@@ -14,6 +14,8 @@ export function EditTransactionModal({ resource, onClose }: { resource: Transact
     }
   };
 
+  console.log(resource);
+  
   return (
     <Modal 
       isOpen={isOpen} 

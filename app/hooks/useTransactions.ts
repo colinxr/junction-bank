@@ -31,8 +31,6 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
     monthId: initialParams.monthId,
   });
   
-
-  console.log(queryParams);
   // Build query string
   const queryString = new URLSearchParams();
   if (queryParams.monthId) queryString.append('monthId', queryParams.monthId.toString());
