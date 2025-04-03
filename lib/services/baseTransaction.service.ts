@@ -20,12 +20,6 @@ interface PaginationOptions {
 
 interface PaginationResponse<T> {
   data: T[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
 }
 
 interface EntityModel {
@@ -72,15 +66,9 @@ export class BaseTransactionService {
     return { page, limit, skip };
   }
 
-  protected formatPaginationResponse<T>(data: T[], totalCount: number, page: number, limit: number): PaginationResponse<T> {
+  protected formatPaginationResponse<T>(data: T[]): PaginationResponse<T> {
     return {
       data,
-      pagination: {
-        total: totalCount,
-        page,
-        limit,
-        totalPages: Math.ceil(totalCount / limit)
-      }
     };
   }
 

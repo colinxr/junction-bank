@@ -19,10 +19,6 @@ export class RecurringTransactionService extends BaseTransactionService {
     page?: number, 
     limit?: number
   }) {
-    const { page, limit, skip } = this.getPaginationParams(options);
-    
-    // Get count for pagination
-    const totalCount = await this.getTotalCount('recurringTransaction');
     
     // Execute query with pagination
     const recurringTransactions = await this.prisma.recurringTransaction.findMany({
@@ -38,12 +34,10 @@ export class RecurringTransactionService extends BaseTransactionService {
       orderBy: {
         createdAt: 'desc'
       },
-      skip,
-      take: limit
     });
 
     const formattedRecurringTransactions = await this.formatTransactions(recurringTransactions);
-    return this.formatPaginationResponse(formattedRecurringTransactions, totalCount, page, limit);
+    return this.formatPaginationResponse(formattedRecurringTransactions);
   }
 
   async create(data: {

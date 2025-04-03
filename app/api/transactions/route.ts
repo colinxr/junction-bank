@@ -10,19 +10,9 @@ const transactionService = new TransactionService(prisma);
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
-    // const page = parseInt(url.searchParams.get('page'));
-    // const limit = parseInt(url.searchParams.get('limit') || '20');  
-    // const startDate = url.searchParams.get('startDate') ? new Date(url.searchParams.get('startDate')!) : undefined;
-    // const endDate = url.searchParams.get('endDate') ? new Date(url.searchParams.get('endDate')!) : undefined;
     const monthId = url.searchParams.get('monthId') ? parseInt(url.searchParams.get('monthId')!) : undefined;
 
-    const result = await transactionService.index({
-      // page,
-      // limit,
-      // startDate,
-      // endDate,
-      monthId
-    });
+    const result = await transactionService.index({monthId});
     
     // Set no-cache headers to prevent stale data
     return NextResponse.json(result, {

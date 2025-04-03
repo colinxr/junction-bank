@@ -28,10 +28,6 @@ interface TransactionQueryParams {
 export function useTransactions(initialParams: TransactionQueryParams = {}) {
   // State for query parameters
   const [queryParams, setQueryParams] = useState<TransactionQueryParams>({
-    page: initialParams.page || 1,
-    limit: initialParams.limit || 20,
-    startDate: initialParams.startDate,
-    endDate: initialParams.endDate,
     monthId: initialParams.monthId,
   });
   
@@ -53,23 +49,6 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
     }
   );
   
-  // Update query parameters
-  const setPage = (page: number) => {
-    setQueryParams(prev => ({ ...prev, page }));
-  };
-  
-  const setLimit = (limit: number) => {
-    setQueryParams(prev => ({ ...prev, limit }));
-  };
-  
-  const setDateRange = (startDate?: Date, endDate?: Date) => {
-    setQueryParams(prev => ({ ...prev, startDate, endDate }));
-  };
-
-  const setMonthId = (monthId: number) => {
-    setQueryParams(prev => ({ ...prev, monthId }));
-  };
-
   const getTransactions = async () => {
     const response = await fetch(`${API_URL}?${queryString.toString()}`);
     return response.json();
@@ -185,13 +164,8 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   
   return {
     transactions: data?.data || [],
-    pagination: data?.pagination || { total: 0, page: 1, pages: 1 },
     isLoading,
     error,
-    setPage,
-    setLimit,
-    setDateRange,
-    setMonthId,
     createTransaction,
     editTransaction,
     deleteTransaction,
