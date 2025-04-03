@@ -7,12 +7,19 @@ const AUTH_TOKEN_COOKIE = 'auth_token';
 const AUTH_USER_COOKIE = 'auth_user';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
+interface AuthUser {
+  id: string;
+  email: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
 /**
  * Set authentication cookies after successful login
  */
 export function setAuthCookies(
   token: string, 
-  user: any,
+  user: AuthUser,
   res?: NextApiResponse
 ) {
   // Options for the cookies

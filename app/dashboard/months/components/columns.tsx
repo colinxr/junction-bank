@@ -1,7 +1,6 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { getMonthName } from "@/lib/utils"
 import { Month } from "@/app/types"
 
 export const columns: ColumnDef<Month>[] = [
@@ -9,12 +8,11 @@ export const columns: ColumnDef<Month>[] = [
     accessorKey: "month",
     header: "Month",
     cell: ({ row }) => {
-      const month = row.original.month
-      const monthNumber = parseInt(month)
-      
+      const month = Number(row.original.month)
+
       return month ? (
-        <div className="max-w-[200px] truncate" title={month}>
-          {getMonthName(monthNumber)}
+        <div className="max-w-[200px] truncate" title={month.toString()}>
+          {month}
         </div>
       ) : (
         <div className="text-gray-400">-</div>

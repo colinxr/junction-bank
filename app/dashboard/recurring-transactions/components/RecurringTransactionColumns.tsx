@@ -142,41 +142,42 @@ export const columns: ColumnDef<RecurringTransaction>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const transaction = row.original;
-      const { deleteRecurringTransaction } = useRecurringTransactions();
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <RecurringTransactionDrawerContent transaction={transaction}>
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                Edit
-              </DropdownMenuItem>
-            </RecurringTransactionDrawerContent>
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={async () => {
-                try {
-                  await deleteRecurringTransaction(transaction.id);
-                } catch (error) {
-                  toast.error("Failed to delete recurring transaction");
-                }
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: ({ row }) => <ActionsCell transaction={row.original} />,
   },
-]; 
+];
+
+function ActionsCell({ transaction }: { transaction: RecurringTransaction }) {
+  const { deleteRecurringTransaction } = useRecurringTransactions();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Open menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <RecurringTransactionDrawerContent transaction={transaction}>
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            Edit
+          </DropdownMenuItem>
+        </RecurringTransactionDrawerContent>
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive"
+          onClick={async () => {
+            try {
+              await deleteRecurringTransaction(transaction.id);
+            } catch {
+              toast.error("Failed to delete recurring transaction");
+            }
+          }}
+        >
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+} 

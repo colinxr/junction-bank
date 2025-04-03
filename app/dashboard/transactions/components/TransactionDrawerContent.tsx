@@ -7,16 +7,13 @@ import { formatCurrency, formatDate } from "@/lib/utils"
 import { 
   Card, 
   CardContent, 
-  CardDescription, 
   CardHeader,
   CardTitle
 } from "@/components/ui/card"
 
-export interface TransactionDrawerContentProps extends ResourceDrawerContentProps<Transaction> {}
-
 export function TransactionDrawerContent({ 
   resource: transaction,
-}: TransactionDrawerContentProps) {
+}: ResourceDrawerContentProps<Transaction>) {
   return (
     <div className="space-y-6">
       <Card>

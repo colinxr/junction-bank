@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { DataTable } from "@/components/layout/DataTable"
-import { Category } from "@/lib/repositories/category.repository"
+import { Category } from "@/app/types"
 import { ResourceDrawer } from "@/components/layout/ResourceDrawer"
 import { CategoryDrawerContent } from "./CategoryDrawerContent"
 import { useCategories } from "@/app/hooks/useCategories"
@@ -60,7 +60,6 @@ export function CategoriesDataTable({ data, columns }: CategoriesDataTableProps)
         filterableColumns={filterableColumns}
         searchPlaceholder="Search categories..."
         onRowClick={handleRowClick}
-        resourceType="category"
       />
       
       {selectedCategory && (

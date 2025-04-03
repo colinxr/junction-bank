@@ -2,6 +2,10 @@ import { PrismaClient } from "@prisma/client";
 import { TransactionService } from "../services/transaction.service";
 import { RecurringTransactionService } from "./recurringTransaction.service";
 
+interface MonthWhereInput {
+  year?: number;
+}
+
 export class MonthService {
   private prisma: PrismaClient;
   private recurringTransactionService: RecurringTransactionService;
@@ -24,7 +28,7 @@ export class MonthService {
     const skip = (page - 1) * limit;
     
     // Build where clause for filtering
-    const where: any = {};
+    const where: MonthWhereInput = {};
     if (options?.year) {
       where.year = options.year;
     }

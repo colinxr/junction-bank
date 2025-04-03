@@ -1,16 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { CategoryService } from '@/lib/services/category.service';
 
 const categoryService = new CategoryService(prisma);
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: number } }
+  request: NextRequest,
 ) {
   try {
-    const { id } = params;
-    const parsedId = Number(id);
+    const parsedId = Number(request.nextUrl.searchParams.get('id'));
     const category = await categoryService.show(parsedId);
     
     if (!category) {
@@ -35,12 +33,10 @@ export async function GET(
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: number } }
+  request: NextRequest,
 ) {
   try {
-    const { id } = params;
-    const parsedId = Number(id);
+    const parsedId = Number(request.nextUrl.searchParams.get('id'));
     const result = await categoryService.destroy(parsedId);
     
     return NextResponse.json(result, { status: 200 });

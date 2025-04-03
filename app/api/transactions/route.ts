@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { TransactionService } from '@/lib/services/transaction.service';
 
@@ -7,7 +7,7 @@ const transactionService = new TransactionService(prisma);
 // Remove caching for transaction data as it changes frequently
 // export const revalidate = 300;
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     // const page = parseInt(url.searchParams.get('page'));
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const headers = request.headers;

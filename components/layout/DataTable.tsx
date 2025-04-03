@@ -38,7 +38,6 @@ interface DataTableProps<TData, TValue> {
     }[]
   }[]
   onRowClick?: (row: TData) => void
-  resourceType?: 'transaction' | 'month' | 'category'
 }
 
 export function DataTable<TData, TValue>({
@@ -47,7 +46,6 @@ export function DataTable<TData, TValue>({
   searchPlaceholder = "Search...",
   filterableColumns = [],
   onRowClick,
-  resourceType,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])

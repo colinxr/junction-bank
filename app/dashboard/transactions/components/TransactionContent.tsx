@@ -11,7 +11,6 @@ export function TransactionsContent({ month }: { month?: Month }) {
     transactions,
     isLoading,
     error,
-    refresh,
   } = useTransactions({ monthId: month?.id });
 
   if (error) {

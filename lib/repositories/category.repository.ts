@@ -1,12 +1,6 @@
 import apiClient from "@/lib/api-client";
 
-export interface Category {
-  id: number;
-  name: string;
-  type: string;
-  notes?: string | null;
-  createdAt: string;
-}
+import { Category } from "@/app/types";
 
 export const CategoryRepository = {
   async createCategory(categoryData: Partial<Category>) {

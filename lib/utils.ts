@@ -33,6 +33,7 @@ export function formatDate(dateStr: string) {
     }).format(date)
 
   } catch (error) {
+    console.error(error)
     return 'Invalid date'
   }
 }

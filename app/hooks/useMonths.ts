@@ -1,4 +1,4 @@
-import useSWR, { mutate } from 'swr';
+import useSWR from 'swr';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Month } from '@/app/types';

@@ -1,6 +1,6 @@
 "use client";
 
-import { Category } from "@/lib/repositories/category.repository";
+import { Category } from "@/app/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CategoryDrawerContentProps {

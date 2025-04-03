@@ -47,6 +47,9 @@ export function NewCategoryForm({ onSubmit }: { onSubmit: () => void }) {
   async function handleSubmit(data: z.infer<typeof categorySchema>) {
     try {
       const resp = await CategoryRepository.createCategory(data);
+      if (resp.status !== 200) {
+        throw new Error('Failed to create category');
+      }
 
       onSubmit();
       toast.success('Category created successfully');

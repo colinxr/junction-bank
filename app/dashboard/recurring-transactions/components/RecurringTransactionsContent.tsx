@@ -10,7 +10,6 @@ export function RecurringTransactionsContent() {
     recurringTransactions,
     isLoading,
     error,
-    refresh,
   } = useRecurringTransactions();
 
   if (error) {

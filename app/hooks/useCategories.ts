@@ -1,8 +1,8 @@
-import useSWR, { mutate } from 'swr';
-import { useState } from 'react';
+import useSWR from 'swr';
 import { toast } from 'sonner';
-import { Category } from '@/lib/repositories/category.repository';
 import { CategoryRepository } from '@/lib/repositories/category.repository';
+import { Category } from '@/app/types';
+
 
 const API_URL = '/api/categories';
 

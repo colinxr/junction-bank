@@ -17,7 +17,7 @@ interface MonthSummaryProps {
 
 export function MonthSummaryCard({ monthId, className }: MonthSummaryProps) {
   // Use the hook to fetch month details
-  const { monthDetail, error, isLoading } = useMonthDetail(monthId);
+  const { monthDetail, isLoading } = useMonthDetail(monthId);
 
   // Format values when available
   const formattedIncome = monthDetail ? formatCurrency(monthDetail.totalIncome) : null;

@@ -11,11 +11,9 @@ import {
 import { TransactionsContent } from "@/app/dashboard/transactions/components/TransactionContent"
 import { MonthSummaryCard } from "./MonthSummaryCard"
 
-export interface MonthDrawerContentProps extends ResourceDrawerContentProps<Month> {}
-
 export function MonthDrawerContent({ 
   resource: month,
-}: MonthDrawerContentProps) {
+}: ResourceDrawerContentProps<Month>) {
   return (
     <div className="space-y-6">
       <div className="flex items-center">

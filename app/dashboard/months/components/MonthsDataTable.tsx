@@ -16,7 +16,7 @@ interface MonthsDataTableProps {
 export function MonthsDataTable({ data, columns }: MonthsDataTableProps) {
   const [selectedMonth, setSelectedMonth] = useState<Month | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const { editMonth, deleteMonth } = useMonths()
+  const { editMonth } = useMonths()
 
   const handleRowClick = (month: Month) => {
     setSelectedMonth(month)
@@ -54,7 +54,6 @@ export function MonthsDataTable({ data, columns }: MonthsDataTableProps) {
         filterableColumns={filterableColumns}
         searchPlaceholder="Search months..."
         onRowClick={handleRowClick}
-        resourceType="month"
       />
       
       {selectedMonth && (
@@ -72,7 +71,6 @@ export function MonthsDataTable({ data, columns }: MonthsDataTableProps) {
             };
             editMonth(monthObj);
           }}
-          onDelete={deleteMonth}
           renderContent={(month) => <MonthDrawerContent resource={month} />}
           title="Month Details"
           className="!w-[90%] !max-w-none"

@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { CurrencyService } from "./currency.service";
 import { BaseTransactionService } from "./baseTransaction.service";
 
 export class RecurringTransactionService extends BaseTransactionService {
@@ -52,17 +51,14 @@ export class RecurringTransactionService extends BaseTransactionService {
       throw new Error("Day of month must be between 1 and 31");
     }
 
-     // Handle currency conversion
-     let { amount_cad, amount_usd } = data;
-    
-     amount_cad = await this.handleCurrencyConversion(amount_cad, amount_usd);
+     const { amount_cad, amount_usd } = data;
 
     // Prepare data for creation
     try {
       const transaction = await this.prisma.recurringTransaction.create({
         data: {
           name: data.name,
-          amountCAD: amount_cad,
+          amountCAD: await this.handleCurrencyConversion(amount_cad, amount_usd),
           amountUSD: amount_usd || null,
           notes: data.notes || null,
           dayOfMonth: data.day_of_month || null,

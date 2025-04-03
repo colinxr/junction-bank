@@ -38,6 +38,8 @@ const transactionSchema = z.object({
   }),
 });
 
+type FormData = z.infer<typeof transactionSchema>;
+
 export function NewTransactionForm({ 
   onSubmit, 
   defaultValues,
@@ -48,29 +50,23 @@ export function NewTransactionForm({
   isEditing?: boolean;
 }) {
   const router = useRouter();
-  const {editTransaction, createTransaction} = useTransactions();
-  const [isLoading, setIsLoading] = useState(false);
+  const { addTransaction, updateTransaction } = useTransactions();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const form = useForm<z.infer<typeof transactionSchema>>({
+  const form = useForm<FormData>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: defaultValues ? {
-      name: defaultValues.name || "",
-      amountCAD: defaultValues.amount_cad || 0,
-      amountUSD: defaultValues.amount_usd || 0,
-      date: defaultValues.date ? new Date(defaultValues.date) : new Date(),
-      notes: defaultValues.notes || "",
-      categoryId: defaultValues.category_id
-    } : {
-      name: "",
-      amountCAD: 0,
-      amountUSD: 0,
-      date: new Date(),
-      notes: ""
+    defaultValues: {
+      name: defaultValues?.name || "",
+      amountCAD: defaultValues?.amount_cad,
+      amountUSD: defaultValues?.amount_usd || undefined,
+      date: defaultValues?.date ? new Date(defaultValues.date) : new Date(),
+      notes: defaultValues?.notes || "",
+      categoryId: defaultValues?.category_id,
     },
   });
 
-  async function handleSubmit(data: z.infer<typeof transactionSchema>) {
-    setIsLoading(true);
+  async function handleSubmit(data: FormData) {
+    setIsSubmitting(true);
     try {
       if (isEditing && defaultValues?.id) {
         const formData = {
@@ -78,10 +74,10 @@ export function NewTransactionForm({
           id: defaultValues.id
         }
         
-        await editTransaction(formData);
+        await updateTransaction(formData);
         toast.success('Transaction updated successfully');
       } else {
-        await createTransaction(data);
+        await addTransaction(data);
         toast.success('Transaction created successfully');
       }
 
@@ -92,7 +88,7 @@ export function NewTransactionForm({
       console.error("Failed to process transaction:", error);
       toast.error("An error occurred while processing the transaction");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   }
 
@@ -222,8 +218,8 @@ export function NewTransactionForm({
           )}
         />
 
-        <Button className="ml-auto" type="submit" disabled={isLoading}>
-          {isLoading ? "Submitting..." : "Submit"}
+        <Button className="ml-auto" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Submitting..." : "Submit"}
         </Button>
       </form>
     </Form>

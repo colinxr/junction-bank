@@ -37,3 +37,11 @@ export interface RecurringTransaction {
   category?: string;
   createdAt: Date;
 }
+
+export interface Category {
+  id: number;
+  name: string;
+  type: string;
+  notes?: string | null;
+  createdAt: string;
+}

@@ -1,16 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { RecurringTransactionService } from '@/lib/services/recurringTransaction.service';
 
 const recurringTransactionService = new RecurringTransactionService(prisma);
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: number } }
+  request: NextRequest,
 ) {
   try { 
-    const { id } = await params;
-    const transaction = await recurringTransactionService.show(id);
+    const parsedId = Number(request.nextUrl.searchParams.get('id'));
+    const transaction = await recurringTransactionService.show(parsedId);
     
     return NextResponse.json({ data: transaction });
   } catch (error) {
@@ -23,15 +22,14 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
-  { params }: { params: { id: number } }
+  request: NextRequest,
 ) {
   try {
-    const { id } = await params;
+    const parsedId = Number(request.nextUrl.searchParams.get('id'));
     const body = await request.json();
     
     const updatedTransaction = await recurringTransactionService.edit(
-      id, 
+      parsedId, 
       body
     );
     
@@ -46,12 +44,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: number } }
+  request: NextRequest,
 ) {
   try {
-    const { id } = await params;
-    const result = await recurringTransactionService.destroy(id);
+    const parsedId = Number(request.nextUrl.searchParams.get('id'));
+    const result = await recurringTransactionService.destroy(parsedId);
     
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

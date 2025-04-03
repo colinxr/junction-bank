@@ -23,10 +23,11 @@ export async function GET(request: Request) {
         'Cache-Control': 'no-store, must-revalidate, max-age=0',
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching months:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Server error';
     return NextResponse.json(
-      { error: error.message || 'Server error' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
@@ -39,10 +40,11 @@ export async function POST(request: Request) {
     const newMonth = await monthService.create({month, year, notes});
     
     return NextResponse.json({ data: newMonth });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating month:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create month';
     return NextResponse.json(
-      { error: error.message || 'Failed to create month' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

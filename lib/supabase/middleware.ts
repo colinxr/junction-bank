@@ -6,7 +6,7 @@ type CookieOptions = Partial<SerializeOptions>
 
 export function createClient(request: NextRequest) {
   // Create a response object
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: request.headers,
     },

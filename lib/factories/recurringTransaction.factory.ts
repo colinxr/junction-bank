@@ -14,12 +14,11 @@ export class RecurringTransactionFactory {
     userId: string;
   }) {
     // Handle currency conversion
-    let { amountCAD, amountUSD } = data;
-    
-    if (!amountCAD && amountUSD) {
-      // Use the currency service to convert USD to CAD
+    const { amountUSD } = data;
+    let amountCAD = null;
+    if (!data.amountCAD && amountUSD) {
       amountCAD = await this.currencyService.convertAmount(amountUSD);
-    } else if (!amountCAD) {
+    } else if (!data.amountCAD) {
       throw new Error("Either CAD or USD amount must be provided");
     }
 

@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { useCategories, Category } from "@/lib/hooks/useCategories";
+import { useCategories } from "@/app/hooks/useCategories";
 import { Combobox, ComboboxOption } from "@/components/ui/combobox";
+import { Category } from "@/app/types";
 
 interface CategoryComboBoxProps {
   value: number | undefined;

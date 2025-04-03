@@ -1,16 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { MonthService } from '@/lib/services/month.service';
 
 const monthService = new MonthService(prisma);
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: number } }
+  request: NextRequest,
 ) {
-  try {
-    const { id } = await params
-    const parsedId = Number(id);
+  try { 
+    const parsedId = Number(request.nextUrl.searchParams.get('id'));
     const month = await monthService.show(parsedId);
     
     if (!month) {
@@ -35,13 +33,11 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
-  { params }: { params: { id: number } }
+  request: NextRequest,
 ) {
   try {
     const {month, year, notes} = await request.json();
-    const { id } = await params
-    const parsedId = Number(id);
+    const parsedId = Number(request.nextUrl.searchParams.get('id'));
     const updatedMonth = await monthService.edit(parsedId, { month, year, notes });
     
     return NextResponse.json({ data: updatedMonth }, { status: 200 });
@@ -55,12 +51,10 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: number } }
+  request: NextRequest,
 ) {
   try {
-    const { id } = await params
-    const parsedId = Number(id);
+    const parsedId = Number(request.nextUrl.searchParams.get('id'));
     const result = await monthService.destroy(parsedId);
     
     return NextResponse.json(result, { status: 200 });
