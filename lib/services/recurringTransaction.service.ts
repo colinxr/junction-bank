@@ -1,5 +1,14 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { BaseTransactionService } from "./baseTransaction.service";
+import { getMonthName } from "../utils";
+
+type RecurringTransaction = {
+  amountCAD: Prisma.Decimal;
+  amountUSD: Prisma.Decimal | null;
+  category: { name: string; type: string };
+  month?: { month: number };
+  [key: string]: unknown;
+}
 
 export class RecurringTransactionService extends BaseTransactionService {
   constructor(prisma: PrismaClient) {
@@ -33,7 +42,7 @@ export class RecurringTransactionService extends BaseTransactionService {
       take: limit
     });
 
-    const formattedRecurringTransactions = await this.formatTransactions(recurringTransactions, 'recurring');
+    const formattedRecurringTransactions = await this.formatTransactions(recurringTransactions);
     return this.formatPaginationResponse(formattedRecurringTransactions, totalCount, page, limit);
   }
 
@@ -215,5 +224,23 @@ export class RecurringTransactionService extends BaseTransactionService {
       console.error('Error applying recurring transactions:', error);
       throw new Error('Failed to apply recurring transactions to month');
     }
+  }
+
+  protected async formatTransactions(transactions: RecurringTransaction[]) {
+    return transactions.map(transaction => {
+      const amountCad = transaction.amountCAD.toNumber();
+      const amountUsd = transaction.amountUSD?.toNumber() || null;
+      const categoryName = transaction.category.name;
+      const monthName = transaction.month?.month ? getMonthName(transaction.month.month) : undefined;
+
+      return {
+        ...transaction,
+        amount_cad: amountCad,
+        amount_usd: amountUsd,
+        category: categoryName,
+        month: monthName,
+        transaction_type: transaction.category.type
+      };
+    });
   }
 } 

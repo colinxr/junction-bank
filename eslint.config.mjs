@@ -11,6 +11,11 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    files: ["app/api/**/*.ts"],
+    rules: {
+      "@next/next/no-server-import-in-page": "off", // Avoids issues with `next/server`
+    },
+  },
 ];
-
 export default eslintConfig;

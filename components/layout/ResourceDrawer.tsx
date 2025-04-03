@@ -25,7 +25,7 @@ export interface ResourceDrawerProps<T> {
   isOpen: boolean
   onClose: () => void
   onEdit?: (resource: T) => void
-  onDelete?: (id: string | number) => Promise<boolean> | void
+  onDelete?: (id: number) => Promise<boolean> | void
   renderContent: (resource: T) => React.ReactNode
   title?: string
   className?: string
@@ -35,7 +35,7 @@ export interface ResourceDrawerProps<T> {
 export interface ResourceDrawerContentProps<T> {
   resource: T
   onEdit?: (resource: T) => void
-  onDelete?: (id: number | string) => void
+  onDelete?: (id: number ) => Promise<boolean> | void
 }
 
 export function ResourceDrawer<T>({
@@ -60,7 +60,8 @@ export function ResourceDrawer<T>({
   const confirmDelete = () => {
     const resourceWithId = resource as unknown as { id: string | number }
     if (onDelete && resourceWithId.id) {
-      onDelete(resourceWithId.id)
+      const id = Number(resourceWithId.id)
+      onDelete(Number(id))
       setIsDeleteDialogOpen(false)
       onClose() // Close the drawer after deletion
     }

@@ -50,7 +50,7 @@ export function NewTransactionForm({
   isEditing?: boolean;
 }) {
   const router = useRouter();
-  const { addTransaction, updateTransaction } = useTransactions();
+  const { createTransaction, editTransaction } = useTransactions();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<FormData>({
@@ -74,10 +74,10 @@ export function NewTransactionForm({
           id: defaultValues.id
         }
         
-        await updateTransaction(formData);
+        await editTransaction(formData);
         toast.success('Transaction updated successfully');
       } else {
-        await addTransaction(data);
+        await createTransaction(data);
         toast.success('Transaction created successfully');
       }
 

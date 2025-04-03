@@ -6,10 +6,11 @@ const recurringTransactionService = new RecurringTransactionService(prisma);
 
 export async function GET(
   request: NextRequest,
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try { 
-    const parsedId = Number(request.nextUrl.searchParams.get('id'));
-    const transaction = await recurringTransactionService.show(parsedId);
+    const id = (await params).id;
+    const transaction = await recurringTransactionService.show(Number(id));
     
     return NextResponse.json({ data: transaction });
   } catch (error) {
@@ -23,13 +24,14 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-    const parsedId = Number(request.nextUrl.searchParams.get('id'));
+    const id = (await params).id;
     const body = await request.json();
     
     const updatedTransaction = await recurringTransactionService.edit(
-      parsedId, 
+      Number(id), 
       body
     );
     
@@ -45,10 +47,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-    const parsedId = Number(request.nextUrl.searchParams.get('id'));
-    const result = await recurringTransactionService.destroy(parsedId);
+    const id = (await params).id;
+    const result = await recurringTransactionService.destroy(id);
     
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

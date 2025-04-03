@@ -6,10 +6,11 @@ const categoryService = new CategoryService(prisma);
 
 export async function GET(
   request: NextRequest,
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-    const parsedId = Number(request.nextUrl.searchParams.get('id'));
-    const category = await categoryService.show(parsedId);
+    const id = (await params).id; 
+    const category = await categoryService.show(Number(id));
     
     if (!category) {
       return NextResponse.json(
@@ -34,10 +35,11 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-    const parsedId = Number(request.nextUrl.searchParams.get('id'));
-    const result = await categoryService.destroy(parsedId);
+    const id = (await params).id; 
+    const result = await categoryService.destroy(id);
     
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

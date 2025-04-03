@@ -6,10 +6,11 @@ const monthService = new MonthService(prisma);
 
 export async function GET(
   request: NextRequest,
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try { 
-    const parsedId = Number(request.nextUrl.searchParams.get('id'));
-    const month = await monthService.show(parsedId);
+    const id = (await params).id;
+    const month = await monthService.show(Number(id));
     
     if (!month) {
       return NextResponse.json(
@@ -33,12 +34,13 @@ export async function GET(
 }
 
 export async function PUT(
-  request: NextRequest,
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
     const {month, year, notes} = await request.json();
-    const parsedId = Number(request.nextUrl.searchParams.get('id'));
-    const updatedMonth = await monthService.edit(parsedId, { month, year, notes });
+    const id = (await params).id; 
+    const updatedMonth = await monthService.edit(Number(id), { month, year, notes });
     
     return NextResponse.json({ data: updatedMonth }, { status: 200 });
   } catch (error) {
@@ -52,10 +54,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-    const parsedId = Number(request.nextUrl.searchParams.get('id'));
-    const result = await monthService.destroy(parsedId);
+    const id = (await params).id; 
+    const result = await monthService.destroy(id);
     
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

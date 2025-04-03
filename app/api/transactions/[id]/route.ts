@@ -6,10 +6,11 @@ const transactionService = new TransactionService(prisma);
 
 export async function DELETE(
   request: NextRequest,
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-  const parsedId = Number(request.nextUrl.searchParams.get('id'));
-    const result = await transactionService.destroy(parsedId);
+    const id = (await params).id;
+    const result = await transactionService.destroy(id);
     
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
@@ -23,10 +24,11 @@ export async function DELETE(
 
 export async function PUT(
   request: NextRequest,
+  { params }: { params: Promise<{ id: number }> }
 ) {
-  const parsedId = Number(request.nextUrl.searchParams.get('id'));
+  const id = (await params).id;
   const { name, amountCAD, amountUSD, date, category: categoryId, notes } = await request.json();
 
-  const result = await transactionService.update(parsedId, { name, amountCAD, amountUSD, date, categoryId, notes });
+  const result = await transactionService.update(id, { name, amountCAD, amountUSD, date, categoryId, notes });
   return NextResponse.json(result, { status: 200 });
 }

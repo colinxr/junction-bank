@@ -6,8 +6,8 @@ import { CurrencyService } from "./currency.service";
 type PrismaEntityName = 'transaction' | 'recurringTransaction';
 
 interface Transaction {
-  amountCAD: { toNumber: () => number };
-  amountUSD?: { toNumber: () => number };
+  amountCAD: Prisma.Decimal;
+  amountUSD: Prisma.Decimal | null;
   category: { name: string; type: string };
   month?: { month: number };
   [key: string]: unknown;

@@ -58,7 +58,6 @@ export function TransactionsDataTable({
         filterableColumns={filterableColumns}
         searchPlaceholder="Search transactions..."
         onRowClick={handleRowClick}
-        resourceType="transaction"
       />
 
       {selectedTransaction && (
