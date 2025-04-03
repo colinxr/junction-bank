@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Month } from "@/app/types"
+import { formatCurrency, getMonthName } from "@/lib/utils"
 
 export const columns: ColumnDef<Month>[] = [
   {
@@ -12,7 +13,7 @@ export const columns: ColumnDef<Month>[] = [
 
       return month ? (
         <div className="max-w-[200px] truncate" title={month.toString()}>
-          {month}
+          {getMonthName(month) + " " + row.original.year}
         </div>
       ) : (
         <div className="text-gray-400">-</div>
@@ -20,8 +21,20 @@ export const columns: ColumnDef<Month>[] = [
     },
   },
   {
-    accessorKey: "year",
-    header: "Year",
+    accessorKey: "totalIncome ",
+    header: "Income",
+    cell: ({ row }) => {
+      const totalIncome = row.original.totalIncome
+      return totalIncome ? formatCurrency(totalIncome) : "-"
+    },
+  },
+  {
+    accessorKey: "totalExpenses",
+    header: "Expenses",
+    cell: ({ row }) => {
+      const totalExpenses = row.original.totalExpenses
+      return totalExpenses ? formatCurrency(totalExpenses) : "-"
+    },
   },
   {
     accessorKey: "notes",

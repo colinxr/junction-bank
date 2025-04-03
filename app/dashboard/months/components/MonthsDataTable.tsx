@@ -38,20 +38,14 @@ export function MonthsDataTable({ data, columns }: MonthsDataTableProps) {
       }))
   }, [data])
 
-  const filterableColumns = [
-    {
-      id: "year",
-      title: "Year",
-      options: years,
-    },
-  ]
 
+  console.log(data);
+  
   return (
     <>
       <DataTable
         columns={columns}
         data={data}
-        filterableColumns={filterableColumns}
         searchPlaceholder="Search months..."
         onRowClick={handleRowClick}
       />
