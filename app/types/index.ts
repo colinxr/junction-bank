@@ -5,7 +5,7 @@ export interface Transaction {
   name: string
   amount_cad: number
   amount_usd: number | null
-  category_id: number
+  categoryId: number
   notes: string | null
   date: Date
   transaction_type: 'income' | 'expense'
