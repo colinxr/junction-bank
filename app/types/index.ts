@@ -29,8 +29,11 @@ export interface RecurringTransaction {
   id: number;
   name: string;
   transaction_type?: "income" | "expense";
-  amount_cad: number;
+  type?: "Income" | "Expense";
+  amount_cad?: number;
   amount_usd?: number;
+  amountCAD?: number;
+  amountUSD?: number;
   day_of_month?: number;
   notes?: string;
   categoryId: number;

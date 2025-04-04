@@ -21,10 +21,10 @@ export interface CategorySpendingDTO {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: number } }
 ) {
   try {
-    const id = Number(params.id);
+    const id = (await params).id;
     const month = await monthUseCases.show.execute(id);
 
     if (!month || month.id == undefined) {
@@ -71,10 +71,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: number } }
 ) {
   try {
-    const id = Number(params.id);
+    const id = (await params).id;
     const data = await request.json();
 
     const month = await monthUseCases.update.execute(id, {
@@ -113,10 +113,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: number } }
 ) {
   try {
-    const id = Number(params.id);
+    const id = (await params).id;
     await monthUseCases.delete.execute(id);
 
     return NextResponse.json(

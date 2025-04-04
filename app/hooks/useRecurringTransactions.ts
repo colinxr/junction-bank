@@ -1,9 +1,9 @@
 import useSWR from 'swr';
-import { useState } from 'react';
 import { toast } from 'sonner';
 import { RecurringTransactionRepository } from '@/lib/repositories/recurringTransaction.repository';
 import { RecurringTransaction } from '@/app/types';
-const API_URL = '/api/recurring-transactions';
+import apiClient from '@/lib/api-client';
+const API_URL = '/api/transactions/recurring';
 
 // Fetcher function
 const fetcher = async (url: string) => {
@@ -22,20 +22,9 @@ interface RecurringTransactionQueryParams {
 }
 
 export function useRecurringTransactions(initialParams: RecurringTransactionQueryParams = {}) {
-  // State for query parameters
-  const [queryParams, setQueryParams] = useState<RecurringTransactionQueryParams>({
-    page: initialParams.page || 1,
-    limit: initialParams.limit || 20,
-  });
-  
-  // Build query string
-  const queryString = new URLSearchParams();
-  if (queryParams.page) queryString.append('page', queryParams.page.toString());
-  if (queryParams.limit) queryString.append('limit', queryParams.limit.toString());
-
   // SWR hook for data fetching
   const { data, error, isLoading, mutate } = useSWR(
-    `${API_URL}?${queryString.toString()}`,
+    API_URL,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -43,15 +32,9 @@ export function useRecurringTransactions(initialParams: RecurringTransactionQuer
       dedupingInterval: 60000, // 1 minute
     }
   );
+
+  console.log(data);
   
-  // Update query parameters
-  const setPage = (page: number) => {
-    setQueryParams(prev => ({ ...prev, page }));
-  };
-  
-  const setLimit = (limit: number) => {
-    setQueryParams(prev => ({ ...prev, limit }));
-  };
 
   // Method to create a new recurring transaction optimistically
   const createRecurringTransaction = async (transactionData: Partial<RecurringTransaction>) => {
@@ -74,7 +57,7 @@ export function useRecurringTransactions(initialParams: RecurringTransactionQuer
       mutate(optimisticData, false);
       
       // Use the repository to create the transaction
-      const response = await RecurringTransactionRepository.createRecurringTransaction(transactionData);
+      const response = await apiClient.post(API_URL, transactionData);
       
       // Revalidate the data to get the actual server response
       mutate();
@@ -107,10 +90,7 @@ export function useRecurringTransactions(initialParams: RecurringTransactionQuer
       mutate(optimisticData, false);
       
       // Use the repository to update the transaction
-      await RecurringTransactionRepository.updateRecurringTransaction(
-        transaction.id,
-        transaction
-      );
+      await apiClient.put(`${API_URL}/${transaction.id}`, transaction);
       
       // Revalidate to get the server data
       mutate();
@@ -141,7 +121,7 @@ export function useRecurringTransactions(initialParams: RecurringTransactionQuer
       mutate(optimisticData, false);
       
       // Use the repository to delete the transaction
-      await RecurringTransactionRepository.deleteRecurringTransaction(id);
+      await apiClient.delete(`${API_URL}/${id}`);
       
       // Revalidate to get the server data
       mutate((key: string) => key.startsWith(API_URL));
@@ -162,8 +142,6 @@ export function useRecurringTransactions(initialParams: RecurringTransactionQuer
     pagination: data?.pagination || { total: 0, page: 1, pages: 1 },
     isLoading,
     error,
-    setPage,
-    setLimit,
     createRecurringTransaction,
     editRecurringTransaction,
     deleteRecurringTransaction,

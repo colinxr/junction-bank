@@ -1,12 +1,14 @@
 import { prisma } from '@/lib/prisma';
+
+// Categories
 import { ICategoryRepository } from '../../domain/repositories/ICategoryRepository';
 import { CategoryRepository } from '../repositories/prisma/CategoryRepository';
 import { IndexCategoryUseCase } from '../../application/useCases/category/IndexCategoriesUseCase';
 import { ShowCategoryUseCase } from '../../application/useCases/category/ShowCategoryUseCase';
 import { StoreCategoryUseCase } from '../../application/useCases/category/StoreCategoryUseCase';
 import { DeleteCategoryUseCase } from '../../application/useCases/category/DeleteCategoryUseCase';
-import { ITransactionRepository } from '../../domain/repositories/ITransactionRepository';
-import { TransactionRepository } from '../repositories/prisma/TransactionRepository';
+
+// Months
 import { IMonthRepository } from '../../domain/repositories/IMonthRepository';
 import { MonthRepository } from '../repositories/prisma/MonthRepository';
 import { IndexMonthsUseCase } from '../../application/useCases/month/IndexMonthsUseCase';
@@ -16,10 +18,25 @@ import { StoreMonthUseCase } from '../../application/useCases/month/StoreMonthUs
 import { UpdateMonthUseCase } from '../../application/useCases/month/UpdateMonthUseCase';
 import { DestroyMonthUseCase } from '../../application/useCases/month/DestroyMonthUseCase'; 
 import { GetMonthlySpendingByCategoryUseCase } from '../../application/useCases/month/GetMonthlySpendingByCategoryUseCase';
+
+// Transactions
+import { ITransactionRepository } from '../../domain/repositories/ITransactionRepository';
+import { TransactionRepository } from '../repositories/prisma/TransactionRepository';
+
+// Recurring Transactions
+import { IRecurringTransactionRepository } from '../../domain/repositories/IRecurringTransactionRepository';
+import { RecurringTransactionRepository } from '../repositories/prisma/RecurringTransactionRepository';
+import { IndexRecurringTransactionsUseCase } from '../../application/useCases/recurringTransaction/IndexRecurringTransactionsUseCase';
+import { ShowRecurringTransactionUseCase } from '../../application/useCases/recurringTransaction/ShowRecurringTransactionUseCase';
+import { StoreRecurringTransactionUseCase } from '../../application/useCases/recurringTransaction/StoreRecurringTransactionUseCase';
+import { UpdateRecurringTransactionUseCase } from '../../application/useCases/recurringTransaction/UpdateRecurringTransactionUseCase';
+import { DeleteRecurringTransactionUseCase } from '../../application/useCases/recurringTransaction/DeleteRecurringTransactionUseCase';
+
 // Singleton repositories
 const categoryRepository: ICategoryRepository = new CategoryRepository(prisma);
 const monthRepository: IMonthRepository = new MonthRepository(prisma);
 const transactionRepository: ITransactionRepository = new TransactionRepository(prisma);
+const recurringTransactionRepository: IRecurringTransactionRepository = new RecurringTransactionRepository(prisma);
 
 // Factory functions for use cases
 export const makeCategoryUseCases = () => {
@@ -46,5 +63,15 @@ export const makeMonthUseCases = () => {
 export const makeTransactionUseCases = () => {
   return {
     getSpendingByCategory: new GetMonthlySpendingByCategoryUseCase(transactionRepository)
+  };
+};
+
+export const makeRecurringTransactionUseCases = () => {
+  return {
+    index: new IndexRecurringTransactionsUseCase(recurringTransactionRepository),
+    show: new ShowRecurringTransactionUseCase(recurringTransactionRepository),
+    store: new StoreRecurringTransactionUseCase(recurringTransactionRepository),
+    update: new UpdateRecurringTransactionUseCase(recurringTransactionRepository),
+    delete: new DeleteRecurringTransactionUseCase(recurringTransactionRepository)
   };
 };
