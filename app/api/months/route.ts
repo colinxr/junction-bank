@@ -1,33 +1,32 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { MonthService } from '@/lib/services/month.service';
+import { makeMonthUseCases } from '@/infrastructure/di/container';
+import { MonthMapper } from '@/infrastructure/mappers/MonthMapper';
+import { DomainException } from '@/domain/exceptions/DomainException';
 
-const monthService = new MonthService(prisma);
+// Create use cases through the dependency injection container
+const monthUseCases = makeMonthUseCases();
 
 export async function GET(request: Request) {
   try {
-    const url = new URL(request.url);
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '20');
-    const year = url.searchParams.get('year') ? parseInt(url.searchParams.get('year') || '') : undefined;
-
-    // Get months with transaction count using MonthService
-    const result = await monthService.index({
-      page,
-      limit,
-      year
-    });
+    const result = await monthUseCases.index.execute();
 
     return NextResponse.json(result, {
       headers: {
         'Cache-Control': 'no-store, must-revalidate, max-age=0',
       }
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching months:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Server error';
+
+    if (error instanceof DomainException) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: errorMessage },
+      { error: 'Failed to fetch months' },
       { status: 500 }
     );
   }
@@ -35,16 +34,31 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const {month, year, notes} = await request.json();
-  
-    const newMonth = await monthService.create({month, year, notes});
-    
-    return NextResponse.json({ data: newMonth });
-  } catch (error: unknown) {
+    const data = await request.json();
+
+    // Execute use case
+    const month = await monthUseCases.store.execute({
+      month: data.month,
+      year: data.year,
+      notes: data.notes
+    });
+
+    // Convert to DTO for response
+    const monthDTO = MonthMapper.toDTO(month);
+
+    return NextResponse.json({ data: monthDTO }, { status: 201 });
+  } catch (error) {
     console.error('Error creating month:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create month';
+
+    if (error instanceof DomainException) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: errorMessage },
+      { error: 'Failed to create month' },
       { status: 500 }
     );
   }
