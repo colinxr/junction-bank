@@ -5,6 +5,6 @@ export class IndexCategoryUseCase {
   constructor(private categoryRepository: ICategoryRepository) {}
   
   async execute(): Promise<Category[]> {
-    return this.categoryRepository.findAll();
+    return this.categoryRepository.index();
   }
 } 
