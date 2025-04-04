@@ -2,7 +2,8 @@ import useSWR from 'swr';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Month } from '@/app/types';
-import { MonthRepository } from '@/lib/repositories/month.repository';
+import { MonthDTO } from '@/application/dtos/month/MonthDTO';
+import apiClient from '@/lib/api-client';
 
 const API_URL = '/api/months';
 
@@ -43,18 +44,14 @@ interface MonthQueryParams {
 export function useMonths(initialParams: MonthQueryParams = {}) {
   // State for query parameters
   const [queryParams, setQueryParams] = useState<MonthQueryParams>({
-    page: initialParams.page || 1,
-    limit: initialParams.limit || 20,
+    page: initialParams.page,
+    limit: initialParams.limit,
     startDate: initialParams.startDate,
     endDate: initialParams.endDate,
   });
   
   // Build query string
   const queryString = new URLSearchParams();
-  if (queryParams.page) queryString.append('page', queryParams.page.toString());
-  if (queryParams.limit) queryString.append('limit', queryParams.limit.toString());
-  if (queryParams.startDate) queryString.append('startDate', queryParams.startDate.toISOString());
-  if (queryParams.endDate) queryString.append('endDate', queryParams.endDate.toISOString());
   
   // SWR hook for data fetching
   const { data, error, isLoading, mutate } = useSWR(
@@ -101,7 +98,7 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
       mutate(optimisticData, false);
       
       // Use the repository to create the transaction
-      const response = await MonthRepository.createMonth(monthData);
+      const response = await apiClient.post<{data: MonthDTO}>(API_URL, monthData);
       
       // Revalidate the data to get the actual server response
       mutate();
@@ -134,7 +131,7 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
       mutate(optimisticData, false);
       
       // Use the repository to update the month
-      await MonthRepository.updateMonth(month.id, month);
+      await apiClient.put<{data: MonthDTO}>(`${API_URL}/${month.id}`, month);
       
       // Revalidate to get the server data
       mutate();
@@ -168,7 +165,7 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
       mutate(optimisticData, false);
       
       // Use the repository to delete the month
-      await MonthRepository.deleteMonth(id);
+      await apiClient.delete<MonthDTO>(`${API_URL}/${id}`);
       
       // Revalidate to get the server data
       mutate((key: string) => key.startsWith(API_URL));
@@ -185,7 +182,7 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
   };
 
   const getMonth = async (id: number) => {
-    const response = await MonthRepository.getMonth(id);
+    const response = await apiClient.get<MonthDTO>(`${API_URL}/${id}`);
     return response.data;
   };
   

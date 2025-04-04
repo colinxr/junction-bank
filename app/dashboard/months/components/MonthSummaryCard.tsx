@@ -80,7 +80,7 @@ export function MonthSummaryCard({ monthId, className }: MonthSummaryProps) {
         <CardContent>
           <p className="text-md text-xl font-semibold">Spending by Category</p>
           <div className="grid grid-cols-4 gap-4 mt-4">
-            {monthDetail?.spendingByCategory.map((category: { categoryId: number, categoryName: string, totalAmountCAD: string, totalAmountUSD: string }) => (
+            {monthDetail?.spendingByCategory?.map((category: { categoryId: number, categoryName: string, totalAmountCAD: string, totalAmountUSD: string }) => (
               <Card key={category.categoryId} className="px-0 py-3 gap-2">
                 <CardHeader>
                 <CardTitle className="text-lg font-semibold">{category.categoryName}</CardTitle>

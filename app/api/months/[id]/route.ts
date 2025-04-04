@@ -1,52 +1,111 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { MonthService } from '@/lib/services/month.service';
+import { NextRequest, NextResponse } from 'next/server';
+import { makeMonthUseCases, makeTransactionUseCases } from '@/infrastructure/di/container';
+import { MonthMapper } from '@/infrastructure/mappers/MonthMapper';
+import { DomainException } from '@/domain/exceptions/DomainException';
+import { MonthNotFoundException } from '@/domain/exceptions/MonthException';
+import { MonthDTO } from '@/application/dtos/month/MonthDTO';
 
-const monthService = new MonthService(prisma);
+// Create use cases through the dependency injection container
+const monthUseCases = makeMonthUseCases();
+const transactionUseCases = makeTransactionUseCases();
+
+export interface MonthDetailDTO extends MonthDTO {
+  spendingByCategory: CategorySpendingDTO[];
+}
+
+export interface CategorySpendingDTO {
+  categoryId: number;
+  categoryName: string;
+  total: number;
+}
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: number }> }
+  { params }: { params: { id: string } }
 ) {
-  try { 
-    const id = (await params).id;
-    const month = await monthService.show(Number(id));
-    
-    if (!month) {
-      return NextResponse.json(
-        { error: 'Month not found' },
-        { status: 404 }
-      );
+  try {
+    const id = Number(params.id);
+    const month = await monthUseCases.show.execute(id);
+
+    if (!month || month.id == undefined) {
+      // Handle case where month exists but has no ID
+      return NextResponse.json({ error: 'Invalid month data' }, { status: 400 });
     }
+
+    const spendingByCategory = await transactionUseCases.getSpendingByCategory.execute(month.id);
     
-    return NextResponse.json(month, { 
+    const monthDTO = MonthMapper.toDTO(month);
+    const response: MonthDetailDTO = {
+      ...monthDTO,
+      spendingByCategory
+    };
+
+    return NextResponse.json(response, {
       headers: {
         'Cache-Control': 'private, max-age=60'
       }
     });
   } catch (error) {
     console.error('Error fetching month:', error);
+
+    if (error instanceof MonthNotFoundException) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 404 }
+      );
+    }
+
+    if (error instanceof DomainException) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to fetch month' },
+      { error: 'Failed to fetch month' },
       { status: 500 }
     );
   }
 }
 
 export async function PUT(
-  request: NextRequest, 
-  { params }: { params: Promise<{ id: number }> }
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const {month, year, notes} = await request.json();
-    const id = (await params).id; 
-    const updatedMonth = await monthService.edit(Number(id), { month, year, notes });
-    
-    return NextResponse.json({ data: updatedMonth }, { status: 200 });
+    const id = Number(params.id);
+    const data = await request.json();
+
+    const month = await monthUseCases.update.execute(id, {
+      month: data.month,
+      year: data.year,
+      notes: data.notes
+    });
+
+    // Convert to DTO
+    const monthDTO = MonthMapper.toDTO(month);
+
+    return NextResponse.json({ data: monthDTO });
   } catch (error) {
     console.error('Error updating month:', error);
+
+    if (error instanceof MonthNotFoundException) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 404 }
+      );
+    }
+
+    if (error instanceof DomainException) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to update month' },
+      { error: 'Failed to update month' },
       { status: 500 }
     );
   }
@@ -54,17 +113,35 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: number }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const id = (await params).id; 
-    const result = await monthService.destroy(id);
-    
-    return NextResponse.json(result, { status: 200 });
+    const id = Number(params.id);
+    await monthUseCases.delete.execute(id);
+
+    return NextResponse.json(
+      { success: true, message: 'Month deleted successfully' },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Error deleting month:', error);
+
+    if (error instanceof MonthNotFoundException) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 404 }
+      );
+    }
+
+    if (error instanceof DomainException) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to delete month' },
+      { error: 'Failed to delete month' },
       { status: 500 }
     );
   }
