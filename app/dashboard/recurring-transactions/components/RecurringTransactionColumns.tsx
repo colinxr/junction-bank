@@ -33,21 +33,7 @@ export const columns: ColumnDef<RecurringTransaction>[] = [
     },
   },
   {
-    accessorKey: "type",
-    header: "Type",
-    cell: ({ row }) => {
-      const type = row.getValue("type") as string;
-      const isExpense = type === "expense";
-
-      return (
-        <Badge variant={isExpense ? "destructive" : "outline"}>
-          {isExpense ? 'Expense' : 'Income'}
-        </Badge>
-      );
-    },
-  },
-  {
-    accessorKey: "amount_cad",
+    accessorKey: "amountCAD",
     header: ({ column }) => {
       return (
         <Button
@@ -60,21 +46,23 @@ export const columns: ColumnDef<RecurringTransaction>[] = [
       );
     },
     cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount_cad"));
+      const type = row.original.type;
+      const isExpense = type === "Expense";
+      const amount = parseFloat(row.getValue("amountCAD"));
       const formatted = new Intl.NumberFormat("en-CA", {
         style: "currency",
         currency: "CAD",
       }).format(amount);
 
       return (
-        <div className={`text-center ${row.original.transaction_type === 'income' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
+        <div className={`text-center ${isExpense ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}`}>
           {formatted}
         </div>
       )
     },
   },
   {
-    accessorKey: "amount_usd",
+    accessorKey: "amountUSD",
     header: ({ column }) => {
       return (
         <Button
@@ -87,16 +75,18 @@ export const columns: ColumnDef<RecurringTransaction>[] = [
       );
     },
     cell: ({ row }) => {
-      if (!row.original.amount_usd) return '-';
+      if (!row.original.amountUSD) return '-';
+      const type = row.original.type;
+      const isExpense = type === "Expense";
 
-      const amount = parseFloat(row.getValue("amount_usd"));
+      const amount = parseFloat(row.getValue("amountUSD"));
       const formatted = new Intl.NumberFormat("en-CA", {
         style: "currency",
         currency: "USD",
       }).format(amount);
 
       return (
-        <div className={`text-center ${row.original.transaction_type === 'income' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
+        <div className={`text-center ${isExpense ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}`}>
           {formatted}
         </div>
       )

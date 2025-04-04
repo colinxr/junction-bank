@@ -3,7 +3,7 @@ import { RecurringTransaction } from "@/app/types";
 
 export const RecurringTransactionRepository = {
   async createRecurringTransaction(transactionData: Partial<RecurringTransaction>) {
-    return apiClient.post("/recurring-transactions", {
+    return apiClient.post("/transactions/recurring", {
       ...transactionData
     });
   },
@@ -13,14 +13,14 @@ export const RecurringTransactionRepository = {
   },
 
   async getRecurringTransaction(id: number) {
-    return apiClient.get(`/recurring-transactions/${id}`);
+    return apiClient.get(`/transactions/recurring/${id}`);
   },
 
   async updateRecurringTransaction(id: number, transactionData: Partial<RecurringTransaction>) {
-    return apiClient.put(`/recurring-transactions/${id}`, transactionData);
+    return apiClient.put(`/transactions/recurring/${id}`, transactionData);
   },
 
   async deleteRecurringTransaction(id: number) {
-    return apiClient.delete(`/recurring-transactions/${id}`);
+    return apiClient.delete(`/transactions/recurring/${id}`);
   }
 }; 
