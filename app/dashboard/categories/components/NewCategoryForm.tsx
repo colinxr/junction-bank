@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { CategoryRepository } from "@/lib/repositories/category.repository";
+import { useCategories } from "@/app/hooks/useCategories";
 
 import {
   Form,
@@ -34,6 +34,7 @@ const categorySchema = z.object({
 
 export function NewCategoryForm({ onSubmit }: { onSubmit: () => void }) {
   const router = useRouter();
+  const { createCategory } = useCategories();
 
   const form = useForm<z.infer<typeof categorySchema>>({
     resolver: zodResolver(categorySchema),
@@ -46,10 +47,7 @@ export function NewCategoryForm({ onSubmit }: { onSubmit: () => void }) {
 
   async function handleSubmit(data: z.infer<typeof categorySchema>) {
     try {
-      const resp = await CategoryRepository.createCategory(data);
-      if (resp.status !== 200) {
-        throw new Error('Failed to create category');
-      }
+      await createCategory(data);
 
       onSubmit();
       toast.success('Category created successfully');
