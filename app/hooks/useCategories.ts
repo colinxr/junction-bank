@@ -1,8 +1,8 @@
 import useSWR from 'swr';
 import { toast } from 'sonner';
-import { CategoryRepository } from '@/lib/repositories/category.repository';
 import { Category } from '@/app/types';
-
+import { CategoryDTO } from '@/application/dtos/category/CategoryDTO';
+import apiClient from '@/lib/api-client';
 
 const API_URL = '/api/categories';
 
@@ -28,10 +28,9 @@ export function useCategories() {
       dedupingInterval: 60000, // 1 minute
     }
   );
-
   
   // Method to create a new category
-  const createCategory = async (categoryData: Partial<Category>) => {
+  const createCategory = async (categoryData: Partial<CategoryDTO>) => {
     try {
       // Optimistically update the local data first
       const optimisticData = {
@@ -51,7 +50,7 @@ export function useCategories() {
       mutate(optimisticData, false);
       
       // Use the repository to create the category
-      const response = await CategoryRepository.createCategory(categoryData);
+      const response = await apiClient.post<{data: CategoryDTO}>(API_URL, categoryData);
       
       // Revalidate the data to get the actual server response
       mutate();
@@ -82,7 +81,7 @@ export function useCategories() {
       mutate(optimisticData, false);
       
       // Use the repository to delete the category
-      await CategoryRepository.deleteCategory(id);
+      await apiClient.delete<CategoryDTO>(`${API_URL}/${id}`);
       
       // Revalidate to get the server data
       mutate((key: string) => key.startsWith(API_URL));
@@ -99,12 +98,12 @@ export function useCategories() {
   };
 
   const getCategory = async (id: number) => {
-    const response = await CategoryRepository.getCategory(id);
+    const response = await apiClient.get<CategoryDTO>(`${API_URL}/${id}`);
     return response.data;
   };
   
   return {
-    categories: data || [],
+    categories: data?.data || [],
     isLoading,
     error,
     getCategory,

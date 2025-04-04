@@ -27,6 +27,9 @@ export function CategoriesDataTable({ data, columns }: CategoriesDataTableProps)
     setIsDrawerOpen(false)
   }
 
+  console.log(data);
+  
+
   // Get unique types for filtering
   const types = [
     {
@@ -39,14 +42,6 @@ export function CategoriesDataTable({ data, columns }: CategoriesDataTableProps)
     }
   ]
 
-  const filterableColumns = [
-    {
-      id: "type",
-      title: "Type",
-      options: types,
-    },
-  ]
-
   // Wrapper for delete function to handle both string and number IDs
   const handleDelete = (id: string | number) => {
     deleteCategory(Number(id));
@@ -57,7 +52,6 @@ export function CategoriesDataTable({ data, columns }: CategoriesDataTableProps)
       <DataTable
         columns={columns}
         data={data}
-        filterableColumns={filterableColumns}
         searchPlaceholder="Search categories..."
         onRowClick={handleRowClick}
       />

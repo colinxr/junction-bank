@@ -1,24 +1,33 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { CategoryService } from '@/lib/services/category.service';
+import { makeCategoryUseCases } from '@/infrastructure/di/container';
+import { CategoryMapper } from '@/infrastructure/mappers/CategoryMapper';
+import { DomainException } from '@/domain/exceptions/DomainException';
 
-const categoryService = new CategoryService(prisma);
+// Create use cases through the dependency injection container
+const categoryUseCases = makeCategoryUseCases();
 
 export async function GET() {
   try {
-    // Get categories using CategoryService
-    const { data } = await categoryService.index();
-
-    return NextResponse.json(data, {
+    const categories = await categoryUseCases.index.execute();
+    const categoryDTOs = categories.map(CategoryMapper.toDTO);
+    
+    return NextResponse.json({ data: categoryDTOs }, {
       headers: {
         'Cache-Control': 'no-store, must-revalidate, max-age=0',
       }
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching categories:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Server error';
+    
+    if (error instanceof DomainException) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: errorMessage },
+      { error: 'Failed to fetch categories' },
       { status: 500 }
     );
   }
@@ -26,23 +35,31 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, type, notes } = await request.json();
+    const data = await request.json();
     
-    if (!name || !type) {
+    // Execute use case
+    const category = await categoryUseCases.store.execute({
+      name: data.name,
+      type: data.type,
+      notes: data.notes
+    });
+    
+    // Convert to DTO for response
+    const categoryDTO = CategoryMapper.toDTO(category);
+    
+    return NextResponse.json({ data: categoryDTO }, { status: 201 });
+  } catch (error) {
+    console.error('Error creating category:', error);
+    
+    if (error instanceof DomainException) {
       return NextResponse.json(
-        { error: 'Name and type are required' },
+        { error: error.message },
         { status: 400 }
       );
     }
     
-    const newCategory = await categoryService.create({ name, type, notes });
-    
-    return NextResponse.json({ data: newCategory }, { status: 201 });
-  } catch (error: unknown) {
-    console.error('Error creating category:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create category';
     return NextResponse.json(
-      { error: errorMessage },
+      { error: 'Failed to create category' },
       { status: 500 }
     );
   }

@@ -13,6 +13,8 @@ export default function CategoriesPage() {
     isLoading,
     error,
   } = useCategories();
+
+  console.log(categories);
   
   if (error) {
     return <div className="p-8 text-center">Failed to load categories. Please try again.</div>;
