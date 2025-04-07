@@ -8,18 +8,20 @@ export interface TransactionDTO {
   categoryName?: string;
   notes?: string;
   type: string;
-  createdAt?: string;
+  date: string;
+  monthId: number;
 }
 
-export interface CreateTransactionDTO {
+export interface TransactionCreateDTO {
   userId: string;
   name: string;
   amountCAD: number;
   amountUSD?: number;
   categoryId: number;
   notes?: string;
-  type?: string;
-  date: Date;
+  type: string;
+  date: string;
+  monthId: number;
 }
 
 export interface UpdateTransactionDTO {
@@ -36,4 +38,11 @@ export interface TransactionListResponseDTO {
   pagination: {
     total: number;
   };
+}
+
+export interface CategorySpendingDTO {
+  categoryId: number;
+  categoryName: string;
+  totalSpent: number;
+  transactionCount: number;
 } 

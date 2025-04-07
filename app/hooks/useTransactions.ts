@@ -27,7 +27,7 @@ interface TransactionQueryParams {
 
 export function useTransactions(initialParams: TransactionQueryParams = {}) {
   // State for query parameters
-  const [queryParams, _setQueryParams] = useState<TransactionQueryParams>({
+  const [queryParams] = useState<TransactionQueryParams>({
     monthId: initialParams.monthId,
   });
   

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { DataTable } from "@/components/layout/DataTable"
 import { Month } from "@/app/types"
@@ -26,20 +26,6 @@ export function MonthsDataTable({ data, columns }: MonthsDataTableProps) {
   const handleDrawerClose = () => {
     setIsDrawerOpen(false)
   }
-
-  // Get unique years for filtering
-  const years = useMemo(() => {
-    const uniqueYears = Array.from(new Set(data.map(item => item.year)))
-    return uniqueYears
-      .sort((a, b) => b - a)
-      .map(year => ({
-        label: year.toString(),
-        value: year.toString(),
-      }))
-  }, [data])
-
-
-  console.log(data);
   
   return (
     <>

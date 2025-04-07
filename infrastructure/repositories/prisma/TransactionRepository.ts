@@ -7,12 +7,14 @@ import { CategorySpendingDTO } from "@/application/dtos/transaction/TransactionD
 export class TransactionRepository implements ITransactionRepository {
   constructor(private prisma: PrismaClient) {}
 
-  async index(): Promise<{data: Transaction[], pagination: {total: number}}> {
+  async index(monthId?: number): Promise<{data: Transaction[], pagination: {total: number}}> {
     // Get count for pagination
     const totalCount = await this.prisma.transaction.count();
 
+    console.log(monthId);
     // Execute query with pagination and filtering
     const transactions = await this.prisma.transaction.findMany({
+      where: { monthId: monthId ?? undefined },
       orderBy: [
         { name: 'asc' }
       ],

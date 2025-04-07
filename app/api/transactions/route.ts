@@ -1,11 +1,9 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { TransactionService } from '@/lib/services/transaction.service';
 import { makeTransactionUseCases } from '@/infrastructure/di/container';
 import { DomainException } from '@/domain/exceptions/DomainException';
 import { TransactionMapper } from '@/infrastructure/mappers/TransactionMapper';
 
-const transactionService = new TransactionService(prisma);
+const transactionUseCases = makeTransactionUseCases();
 
 // Remove caching for transaction data as it changes frequently
 // export const revalidate = 300;
@@ -15,7 +13,7 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const monthId = url.searchParams.get('monthId') ? parseInt(url.searchParams.get('monthId')!) : undefined;
 
-    const result = await transactionService.index({monthId});
+    const result = await transactionUseCases.index.execute(monthId);
     
     // Set no-cache headers to prevent stale data
     return NextResponse.json(result, {
@@ -32,7 +30,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    const transactionUseCases = makeTransactionUseCases();
     
     // Execute use case with input data
     const transaction = await transactionUseCases.store.execute({

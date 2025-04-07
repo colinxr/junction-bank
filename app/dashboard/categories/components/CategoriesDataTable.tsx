@@ -27,21 +27,6 @@ export function CategoriesDataTable({ data, columns }: CategoriesDataTableProps)
     setIsDrawerOpen(false)
   }
 
-  console.log(data);
-  
-
-  // Get unique types for filtering
-  const types = [
-    {
-      label: "Expense",
-      value: "expense",
-    },
-    {
-      label: "Income",
-      value: "income",
-    }
-  ]
-
   // Wrapper for delete function to handle both string and number IDs
   const handleDelete = (id: string | number) => {
     deleteCategory(Number(id));

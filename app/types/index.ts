@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client';
+
 export interface Transaction {
   id: number
   user_id: string
@@ -47,4 +49,30 @@ export interface Category {
   type: string;
   notes?: string | null;
   createdAt: string;
+}
+
+export interface USDSpending {
+  categoryId: number;
+  _sum: {
+      amountCAD: Prisma.Decimal | null;
+  };
+}
+
+export interface CategorySpending {
+  categoryId: number;
+  categoryName: string;
+  _sum: {
+      amountCAD: Prisma.Decimal | null;
+  };
+  _count: {
+      amountUSD: number;
+  };
+}
+
+export interface FormatedCategorySpending {
+  categoryId: number;
+  categoryName: string;
+  totalAmountCAD: string;
+  totalAmountUSD: string;
+  total: number;
 }

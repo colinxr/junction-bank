@@ -22,6 +22,7 @@ import { GetMonthlySpendingByCategoryUseCase } from '../../application/useCases/
 // Transactions
 import { ITransactionRepository } from '../../domain/repositories/ITransactionRepository';
 import { TransactionRepository } from '../repositories/prisma/TransactionRepository';
+import { IndexTransactionsUseCase } from '@/application/useCases/transaction/IndexTransactionsUseCase';
 import { StoreTransactionUseCase } from '../../application/useCases/transaction/StoreTransactionUseCase';
 
 // Currency Conversion
@@ -36,6 +37,8 @@ import { ShowRecurringTransactionUseCase } from '../../application/useCases/recu
 import { StoreRecurringTransactionUseCase } from '../../application/useCases/recurringTransaction/StoreRecurringTransactionUseCase';
 import { UpdateRecurringTransactionUseCase } from '../../application/useCases/recurringTransaction/UpdateRecurringTransactionUseCase';
 import { DeleteRecurringTransactionUseCase } from '../../application/useCases/recurringTransaction/DeleteRecurringTransactionUseCase';
+
+
 
 // Singleton repositories
 const categoryRepository: ICategoryRepository = new CategoryRepository(prisma);
@@ -70,6 +73,7 @@ export const makeMonthUseCases = () => {
 
 export const makeTransactionUseCases = () => {
   return {
+    index: new IndexTransactionsUseCase(transactionRepository),
     store: new StoreTransactionUseCase(transactionRepository, monthRepository, currencyService),
     getSpendingByCategory: new GetMonthlySpendingByCategoryUseCase(transactionRepository)
   };

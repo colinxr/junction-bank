@@ -1,9 +1,9 @@
 import useSWR from 'swr';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { Month } from '@/app/types';
-import { MonthDTO } from '@/application/dtos/month/MonthDTO';
 import apiClient from '@/lib/api-client';
+import { MonthDTO } from '@/application/dtos/month/MonthDTO';
+import { toast } from 'sonner';
+
+import { Month } from '@/app/types';
 
 const API_URL = '/api/months';
 
@@ -41,14 +41,14 @@ interface MonthQueryParams {
   endDate?: Date;
 }
 
-export function useMonths(initialParams: MonthQueryParams = {}) {
-  // State for query parameters
-  const [queryParams, setQueryParams] = useState<MonthQueryParams>({
-    page: initialParams.page,
-    limit: initialParams.limit,
-    startDate: initialParams.startDate,
-    endDate: initialParams.endDate,
-  });
+export function useMonths() {
+  // // State for query parameters
+  // const [queryParams, setQueryParams] = useState<MonthQueryParams>({
+  //   page: initialParams.page,
+  //   limit: initialParams.limit,
+  //   startDate: initialParams.startDate,
+  //   endDate: initialParams.endDate,
+  // });
   
   // Build query string
   const queryString = new URLSearchParams();
@@ -64,18 +64,18 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
     }
   );
   
-  // Update query parameters
-  const setPage = (page: number) => {
-    setQueryParams(prev => ({ ...prev, page }));
-  };
+  // // Update query parameters
+  // const setPage = (page: number) => {
+  //   setQueryParams(prev => ({ ...prev, page }));
+  // };
   
-  const setLimit = (limit: number) => {
-    setQueryParams(prev => ({ ...prev, limit }));
-  };
+  // const setLimit = (limit: number) => {
+  //   setQueryParams(prev => ({ ...prev, limit }));
+  // };
   
-  const setDateRange = (startDate?: Date, endDate?: Date) => {
-    setQueryParams(prev => ({ ...prev, startDate, endDate }));
-  };
+  // const setDateRange = (startDate?: Date, endDate?: Date) => {
+  //   setQueryParams(prev => ({ ...prev, startDate, endDate }));
+  // };
   
   // Method to create a new transaction optimistically
   const createMonth = async (monthData: Partial<Month>) => {
@@ -191,9 +191,6 @@ export function useMonths(initialParams: MonthQueryParams = {}) {
     pagination: data?.pagination || { total: 0, page: 1, pages: 1 },
     isLoading,
     error,
-    setPage,
-    setLimit,
-    setDateRange,
     getMonth,
     createMonth,
     editMonth,

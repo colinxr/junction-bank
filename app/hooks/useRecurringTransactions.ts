@@ -15,11 +15,6 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-interface RecurringTransactionQueryParams {
-  page?: number;
-  limit?: number;
-}
-
 export function useRecurringTransactions() {
   // SWR hook for data fetching
   const { data, error, isLoading, mutate } = useSWR(

@@ -5,8 +5,8 @@ import { TransactionMapper } from '@/infrastructure/mappers/TransactionMapper';
 export class IndexTransactionsUseCase {
   constructor(private transactionRepository: ITransactionRepository) {}
 
-  async execute(): Promise<TransactionListResponseDTO> {
-    const result = await this.transactionRepository.index();
+  async execute(monthId?: number): Promise<TransactionListResponseDTO> {
+    const result = await this.transactionRepository.index(monthId);
     return {
       data: result.data.map(domain => TransactionMapper.toDTO(domain)),
       pagination: result.pagination
