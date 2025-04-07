@@ -1,5 +1,5 @@
 "use client";
-
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { DrawerClose, Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { Textarea } from "@/components/ui/textarea";
 import { useRecurringTransactions } from "@/app/hooks/useRecurringTransactions";
-import { useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -26,18 +25,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { RecurringTransaction } from "@/app/types";
+
 // Interface for the drawer component props
 interface RecurringTransactionDrawerContentProps {
   children: React.ReactNode;
-  transaction: {
-    id: number;
-    name: string;
-    amount_cad: number;
-    amount_usd?: number;
-    day_of_month?: number;
-    notes?: string;
-    categoryId?: number;
-  };
+  transaction: Partial<RecurringTransaction>;
 }
 
 // Interface for categories from the API

@@ -74,7 +74,7 @@ export function useRecurringTransactions(initialParams: RecurringTransactionQuer
   };
   
   // Method to edit a recurring transaction
-  const editRecurringTransaction = async (transaction: RecurringTransaction) => {
+  const editRecurringTransaction = async (transaction: Partial<RecurringTransaction>) => {
     try {
       toast.success(`Editing recurring transaction: ${transaction.name}`);
       

@@ -1,8 +1,6 @@
 import { IRecurringTransactionRepository } from '../../../domain/repositories/IRecurringTransactionRepository';
 import { RecurringTransaction, TransactionType } from '../../../domain/entities/RecurringTransaction';
 import { CreateRecurringTransactionDTO } from '../../dtos/recurringTransaction/RecurringTransactionDTO';
-import { RecurringTransactionMapper } from '../../../infrastructure/mappers/RecurringTransactionMapper';
-import { RecurringTransactionDTO } from '../../dtos/recurringTransaction/RecurringTransactionDTO';
 
 export class StoreRecurringTransactionUseCase {
   constructor(private recurringTransactionRepository: IRecurringTransactionRepository) {}
