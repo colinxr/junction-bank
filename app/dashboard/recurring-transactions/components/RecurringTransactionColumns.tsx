@@ -11,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { useRecurringTransactions } from "@/app/hooks/useRecurringTransactions";
 import { toast } from "sonner";
 import { RecurringTransactionDrawerContent } from "./RecurringTransactionDrawerContent";

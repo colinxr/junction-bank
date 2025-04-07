@@ -22,6 +22,11 @@ import { GetMonthlySpendingByCategoryUseCase } from '../../application/useCases/
 // Transactions
 import { ITransactionRepository } from '../../domain/repositories/ITransactionRepository';
 import { TransactionRepository } from '../repositories/prisma/TransactionRepository';
+import { StoreTransactionUseCase } from '../../application/useCases/transaction/StoreTransactionUseCase';
+
+// Currency Conversion
+import { ICurrencyConversionService } from '../../domain/services/ICurrencyConversionService';
+import { CurrencyConversionService } from '../services/CurrencyConversionService';
 
 // Recurring Transactions
 import { IRecurringTransactionRepository } from '../../domain/repositories/IRecurringTransactionRepository';
@@ -37,6 +42,9 @@ const categoryRepository: ICategoryRepository = new CategoryRepository(prisma);
 const monthRepository: IMonthRepository = new MonthRepository(prisma);
 const transactionRepository: ITransactionRepository = new TransactionRepository(prisma);
 const recurringTransactionRepository: IRecurringTransactionRepository = new RecurringTransactionRepository(prisma);
+
+// Singleton services
+const currencyService: ICurrencyConversionService = new CurrencyConversionService();
 
 // Factory functions for use cases
 export const makeCategoryUseCases = () => {
@@ -62,6 +70,7 @@ export const makeMonthUseCases = () => {
 
 export const makeTransactionUseCases = () => {
   return {
+    store: new StoreTransactionUseCase(transactionRepository, monthRepository, currencyService),
     getSpendingByCategory: new GetMonthlySpendingByCategoryUseCase(transactionRepository)
   };
 };

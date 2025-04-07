@@ -6,9 +6,9 @@ export class InvalidAmountException extends DomainException {
   }
 }
 
-export class RecurringTransactionNotFoundException extends DomainException {
+export class TransactionNotFoundException extends DomainException {
   constructor(id: number) {
-    super(`Recurring transaction with ID ${id} not found`);
+    super(`Transaction with ID ${id} not found`);
   }
 }
 

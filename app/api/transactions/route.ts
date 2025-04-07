@@ -1,6 +1,9 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { TransactionService } from '@/lib/services/transaction.service';
+import { makeTransactionUseCases } from '@/infrastructure/di/container';
+import { DomainException } from '@/domain/exceptions/DomainException';
+import { TransactionMapper } from '@/infrastructure/mappers/TransactionMapper';
 
 const transactionService = new TransactionService(prisma);
 
@@ -28,24 +31,35 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const headers = request.headers;
-    const userId = headers.get('x-user-id');
-
-    const transaction = await transactionService.create({
-      ...body,
-      userId: userId,
+    const data = await request.json();
+    const transactionUseCases = makeTransactionUseCases();
+    
+    // Execute use case with input data
+    const transaction = await transactionUseCases.store.execute({
+      userId: data.userId,
+      name: data.name,
+      amountCAD: data.amountCAD,
+      amountUSD: data.amountUSD,
+      date: new Date(data.date),
+      categoryId: data.categoryId,
+      notes: data.notes,
+      type: data.type
     });
-
-    return NextResponse.json(
-      { data: transaction },
-      { status: 200 }
-    );
+    
+    // Map to DTO for response
+    const transactionDTO = TransactionMapper.toDTO(transaction);
+    
+    return NextResponse.json({ data: transactionDTO }, { status: 201 });
   } catch (error) {
-    console.error('Transaction creation error:', error);
+    console.error('Error creating transaction:', error);
+    
+    if (error instanceof DomainException) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to create transaction' },
-      { status: 400 }
+      { error: 'Failed to create transaction' },
+      { status: 500 }
     );
   }
 }
