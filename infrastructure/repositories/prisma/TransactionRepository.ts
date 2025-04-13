@@ -1,7 +1,7 @@
 import { ITransactionRepository } from "@/domain/repositories/ITransactionRepository";
 import { PrismaClient } from "@prisma/client";
-import { Transaction, TransactionType } from "@/domain/entities/Transaction";
-import { TransactionMapper } from "../../mappers/TransactionMapper";
+import { Transaction as DomainTransaction, TransactionType } from "@/domain/entities/Transaction";
+import { Transaction, USDSpending } from "@/app/types";
 import { CategorySpendingDTO } from "@/application/dtos/transaction/TransactionDTO";
 
 export class TransactionRepository implements ITransactionRepository {
@@ -11,7 +11,6 @@ export class TransactionRepository implements ITransactionRepository {
     // Get count for pagination
     const totalCount = await this.prisma.transaction.count();
 
-    console.log(monthId);
     // Execute query with pagination and filtering
     const transactions = await this.prisma.transaction.findMany({
       where: { monthId: monthId ?? undefined },
@@ -28,9 +27,11 @@ export class TransactionRepository implements ITransactionRepository {
     });
 
     return {
-      data: transactions.map(t => TransactionMapper.toDomain({
-        ...t,
-        updatedAt: t.createdAt // Use createdAt as a fallback
+      data: transactions.map(transaction => ({
+        ...transaction,
+        createdAt: transaction.createdAt.toISOString(),
+        category: transaction.category?.name,
+        type: transaction.type === 'Income' ? TransactionType.INCOME : TransactionType.EXPENSE
       })),
       pagination: {
         total: totalCount,
@@ -52,13 +53,12 @@ export class TransactionRepository implements ITransactionRepository {
 
     if (!transaction) return null;
     
-    // Add updatedAt property to match TransactionModel interface
-    const transactionWithUpdated = {
+    return {
       ...transaction,
-      updatedAt: transaction.createdAt // Use createdAt as a fallback
+      createdAt: transaction.createdAt.toISOString(),
+      category: transaction.category?.name,
+      type: transaction.type === 'Income' ? TransactionType.INCOME : TransactionType.EXPENSE
     };
-    
-    return TransactionMapper.toDomain(transactionWithUpdated);
   }
 
   async store(transactionData: Omit<Transaction, 'id' | 'validate' | 'isIncome' | 'isExpense'>): Promise<Transaction> {
@@ -70,21 +70,30 @@ export class TransactionRepository implements ITransactionRepository {
       amountUSD: transactionData.amountUSD || null,
       categoryId: transactionData.categoryId,
       notes: transactionData.notes || null,
-      // Convert enum to string for Prisma
-      type: transactionData.type as unknown as string,
-      monthId: transactionData.monthId!,
-      date: transactionData.date!
+      // Convert domain enum to string for Prisma
+      type: transactionData.type === TransactionType.INCOME ? 'Income' : 'Expense',
+      monthId: transactionData.monthId,
+      date: transactionData.date
     };
 
-    // Cast to any to bypass TypeScript's type checking with Prisma
+    // Create transaction
     const created = await this.prisma.transaction.create({
-      data: prismaData as any
+      data: prismaData as any,
+      include: {
+        category: {
+          select: {
+            name: true
+          }
+        }
+      }
     });
-
-    return TransactionMapper.toDomain({
+    
+    return {
       ...created,
-      updatedAt: created.createdAt // Use createdAt as a fallback
-    });
+      createdAt: created.createdAt.toISOString(),
+      category: created.category?.name,
+      type: created.type === 'Income' ? TransactionType.INCOME : TransactionType.EXPENSE
+    };
   }
 
   async getTotalSpendingByCategory(monthId: number): Promise<CategorySpendingDTO[]> {
@@ -104,15 +113,15 @@ export class TransactionRepository implements ITransactionRepository {
     });
 
     // Merge category names with spending data
-    const result = spending.map(s => ({
-      ...s,
-      categoryName: categories.find(c => c.id === s.categoryId)?.name || ''
+    return spending.map(s => ({
+      categoryId: s.categoryId,
+      categoryName: categories.find(c => c.id === s.categoryId)?.name || '',
+      totalSpent: Number(s._sum?.amountCAD || 0),
+      transactionCount: s._count?.amountUSD || 0
     }));
-
-    return result.map(item => TransactionMapper.toCategorySpendingDTO(item));
   }
 
-  async getUSDSpendingByCategory(monthId: number): Promise<CategorySpendingDTO[]> {
+  async getUSDSpendingByCategory(monthId: number): Promise<USDSpending[]> {
     const spending = await this.prisma.transaction.groupBy({
       by: ['categoryId'],
       where: {
@@ -123,21 +132,30 @@ export class TransactionRepository implements ITransactionRepository {
       _count: { id: true }
     });
 
-    // Get category names
-    const categories = await this.prisma.category.findMany({
-      where: {
-        id: { in: spending.map(s => s.categoryId) }
-      },
-      select: { id: true, name: true }
-    });
-
-    // Merge data
-    const result = spending.map(s => ({
-      ...s,
-      categoryName: categories.find(c => c.id === s.categoryId)?.name || ''
+    return spending.map(s => ({
+      categoryId: s.categoryId,
+      _sum: {
+        amountCAD: s._sum.amountCAD
+      }
     }));
+  }
 
-    return result.map(item => TransactionMapper.toCategorySpendingDTO(item));
+  // Helper method to convert Prisma model to domain entity if needed
+  private toDomainEntity(prismaTransaction: any): DomainTransaction {
+    return DomainTransaction.create({
+      id: prismaTransaction.id,
+      userId: prismaTransaction.userId,
+      name: prismaTransaction.name,
+      amountCAD: Number(prismaTransaction.amountCAD),
+      amountUSD: prismaTransaction.amountUSD ? Number(prismaTransaction.amountUSD) : undefined,
+      categoryId: prismaTransaction.categoryId,
+      notes: prismaTransaction.notes || undefined,
+      // Convert Prisma enum string to domain enum
+      type: prismaTransaction.type === 'Income' ? TransactionType.INCOME : TransactionType.EXPENSE,
+      date: prismaTransaction.date,
+      monthId: prismaTransaction.monthId,
+      createdAt: prismaTransaction.createdAt
+    });
   }
 }
 

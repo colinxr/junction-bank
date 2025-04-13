@@ -1,4 +1,5 @@
-import { Transaction, TransactionType } from '@/domain/entities/Transaction';
+import { Transaction as TransactionEntity, Transaction, TransactionType } from '@/domain/entities/Transaction';
+
 import { TransactionDTO, CategorySpendingDTO } from '@/application/dtos/transaction/TransactionDTO';
 import { TransactionModel } from '../persistence/TransactionModel';
 
@@ -43,7 +44,7 @@ export class TransactionMapper {
   }
 
   // Convert from domain entity or DB model to DTO for API responses
-  static toDTO(source: Transaction | TransactionModel): TransactionDTO {
+  static toDTO(source: TransactionEntity | TransactionModel): TransactionDTO {
     const getNumberValue = (val: any): number | undefined => {
       if (val === null || val === undefined) return undefined;
       if (typeof val === 'number') return val;
@@ -52,7 +53,7 @@ export class TransactionMapper {
     };
 
     // Handle both Transaction class and database model
-    if (source instanceof Transaction) {
+    if (source instanceof TransactionEntity) {
       return {
         id: source.id!,
         userId: source.userId,

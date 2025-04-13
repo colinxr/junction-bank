@@ -12,8 +12,10 @@ import {
 } from "@/components/ui/card"
 
 export function TransactionDrawerContent({ 
-  resource: transaction,
+  resource: transaction
 }: ResourceDrawerContentProps<Transaction>) {
+  console.log(transaction);
+  
   return (
     <div className="space-y-6">
       <Card>
@@ -37,14 +39,14 @@ export function TransactionDrawerContent({
             <div>
               <p className="text-sm text-muted-foreground">Amount (CAD)</p>
               <p className={`font-medium`}>
-                {formatCurrency(transaction.amount_cad)}
+                {formatCurrency(Number(transaction.amountCAD))}
               </p>
             </div>
-            {transaction.amount_usd !== null && (
+            {transaction.amountUSD !== null && (
               <div>
                 <p className="text-sm text-muted-foreground">Amount (USD)</p>
                 <p className={`font-medium`}>
-                  {formatCurrency(transaction.amount_usd)}
+                  {formatCurrency(Number(transaction.amountUSD))}
                 </p>
               </div>
             )}

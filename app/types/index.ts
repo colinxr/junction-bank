@@ -1,17 +1,18 @@
 import { Prisma } from '@prisma/client';
+import { TransactionType } from '@/domain/entities/Transaction';
 
 export interface Transaction {
   id: number
-  user_id: string
-  month_id: number
+  userId: string
+  monthId: number
   name: string
-  amount_cad: number
-  amount_usd: number | null
+  amountCAD: Prisma.Decimal
+  amountUSD: Prisma.Decimal | null
   categoryId: number
   notes: string | null
   date: Date
-  transaction_type: 'income' | 'expense'
-  created_at: string
+  type: TransactionType
+  createdAt: string
   category?: string
 }
 
@@ -30,13 +31,10 @@ export interface Month {
 export interface RecurringTransaction {
   id: number;
   name: string;
-  transaction_type?: "income" | "expense";
   type?: "Income" | "Expense";
-  amount_cad?: number;
-  amount_usd?: number;
   amountCAD?: number;
   amountUSD?: number;
-  day_of_month?: number;
+  dayOfMonth?: number;
   notes?: string;
   categoryId: number;
   category?: string;

@@ -7,6 +7,8 @@ export class IndexTransactionsUseCase {
 
   async execute(monthId?: number): Promise<TransactionListResponseDTO> {
     const result = await this.transactionRepository.index(monthId);
+    console.log(result);
+    
     return {
       data: result.data.map(domain => TransactionMapper.toDTO(domain)),
       pagination: result.pagination

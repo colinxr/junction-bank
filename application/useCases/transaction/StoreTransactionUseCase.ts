@@ -1,9 +1,10 @@
 import { ITransactionRepository } from '../../../domain/repositories/ITransactionRepository';
 import { IMonthRepository } from '../../../domain/repositories/IMonthRepository';
 import { ICurrencyConversionService } from '../../../domain/services/ICurrencyConversionService';
-import { Transaction, TransactionType } from '../../../domain/entities/Transaction';
-import { CreateTransactionDTO } from '../../dtos/transaction/TransactionDTO';
+import { Transaction as TransactionEntity, TransactionType } from '../../../domain/entities/Transaction';
+import { TransactionCreateDTO, TransactionDTO } from '../../dtos/transaction/TransactionDTO';
 import { Month } from '../../../domain/entities/Month';
+import { Prisma } from '@prisma/client';
 
 export class StoreTransactionUseCase {
   constructor(
@@ -12,7 +13,7 @@ export class StoreTransactionUseCase {
     private currencyService: ICurrencyConversionService
   ) {}
 
-  async execute(data: CreateTransactionDTO): Promise<Transaction> {
+  async execute(data: TransactionCreateDTO): Promise<TransactionDTO> {
     // 1. Process transaction date
     const transactionDate = new Date(data.date);
     
@@ -20,7 +21,7 @@ export class StoreTransactionUseCase {
     const { amountCAD, amountUSD } = await this.getCurrencyAmount(data);
     
     // 4. Create transaction entity
-    const transaction = Transaction.create({
+    const transaction = TransactionEntity.create({
       userId: data.userId,
       name: data.name,
       amountCAD: amountCAD!,
@@ -31,17 +32,33 @@ export class StoreTransactionUseCase {
     });
     
     // 5. Store and return transaction
-    return this.transactionRepository.store({
+    const newTransaction = await this.transactionRepository.store({
       userId: transaction.userId!,
       name: transaction.name,
-      amountCAD: transaction.amountCAD,
-      amountUSD: transaction.amountUSD,
+      amountCAD: new Prisma.Decimal(transaction.amountCAD),
+      amountUSD: transaction.amountUSD ? new Prisma.Decimal(transaction.amountUSD) : null,
       categoryId: transaction.categoryId,
-      notes: transaction.notes,
+      notes: transaction.notes || null,
       type: transaction.type,
       monthId,
-      date: transactionDate
+      date: transactionDate,
+      createdAt: new Date().toISOString()
     });
+
+    // Convert directly to DTO instead of using the mapper
+    return {
+      id: newTransaction.id,
+      userId: newTransaction.userId,
+      name: newTransaction.name,
+      amountCAD: Number(newTransaction.amountCAD),
+      amountUSD: newTransaction.amountUSD ? Number(newTransaction.amountUSD) : undefined,
+      categoryId: newTransaction.categoryId,
+      categoryName: newTransaction.category,
+      notes: newTransaction.notes || undefined,
+      type: String(newTransaction.type),
+      date: newTransaction.date.toISOString(),
+      monthId: newTransaction.monthId
+    };
   }
 
   private async getMonthId(transactionDate: Date): Promise<number> {
@@ -70,7 +87,7 @@ export class StoreTransactionUseCase {
     return monthEntity.id!;
   }
 
-  private async getCurrencyAmount(data: CreateTransactionDTO): Promise<{amountCAD: number, amountUSD: number | undefined}> {
+  private async getCurrencyAmount(data: TransactionCreateDTO): Promise<{amountCAD: number, amountUSD: number | undefined}> {
     // If both amounts are provided, return them as is
     if (data.amountCAD && data.amountUSD) {
       return {
