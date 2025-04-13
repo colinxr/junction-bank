@@ -46,16 +46,12 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
       dedupingInterval: 60000, // 1 minute
     }
   );
-
-  console.log(data);
-  
   
   const getTransactions = async () => {
     const response = await fetch(`${API_URL}?${queryString.toString()}`);
     return response.json();
   };
   
-  // Method to create a new transaction optimistically
   const createTransaction = async (transactionData: Partial<Transaction>) => {
     try {
       // Optimistically update the local data first
@@ -94,7 +90,6 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
     }
   };
   
-  // Method to edit a transaction
   const editTransaction = async (transaction: Partial<Transaction>) => {
     try {
       if (!transaction.id) {
@@ -131,7 +126,6 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
     }
   };
   
-  // Method to delete a transaction
   const deleteTransaction = async (id: number) => {
     try {
       toast.success(`Deleting transaction ID: ${id}`);
@@ -163,7 +157,7 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   };
   
   return {
-    transactions: data?.data || [],
+    transactions: data || [],
     isLoading,
     error,
     createTransaction,
