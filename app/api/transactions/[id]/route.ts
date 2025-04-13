@@ -9,7 +9,7 @@ export async function DELETE(
 ) {
   try {
     const id = (await params).id;
-    const result = await transactionUseCases.destroy.execute(id);
+    const result = await transactionUseCases.destroy.execute(Number(id));
     
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
@@ -28,6 +28,6 @@ export async function PUT(
   const id = (await params).id;
   const { name, amountCAD, amountUSD, category: categoryId, notes } = await request.json();
 
-  const result = await transactionUseCases.update.execute(id, { name, amountCAD, amountUSD, categoryId, notes });
+  const result = await transactionUseCases.update.execute(Number(id), { name, amountCAD, amountUSD, categoryId, notes });
   return NextResponse.json(result, { status: 200 });
 }

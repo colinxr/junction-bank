@@ -13,7 +13,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const category = await categoryUseCases.show.execute(id);
+    const category = await categoryUseCases.show.execute(Number(id));
     const categoryDTO = CategoryMapper.toDTO(category);
     
     return NextResponse.json(categoryDTO, { 
@@ -51,7 +51,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = (await params);
-    await categoryUseCases.delete.execute(id);
+    await categoryUseCases.delete.execute(Number(id));
     
     return NextResponse.json(
       { success: true, message: 'Category deleted successfully' }, 
