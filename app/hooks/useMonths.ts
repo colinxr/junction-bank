@@ -2,7 +2,6 @@ import useSWR from 'swr';
 import apiClient from '@/lib/api-client';
 import { MonthDTO } from '@/application/dtos/month/MonthDTO';
 import { toast } from 'sonner';
-
 import { Month } from '@/app/types';
 
 const API_URL = '/api/months';
@@ -34,12 +33,12 @@ export function useMonthDetail(id: number) {
   };
 }
 
-interface MonthQueryParams {
-  page?: number;
-  limit?: number;
-  startDate?: Date;
-  endDate?: Date;
-}
+// interface MonthQueryParams {
+//   page?: number;
+//   limit?: number;
+//   startDate?: Date;
+//   endDate?: Date;
+// }
 
 export function useMonths() {
   // // State for query parameters

@@ -19,6 +19,8 @@ export function MonthSummaryCard({ monthId, className }: MonthSummaryProps) {
   // Use the hook to fetch month details
   const { monthDetail, isLoading } = useMonthDetail(monthId);
 
+  console.log(monthDetail);
+
   // Format values when available
   const formattedIncome = monthDetail ? formatCurrency(monthDetail.totalIncome) : null;
   const formattedExpenses = monthDetail ? formatCurrency(monthDetail.totalExpenses) : null;

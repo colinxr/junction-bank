@@ -6,15 +6,15 @@ export interface Transaction {
   userId: string
   monthId: number
   name: string
-  amountCAD: Prisma.Decimal
-  amountUSD: Prisma.Decimal | null
+  amountCAD: number
+  amountUSD: number | null
   categoryId: number
   categoryName: string,
+  category?: Category,
   notes: string | null
   date: Date
   type: TransactionType
   createdAt: string
-  category?: string
 }
 
 export interface Month {
@@ -37,8 +37,8 @@ export interface RecurringTransaction {
   amountUSD?: number;
   dayOfMonth?: number;
   notes?: string;
-  categoryId: number;
-  category?: string;
+  categoryId: number; 
+  categoryName: string;
   createdAt: Date;
 }
 

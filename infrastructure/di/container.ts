@@ -37,8 +37,9 @@ import { ShowRecurringTransactionUseCase } from '../../application/useCases/recu
 import { StoreRecurringTransactionUseCase } from '../../application/useCases/recurringTransaction/StoreRecurringTransactionUseCase';
 import { UpdateRecurringTransactionUseCase } from '../../application/useCases/recurringTransaction/UpdateRecurringTransactionUseCase';
 import { DeleteRecurringTransactionUseCase } from '../../application/useCases/recurringTransaction/DeleteRecurringTransactionUseCase';
-
-
+import { ShowTransactionUseCase } from '../../application/useCases/transaction/ShowTransactionUseCase';
+import { UpdateTransactionUseCase } from '../../application/useCases/transaction/UpdateTransactionUseCase';
+import { DeleteTransactionUseCase } from '../../application/useCases/transaction/DeleteRecurringTransactionUseCase';
 
 // Singleton repositories
 const categoryRepository: ICategoryRepository = new CategoryRepository(prisma);
@@ -75,6 +76,9 @@ export const makeTransactionUseCases = () => {
   return {
     index: new IndexTransactionsUseCase(transactionRepository),
     store: new StoreTransactionUseCase(transactionRepository, monthRepository, currencyService),
+    show: new ShowTransactionUseCase(transactionRepository),
+    update: new UpdateTransactionUseCase(transactionRepository),
+    destroy: new DeleteTransactionUseCase(transactionRepository),
     getSpendingByCategory: new GetMonthlySpendingByCategoryUseCase(transactionRepository)
   };
 };

@@ -1,17 +1,12 @@
 import { ITransactionRepository } from '@/domain/repositories/ITransactionRepository';
-import { TransactionListResponseDTO } from '@/application/dtos/transaction/TransactionDTO';
-import { TransactionMapper } from '@/infrastructure/mappers/TransactionMapper';
+import { Transaction as TransactionEntity } from '@/domain/entities/Transaction';
 
 export class IndexTransactionsUseCase {
   constructor(private transactionRepository: ITransactionRepository) {}
 
-  async execute(monthId?: number): Promise<TransactionListResponseDTO> {
+  async execute(monthId?: number): Promise<TransactionEntity[]> {
     const result = await this.transactionRepository.index(monthId);
-    console.log(result);
     
-    return {
-      data: result.data.map(domain => TransactionMapper.toDTO(domain)),
-      pagination: result.pagination
-    };
+    return result
   }
 } 

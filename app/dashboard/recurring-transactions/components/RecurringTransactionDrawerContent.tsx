@@ -67,8 +67,8 @@ export function RecurringTransactionDrawerContent({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: transaction.name,
-      amount_cad: transaction.amount_cad,
-      day_of_month: transaction.day_of_month,
+      amount_cad: transaction.amountCAD,
+      day_of_month: transaction.dayOfMonth,
       notes: transaction.notes || "",
       categoryId: transaction.categoryId || 0,
     },

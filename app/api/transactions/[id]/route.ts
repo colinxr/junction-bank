@@ -1,8 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { TransactionService } from '@/lib/services/transaction.service';
+import { makeTransactionUseCases } from '../../../../infrastructure/di/container';
 
-const transactionService = new TransactionService(prisma);
+const transactionUseCases = makeTransactionUseCases();
 
 export async function DELETE(
   request: NextRequest,
@@ -10,7 +9,7 @@ export async function DELETE(
 ) {
   try {
     const id = (await params).id;
-    const result = await transactionService.destroy(id);
+    const result = await transactionUseCases.destroy.execute(Number(id));
     
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
@@ -27,8 +26,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: number }> }
 ) {
   const id = (await params).id;
-  const { name, amountCAD, amountUSD, date, category: categoryId, notes } = await request.json();
+  const { name, amountCAD, amountUSD, category: categoryId, notes } = await request.json();
 
-  const result = await transactionService.update(id, { name, amountCAD, amountUSD, date, categoryId, notes });
+  const result = await transactionUseCases.update.execute(Number(id), { name, amountCAD, amountUSD, categoryId, notes });
   return NextResponse.json(result, { status: 200 });
 }

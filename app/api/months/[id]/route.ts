@@ -21,25 +21,24 @@ export interface CategorySpendingDTO {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: number } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-    const id = (await params).id;
+    const { id } = await params;
     const month = await monthUseCases.show.execute(Number(id));
 
     if (!month || month.id == undefined) {
-      // Handle case where month exists but has no ID
       return NextResponse.json({ error: 'Invalid month data' }, { status: 400 });
     }
 
     const spendingByCategory = await transactionUseCases.getSpendingByCategory.execute(month.id);
-    
     const monthDTO = MonthMapper.toDTO(month);
+    
     const response: MonthDetailDTO = {
       ...monthDTO,
       spendingByCategory
     };
-
+    
     return NextResponse.json(response, {
       headers: {
         'Cache-Control': 'private, max-age=60'
@@ -72,13 +71,13 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: number } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-    const id = (await params).id;
+    const { id } = await params;
     const data = await request.json();
 
-    const month = await monthUseCases.update.execute(id, {
+    const month = await monthUseCases.update.execute(Number(id), {
       month: data.month,
       year: data.year,
       notes: data.notes
@@ -114,11 +113,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: number } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-    const id = (await params).id;
-    await monthUseCases.delete.execute(id);
+    const { id } = await params;
+    await monthUseCases.delete.execute(Number(id));
 
     return NextResponse.json(
       { success: true, message: 'Month deleted successfully' },

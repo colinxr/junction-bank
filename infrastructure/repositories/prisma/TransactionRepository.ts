@@ -1,13 +1,16 @@
 import { ITransactionRepository } from "@/domain/repositories/ITransactionRepository";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { Transaction as DomainTransaction, TransactionType } from "@/domain/entities/Transaction";
 import { Transaction, USDSpending } from "@/app/types";
-import { CategorySpendingDTO } from "@/application/dtos/transaction/TransactionDTO";
+import { CategorySpendingDTO, TransactionDTO } from "@/application/dtos/transaction/TransactionDTO";
+import { TransactionMapper } from '../../mappers/TransactionMapper';
+import { TransactionModel } from "../../persistence/TransactionModel";
+import { Transaction as TransactionEntity } from '@/domain/entities/Transaction';
 
 export class TransactionRepository implements ITransactionRepository {
   constructor(private prisma: PrismaClient) {}
 
-  async index(monthId?: number): Promise<{data: Transaction[], pagination: {total: number}}> {
+  async index(monthId?: number): Promise<TransactionEntity[]> {
     // Get count for pagination
     const totalCount = await this.prisma.transaction.count();
 
@@ -26,20 +29,10 @@ export class TransactionRepository implements ITransactionRepository {
       }
     });
 
-    return {
-      data: transactions.map(transaction => ({
-        ...transaction,
-        createdAt: transaction.createdAt.toISOString(),
-        category: transaction.category?.name,
-        type: transaction.type === 'Income' ? TransactionType.INCOME : TransactionType.EXPENSE
-      })),
-      pagination: {
-        total: totalCount,
-      }
-    };
+    return transactions.map(transaction => this.toDomainEntity(transaction));
   }
 
-  async show(id: number): Promise<Transaction | null> {
+  async show(id: number): Promise<TransactionModel | null> {
     const transaction = await this.prisma.transaction.findUnique({
       where: { id },
       include: {
@@ -53,15 +46,10 @@ export class TransactionRepository implements ITransactionRepository {
 
     if (!transaction) return null;
     
-    return {
-      ...transaction,
-      createdAt: transaction.createdAt.toISOString(),
-      category: transaction.category?.name,
-      type: transaction.type === 'Income' ? TransactionType.INCOME : TransactionType.EXPENSE
-    };
+    return transaction;
   }
 
-  async store(transactionData: Omit<Transaction, 'id' | 'validate' | 'isIncome' | 'isExpense'>): Promise<Transaction> {
+  async store(transactionData: Omit<Transaction, 'id' | 'validate' | 'isIncome' | 'isExpense'>): Promise<TransactionModel> {
     // Extract only the fields Prisma needs and convert to the format it expects
     const prismaData = {
       userId: transactionData.userId,
@@ -87,13 +75,30 @@ export class TransactionRepository implements ITransactionRepository {
         }
       }
     });
+
+    return created;
+  }
+
+  async update(id: number, data: Partial<Transaction>): Promise<TransactionModel> {
+    const updateData: any = {};
+
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.amountCAD !== undefined) updateData.amountCAD = data.amountCAD;
+    if (data.amountUSD !== undefined) updateData.amountUSD = data.amountUSD;
+    if (data.notes !== undefined) updateData.notes = data.notes;
+    if (data.type !== undefined) updateData.type = data.type as TransactionType;
+    if (data.categoryId !== undefined) updateData.category = { connect: { id: data.categoryId } };
     
-    return {
-      ...created,
-      createdAt: created.createdAt.toISOString(),
-      category: created.category?.name,
-      type: created.type === 'Income' ? TransactionType.INCOME : TransactionType.EXPENSE
-    };
+    return await this.prisma.transaction.update({
+      where: { id },
+      data: updateData
+    });
+  }
+
+  async destroy(id: number): Promise<void> {
+    await this.prisma.transaction.delete({
+      where: { id }
+    });
   }
 
   async getTotalSpendingByCategory(monthId: number): Promise<CategorySpendingDTO[]> {
@@ -149,6 +154,7 @@ export class TransactionRepository implements ITransactionRepository {
       amountCAD: Number(prismaTransaction.amountCAD),
       amountUSD: prismaTransaction.amountUSD ? Number(prismaTransaction.amountUSD) : undefined,
       categoryId: prismaTransaction.categoryId,
+      categoryName: prismaTransaction.category?.name ?? '',
       notes: prismaTransaction.notes || undefined,
       // Convert Prisma enum string to domain enum
       type: prismaTransaction.type === 'Income' ? TransactionType.INCOME : TransactionType.EXPENSE,
