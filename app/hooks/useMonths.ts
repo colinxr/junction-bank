@@ -34,12 +34,12 @@ export function useMonthDetail(id: number) {
   };
 }
 
-interface MonthQueryParams {
-  page?: number;
-  limit?: number;
-  startDate?: Date;
-  endDate?: Date;
-}
+// interface MonthQueryParams {
+//   page?: number;
+//   limit?: number;
+//   startDate?: Date;
+//   endDate?: Date;
+// }
 
 export function useMonths() {
   // // State for query parameters

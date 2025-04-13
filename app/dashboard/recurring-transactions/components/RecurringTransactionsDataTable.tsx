@@ -31,7 +31,7 @@ export function RecurringTransactionsDataTable<TData, TValue>({
   data,
 }: RecurringTransactionsDataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const { pagination, setPage } = useRecurringTransactions();
+  const { pagination } = useRecurringTransactions();
 
   const table = useReactTable({
     data,
@@ -104,7 +104,7 @@ export function RecurringTransactionsDataTable<TData, TValue>({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setPage(pagination.page - 1)}
+          // onClick={() => setPage(pagination.page - 1)}
           disabled={pagination.page <= 1}
         >
           Previous
@@ -112,7 +112,7 @@ export function RecurringTransactionsDataTable<TData, TValue>({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setPage(pagination.page + 1)}
+          // onClick={() => setPage(pagination.page + 1)}
           disabled={pagination.page >= pagination.pages}
         >
           Next

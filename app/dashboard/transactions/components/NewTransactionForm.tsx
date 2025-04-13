@@ -52,13 +52,13 @@ export function NewTransactionForm({
   const router = useRouter();
   const { createTransaction, editTransaction } = useTransactions();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const form = useForm<FormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       name: defaultValues?.name || "",
-      amountCAD: defaultValues?.amount_cad,
-      amountUSD: defaultValues?.amount_usd || undefined,
+      amountCAD: defaultValues?.amountCAD, 
+      amountUSD: defaultValues?.amountUSD || undefined,
       date: defaultValues?.date ? new Date(defaultValues.date) : new Date(),
       notes: defaultValues?.notes || "",
       categoryId: defaultValues?.categoryId,

@@ -21,11 +21,11 @@ export interface CategorySpendingDTO {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: number } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-    const id = (await params).id;
-    const month = await monthUseCases.show.execute(Number(id));
+    const { id } = await params;
+    const month = await monthUseCases.show.execute(id);
 
     if (!month || month.id == undefined) {
       // Handle case where month exists but has no ID
@@ -72,10 +72,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: number } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-    const id = (await params).id;
+    const { id } = await params;
     const data = await request.json();
 
     const month = await monthUseCases.update.execute(id, {
@@ -114,10 +114,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: number } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-    const id = (await params).id;
+    const { id } = await params;
     await monthUseCases.delete.execute(id);
 
     return NextResponse.json(

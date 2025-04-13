@@ -2,10 +2,9 @@ import { ITransactionRepository } from '../../../domain/repositories/ITransactio
 import { IMonthRepository } from '../../../domain/repositories/IMonthRepository';
 import { ICurrencyConversionService } from '../../../domain/services/ICurrencyConversionService';
 import { Transaction as TransactionEntity, TransactionType } from '../../../domain/entities/Transaction';
-import { TransactionCreateDTO, TransactionDTO } from '../../dtos/transaction/TransactionDTO';
+import { TransactionCreateDTO } from '../../dtos/transaction/TransactionDTO';
 import { Month } from '../../../domain/entities/Month';
-import { Prisma } from '@prisma/client';
-
+import { TransactionModel } from '../../../infrastructure/persistence/TransactionModel';
 export class StoreTransactionUseCase {
   constructor(
     private transactionRepository: ITransactionRepository,
@@ -13,7 +12,7 @@ export class StoreTransactionUseCase {
     private currencyService: ICurrencyConversionService
   ) {}
 
-  async execute(data: TransactionCreateDTO): Promise<TransactionDTO> {
+  async execute(data: TransactionCreateDTO): Promise<TransactionModel> {
     // 1. Process transaction date
     const transactionDate = new Date(data.date);
     
@@ -35,8 +34,8 @@ export class StoreTransactionUseCase {
     const newTransaction = await this.transactionRepository.store({
       userId: transaction.userId!,
       name: transaction.name,
-      amountCAD: new Prisma.Decimal(transaction.amountCAD),
-      amountUSD: transaction.amountUSD ? new Prisma.Decimal(transaction.amountUSD) : null,
+      amountCAD: transaction.amountCAD,
+      amountUSD: transaction.amountUSD || null,
       categoryId: transaction.categoryId,
       notes: transaction.notes || null,
       type: transaction.type,
@@ -45,20 +44,7 @@ export class StoreTransactionUseCase {
       createdAt: new Date().toISOString()
     });
 
-    // Convert directly to DTO instead of using the mapper
-    return {
-      id: newTransaction.id,
-      userId: newTransaction.userId,
-      name: newTransaction.name,
-      amountCAD: Number(newTransaction.amountCAD),
-      amountUSD: newTransaction.amountUSD ? Number(newTransaction.amountUSD) : undefined,
-      categoryId: newTransaction.categoryId,
-      categoryName: newTransaction.category,
-      notes: newTransaction.notes || undefined,
-      type: String(newTransaction.type),
-      date: newTransaction.date.toISOString(),
-      monthId: newTransaction.monthId
-    };
+    return newTransaction;
   }
 
   private async getMonthId(transactionDate: Date): Promise<number> {

@@ -12,6 +12,7 @@ export class Transaction {
   readonly amountCAD: number;
   readonly amountUSD?: number;
   readonly categoryId: number;
+  readonly categoryName?: string;
   readonly notes?: string;
   readonly type: TransactionType;
   readonly date?: Date;
@@ -25,6 +26,7 @@ export class Transaction {
     amountCAD: number;
     amountUSD?: number;
     categoryId: number;
+    categoryName?: string;
     notes?: string;
     type?: TransactionType;
     date?: Date;
@@ -37,6 +39,7 @@ export class Transaction {
     this.amountCAD = props.amountCAD;
     this.amountUSD = props.amountUSD;
     this.categoryId = props.categoryId;
+    this.categoryName = props.categoryName;
     this.notes = props.notes;
     this.type = props.type || TransactionType.EXPENSE;
     this.date = props.date;
@@ -59,6 +62,7 @@ export class Transaction {
     amountCAD: number;
     amountUSD?: number;
     categoryId: number;
+    categoryName?: string;
     notes?: string;
     type?: TransactionType;
     date?: Date;

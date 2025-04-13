@@ -3,6 +3,8 @@ import { Transaction } from '../../app/types';
 import { TransactionDTO, CategorySpendingDTO } from '@/application/dtos/transaction/TransactionDTO';
 import { TransactionModel } from '../persistence/TransactionModel';
 
+type TransactionSource = Partial<TransactionEntity> | Partial<TransactionModel>;
+
 export class TransactionMapper {
   // Convert from database model to domain entity
   static toDomain(model: TransactionModel): TransactionEntity {
@@ -20,6 +22,7 @@ export class TransactionMapper {
       amountCAD: getNumber(model.amountCAD),
       amountUSD: model.amountUSD ? getNumber(model.amountUSD) : undefined,
       categoryId: model.categoryId,
+      categoryName: model.category?.name ?? '',
       notes: model.notes || undefined,
       type: model.type as TransactionType,
       date: model.date,
@@ -44,7 +47,7 @@ export class TransactionMapper {
   }
 
   // Convert from domain entity or DB model to DTO for API responses
-  static toDTO(source: TransactionEntity | Transaction): TransactionDTO {
+  static toDTO(source: TransactionSource): TransactionDTO {
     const getNumberValue = (val: any): number | undefined => {
       if (val === null || val === undefined) return undefined;
       if (typeof val === 'number') return val;
@@ -61,7 +64,6 @@ export class TransactionMapper {
         amountCAD: source.amountCAD,
         amountUSD: source.amountUSD,
         categoryId: source.categoryId,
-        categoryName: undefined, // Transaction doesn't have category name
         notes: source.notes,
         type: source.type.toString(),
         date: source.date ? source.date.toISOString() : new Date().toISOString(),
@@ -71,16 +73,15 @@ export class TransactionMapper {
       // Handle database model
       return {
         id: source.id!,
-        userId: source.userId,
-        name: source.name,
+        userId: source.userId!,
+        name: source.name!,
         amountCAD: getNumberValue(source.amountCAD)!,
         amountUSD: getNumberValue(source.amountUSD),
-        categoryId: source.categoryId,
-        categoryName: source.category ?? undefined,
+        categoryId: source.categoryId!,
         notes: source.notes || undefined,
         type: String(source.type),
         date: source.date instanceof Date ? source.date.toISOString() : String(source.date),
-        monthId: source.monthId
+        monthId: source.monthId!
       };
     }
   }

@@ -1,12 +1,9 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { makeTransactionUseCases } from '@/infrastructure/di/container';
 import { DomainException } from '@/domain/exceptions/DomainException';
-import { TransactionMapper } from '@/infrastructure/mappers/TransactionMapper';
+import { TransactionMapper } from '../../../infrastructure/mappers/TransactionMapper';
 
 const transactionUseCases = makeTransactionUseCases();
-
-// Remove caching for transaction data as it changes frequently
-// export const revalidate = 300;
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,13 +34,13 @@ export async function POST(request: NextRequest) {
       name: data.name,
       amountCAD: data.amountCAD,
       amountUSD: data.amountUSD,
-      date: new Date(data.date),
+      date: data.date,
       categoryId: data.categoryId,
       notes: data.notes,
-      type: data.type
+      type: data.type,
+      monthId: data.monthId
     });
-    
-    // Map to DTO for response
+
     const transactionDTO = TransactionMapper.toDTO(transaction);
     
     return NextResponse.json({ data: transactionDTO }, { status: 201 });

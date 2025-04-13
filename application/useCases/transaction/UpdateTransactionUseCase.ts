@@ -1,6 +1,6 @@
 import { ITransactionRepository } from '@/domain/repositories/ITransactionRepository';
 import { TransactionNotFoundException } from '@/domain/exceptions/TransactionException';
-import { Transaction } from '@/domain/entities/Transaction';
+import { Transaction } from '@/app/types';
 import { TransactionMapper } from '@/infrastructure/mappers/TransactionMapper';
 import { UpdateTransactionDTO } from '@/application/dtos/transaction/TransactionDTO';
 import { TransactionDTO } from '@/application/dtos/transaction/TransactionDTO';

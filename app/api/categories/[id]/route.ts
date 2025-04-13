@@ -9,10 +9,10 @@ const categoryUseCases = makeCategoryUseCases();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-    const id = Number(params.id);
+    const { id } = await params;
     const category = await categoryUseCases.show.execute(id);
     const categoryDTO = CategoryMapper.toDTO(category);
     
@@ -47,10 +47,10 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
-    const id = Number(params.id);
+    const { id } = (await params);
     await categoryUseCases.delete.execute(id);
     
     return NextResponse.json(

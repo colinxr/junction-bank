@@ -6,7 +6,7 @@ export class ShowCategoryUseCase {
   constructor(private categoryRepository: ICategoryRepository) {}
   
   async execute(id: number): Promise<Category> {
-    const category = await this.categoryRepository.findById(id);
+    const category = await this.categoryRepository.show(id);
     
     if (!category) {
       throw new CategoryNotFoundException(id);
