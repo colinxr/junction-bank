@@ -22,6 +22,12 @@ import { GetMonthlySpendingByCategoryUseCase } from '../../application/useCases/
 // Transactions
 import { ITransactionRepository } from '../../domain/repositories/ITransactionRepository';
 import { TransactionRepository } from '../repositories/prisma/TransactionRepository';
+import { IndexTransactionsUseCase } from '@/application/useCases/transaction/IndexTransactionsUseCase';
+import { StoreTransactionUseCase } from '../../application/useCases/transaction/StoreTransactionUseCase';
+
+// Currency Conversion
+import { ICurrencyConversionService } from '../../domain/services/ICurrencyConversionService';
+import { CurrencyConversionService } from '../services/CurrencyConversionService';
 
 // Recurring Transactions
 import { IRecurringTransactionRepository } from '../../domain/repositories/IRecurringTransactionRepository';
@@ -32,11 +38,16 @@ import { StoreRecurringTransactionUseCase } from '../../application/useCases/rec
 import { UpdateRecurringTransactionUseCase } from '../../application/useCases/recurringTransaction/UpdateRecurringTransactionUseCase';
 import { DeleteRecurringTransactionUseCase } from '../../application/useCases/recurringTransaction/DeleteRecurringTransactionUseCase';
 
+
+
 // Singleton repositories
 const categoryRepository: ICategoryRepository = new CategoryRepository(prisma);
 const monthRepository: IMonthRepository = new MonthRepository(prisma);
 const transactionRepository: ITransactionRepository = new TransactionRepository(prisma);
 const recurringTransactionRepository: IRecurringTransactionRepository = new RecurringTransactionRepository(prisma);
+
+// Singleton services
+const currencyService: ICurrencyConversionService = new CurrencyConversionService();
 
 // Factory functions for use cases
 export const makeCategoryUseCases = () => {
@@ -62,6 +73,8 @@ export const makeMonthUseCases = () => {
 
 export const makeTransactionUseCases = () => {
   return {
+    index: new IndexTransactionsUseCase(transactionRepository),
+    store: new StoreTransactionUseCase(transactionRepository, monthRepository, currencyService),
     getSpendingByCategory: new GetMonthlySpendingByCategoryUseCase(transactionRepository)
   };
 };

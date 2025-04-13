@@ -1,6 +1,5 @@
 import useSWR from 'swr';
 import { toast } from 'sonner';
-import { RecurringTransactionRepository } from '@/lib/repositories/recurringTransaction.repository';
 import { RecurringTransaction } from '@/app/types';
 import apiClient from '@/lib/api-client';
 const API_URL = '/api/transactions/recurring';
@@ -16,12 +15,7 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-interface RecurringTransactionQueryParams {
-  page?: number;
-  limit?: number;
-}
-
-export function useRecurringTransactions(initialParams: RecurringTransactionQueryParams = {}) {
+export function useRecurringTransactions() {
   // SWR hook for data fetching
   const { data, error, isLoading, mutate } = useSWR(
     API_URL,

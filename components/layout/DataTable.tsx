@@ -82,7 +82,7 @@ export function DataTable<TData, TValue>({
           onChange={(event) => setGlobalFilter(event.target.value)}
           className="max-w-sm"
         />
-        {filterableColumns.map((column) => (
+        {/* {filterableColumns.map((column) => (
           <select
             key={column.id}
             value={(table.getColumn(column.id)?.getFilterValue() as string) ?? ""}
@@ -98,7 +98,7 @@ export function DataTable<TData, TValue>({
               </option>
             ))}
           </select>
-        ))}
+        ))} */}
       </div>
       <div className="rounded-md border">
         <Table>

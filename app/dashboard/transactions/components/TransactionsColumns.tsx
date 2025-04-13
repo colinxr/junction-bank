@@ -13,7 +13,7 @@ export const columns: ColumnDef<Transaction>[] = [
     cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
   },
   {
-    accessorKey: "category",
+    accessorKey: "categoryName",
     header: ({ column }) => (
       <Button
         variant="ghost"
@@ -44,7 +44,7 @@ export const columns: ColumnDef<Transaction>[] = [
     sortingFn: "datetime"
   },
   {
-    accessorKey: "amount_cad",
+    accessorKey: "amountCAD",
     header: ({ column }) => (
       <Button
         variant="ghost"
@@ -56,32 +56,32 @@ export const columns: ColumnDef<Transaction>[] = [
       </Button>
     ),
     cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount_cad"));
+      const amount = parseFloat(row.getValue("amountCAD"));
       const formatted = new Intl.NumberFormat("en-CA", {
         style: "currency",
         currency: "CAD",
       }).format(amount);
       
       return (
-        <div className={`text-center ${row.original.transaction_type === 'income' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
+        <div className={`text-center ${row.original.type === 'INCOME' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
           {formatted}
         </div>
       )
     },
   },
   {
-    accessorKey: "amount_usd",
+    accessorKey: "amountUSD",
     header: "Amount (USD)",
     cell: ({ row }) => {
-      if (!row.original.amount_usd) return '-';
-      const amount = parseFloat(row.getValue("amount_usd"));
+      if (!row.original.amountUSD) return '-';
+      const amount = parseFloat(row.getValue("amountUSD"));
       const formatted = new Intl.NumberFormat("en-CA", {
         style: "currency",
         currency: "USD",
       }).format(amount);
       
       return (
-        <div className={`text-center ${row.original.transaction_type === 'income' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
+        <div className={`text-center ${row.original.type === 'INCOME' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
           {formatted}
         </div>
       )

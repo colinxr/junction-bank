@@ -27,7 +27,7 @@ interface TransactionQueryParams {
 
 export function useTransactions(initialParams: TransactionQueryParams = {}) {
   // State for query parameters
-  const [queryParams, setQueryParams] = useState<TransactionQueryParams>({
+  const [queryParams] = useState<TransactionQueryParams>({
     monthId: initialParams.monthId,
   });
   
@@ -46,6 +46,9 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
       dedupingInterval: 60000, // 1 minute
     }
   );
+
+  console.log(data);
+  
   
   const getTransactions = async () => {
     const response = await fetch(`${API_URL}?${queryString.toString()}`);

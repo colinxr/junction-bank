@@ -6,7 +6,7 @@ import { DomainException } from '@/domain/exceptions/DomainException';
 // Create use cases through the dependency injection container
 const monthUseCases = makeMonthUseCases();
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const result = await monthUseCases.index.execute();
 

@@ -25,7 +25,7 @@ export async function GET(
 ) {
   try {
     const id = (await params).id;
-    const month = await monthUseCases.show.execute(id);
+    const month = await monthUseCases.show.execute(Number(id));
 
     if (!month || month.id == undefined) {
       // Handle case where month exists but has no ID
@@ -47,6 +47,7 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error fetching month:', error);
+
 
     if (error instanceof MonthNotFoundException) {
       return NextResponse.json(
