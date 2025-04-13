@@ -1,4 +1,3 @@
-import { Transaction as TransactionEntity } from '../entities/Transaction';
 import { Transaction } from '@/app/types';
 import { USDSpending } from '@/app/types';
 import { CategorySpendingDTO } from '@/application/dtos/transaction/TransactionDTO';

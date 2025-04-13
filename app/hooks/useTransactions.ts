@@ -46,6 +46,9 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
       dedupingInterval: 60000, // 1 minute
     }
   );
+
+  console.log(data);
+  
   
   const getTransactions = async () => {
     const response = await fetch(`${API_URL}?${queryString.toString()}`);

@@ -13,7 +13,7 @@ export const columns: ColumnDef<Transaction>[] = [
     cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
   },
   {
-    accessorKey: "category",
+    accessorKey: "categoryName",
     header: ({ column }) => (
       <Button
         variant="ghost"

@@ -9,6 +9,7 @@ export interface Transaction {
   amountCAD: Prisma.Decimal
   amountUSD: Prisma.Decimal | null
   categoryId: number
+  categoryName: string,
   notes: string | null
   date: Date
   type: TransactionType
