@@ -5,10 +5,12 @@ import { Transaction, USDSpending } from "@/app/types";
 import { CategorySpendingDTO, TransactionDTO } from "@/application/dtos/transaction/TransactionDTO";
 import { TransactionMapper } from '../../mappers/TransactionMapper';
 import { TransactionModel } from "../../persistence/TransactionModel";
+import { Transaction as TransactionEntity } from '@/domain/entities/Transaction';
+
 export class TransactionRepository implements ITransactionRepository {
   constructor(private prisma: PrismaClient) {}
 
-  async index(monthId?: number): Promise<TransactionModel[]> {
+  async index(monthId?: number): Promise<TransactionEntity[]> {
     // Get count for pagination
     const totalCount = await this.prisma.transaction.count();
 
@@ -27,7 +29,7 @@ export class TransactionRepository implements ITransactionRepository {
       }
     });
 
-    return transactions
+    return transactions.map(transaction => this.toDomainEntity(transaction));
   }
 
   async show(id: number): Promise<TransactionModel | null> {

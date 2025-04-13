@@ -1,5 +1,3 @@
-import { InvalidAmountException } from '../exceptions/TransactionException';
-
 export enum TransactionType {
   INCOME = 'INCOME',
   EXPENSE = 'EXPENSE'
@@ -45,14 +43,6 @@ export class Transaction {
     this.date = props.date;
     this.monthId = props.monthId;
     this.createdAt = props.createdAt;
-
-    this.validate();
-  }
-
-  private validate(): void {
-    if (this.amountCAD <= 0) {
-      throw new InvalidAmountException(this.amountCAD);
-    }
   }
 
   public static create(props: {
@@ -70,13 +60,5 @@ export class Transaction {
     createdAt?: Date;
   }): Transaction {
     return new Transaction(props);
-  }
-
-  public isIncome(): boolean {
-    return this.type === TransactionType.INCOME;
-  }
-
-  public isExpense(): boolean {
-    return this.type === TransactionType.EXPENSE;
   }
 } 

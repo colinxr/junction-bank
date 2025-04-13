@@ -64,6 +64,7 @@ export class TransactionMapper {
         amountCAD: source.amountCAD,
         amountUSD: source.amountUSD,
         categoryId: source.categoryId,
+        categoryName: source.categoryName,
         notes: source.notes,
         type: source.type.toString(),
         date: source.date ? source.date.toISOString() : new Date().toISOString(),

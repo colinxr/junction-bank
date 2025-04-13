@@ -10,10 +10,12 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const monthId = url.searchParams.get('monthId') ? parseInt(url.searchParams.get('monthId')!) : undefined;
 
-    const result = await transactionUseCases.index.execute(monthId);
+    const results = await transactionUseCases.index.execute(monthId);
+
+    const transactions = results.map((result) => TransactionMapper.toDTO(result));
     
     // Set no-cache headers to prevent stale data
-    return NextResponse.json(result, {
+    return NextResponse.json(transactions, {
       headers: {
         'Cache-Control': 'no-store, must-revalidate, max-age=0',
       }

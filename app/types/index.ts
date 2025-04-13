@@ -10,6 +10,7 @@ export interface Transaction {
   amountUSD: number | null
   categoryId: number
   categoryName: string,
+  category?: Category,
   notes: string | null
   date: Date
   type: TransactionType
