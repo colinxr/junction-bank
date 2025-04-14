@@ -101,8 +101,7 @@ export function useCategories() {
     const response = await apiClient.get<CategoryDTO>(`${API_URL}/${id}`);
     return response.data;
   };
-  
-  console.log(data);
+
   
   return {
     categories: data || [],

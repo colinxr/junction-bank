@@ -13,9 +13,6 @@ export function TransactionsContent({ month }: { month?: Month }) {
     error,
   } = useTransactions({ monthId: Number(month?.id) });
 
-  console.log(transactions);
-  
-
   if (error) {
     return <div className="p-8 text-center">Failed to load transactions. Please try again.</div>;
   }

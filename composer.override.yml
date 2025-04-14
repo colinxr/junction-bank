@@ -1,0 +1,5 @@
+# docker-compose.override.yml (only used in dev by default)
+services:
+  valkey:
+    ports:
+      - "6379:6379"  # expose to host machine

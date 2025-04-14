@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { redis } from '@/lib/redis' ; 
 
 // Categories
 import { ICategoryRepository } from '@/domains/Categories/ICategoryRepository';
@@ -44,7 +45,7 @@ import { DeleteRecurringTransaction } from '@/domains/RecurringTransactions/Acti
 // Singleton repositories
 const categoryRepository: ICategoryRepository = new CategoryRepository(prisma);
 const monthRepository: IMonthRepository = new MonthRepository(prisma);
-const transactionRepository: ITransactionRepository = new TransactionRepository(prisma);
+const transactionRepository: ITransactionRepository = new TransactionRepository(prisma, redis);
 const recurringTransactionRepository: IRecurringTransactionRepository = new RecurringTransactionRepository(prisma);
 
 // Singleton services

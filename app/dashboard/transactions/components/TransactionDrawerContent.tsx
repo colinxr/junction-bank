@@ -14,8 +14,6 @@ import {
 export function TransactionDrawerContent({ 
   resource: transaction
 }: ResourceDrawerContentProps<Transaction>) {
-  console.log(transaction);
-  
   return (
     <div className="space-y-6">
       <Card>

@@ -47,8 +47,6 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
     }
   );
   
-  console.log(data);
-  
   const getTransactions = async () => {
     const response = await fetch(`${API_URL}?${queryString.toString()}`);
     return response.json();
