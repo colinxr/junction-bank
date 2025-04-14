@@ -38,7 +38,7 @@ export class MonthMapper {
       totalIncome: domain.totalIncome,
       totalExpenses: domain.totalExpenses,
       cashflow: domain.getCashflow(),
-      createdAt: domain.createdAt?.toISOString(),
+      createdAt: domain.createdAt,
       spendingByCategory
     };
   }
