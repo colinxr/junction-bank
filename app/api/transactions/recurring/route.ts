@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { makeRecurringTransactionUseCases } from '@/infrastructure/di/container';
-import { RecurringTransactionMapper } from '@/infrastructure/mappers/RecurringTransactionMapper';
-import { DomainException } from '@/domain/exceptions/DomainException';
+import { RecurringTransactionMapper } from '@/domains/RecurringTransactions/RecurringTransactionMapper';
+import { DomainException } from '@/domains/Shared/DomainException';
 
 // Create use cases through the dependency injection container
 const recurringTransactionUseCases = makeRecurringTransactionUseCases();
@@ -10,7 +10,8 @@ export async function GET() {
   try {
     const result = await recurringTransactionUseCases.index.execute();
 
-    return NextResponse.json(result, {
+    const recurringTransactions = result.data.map((recurringTransaction) => RecurringTransactionMapper.toDTO(recurringTransaction));
+    return NextResponse.json(recurringTransactions, {
       headers: {
         'Cache-Control': 'no-store, must-revalidate, max-age=0',
       }

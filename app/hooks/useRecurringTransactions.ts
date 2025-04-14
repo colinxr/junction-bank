@@ -27,9 +27,6 @@ export function useRecurringTransactions() {
     }
   );
 
-  console.log(data);
-  
-
   // Method to create a new recurring transaction optimistically
   const createRecurringTransaction = async (transactionData: Partial<RecurringTransaction>) => {
     try {
@@ -132,7 +129,7 @@ export function useRecurringTransactions() {
   };
   
   return {
-    recurringTransactions: data?.data || [],
+    recurringTransactions: data || [],
     pagination: data?.pagination || { total: 0, page: 1, pages: 1 },
     isLoading,
     error,

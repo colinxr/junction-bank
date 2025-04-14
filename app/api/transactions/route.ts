@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { makeTransactionUseCases } from '@/infrastructure/di/container';
-import { DomainException } from '@/domain/exceptions/DomainException';
-import { TransactionMapper } from '../../../infrastructure/mappers/TransactionMapper';
+import { DomainException } from '@/domains/Shared/DomainException';
+import { TransactionMapper } from '@/domains/Transactions/TransactionMapper';
 
 const transactionUseCases = makeTransactionUseCases();
 

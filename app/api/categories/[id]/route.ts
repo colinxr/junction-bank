@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makeCategoryUseCases } from '@/infrastructure/di/container';
-import { CategoryMapper } from '@/infrastructure/mappers/CategoryMapper';
-import { DomainException } from '@/domain/exceptions/DomainException';
-import { CategoryNotFoundException } from '@/domain/exceptions/CategoryException';
+import { DomainException } from '@/domains/Shared/DomainException';
+import { CategoryMapper } from '@/domains/Categories/CategoryMapper';
+import { CategoryNotFoundException } from '@/domains/Categories/CategoryException';
 
 // Create use cases through the dependency injection container
 const categoryUseCases = makeCategoryUseCases();
@@ -14,8 +14,8 @@ export async function GET(
   try {
     const { id } = await params;
     const category = await categoryUseCases.show.execute(Number(id));
-    const categoryDTO = CategoryMapper.toDTO(category);
     
+    const categoryDTO = CategoryMapper.toDTO(category);
     return NextResponse.json(categoryDTO, { 
       headers: {
         'Cache-Control': 'private, max-age=60'
@@ -53,8 +53,7 @@ export async function DELETE(
     const { id } = (await params);
     await categoryUseCases.delete.execute(Number(id));
     
-    return NextResponse.json(
-      { success: true, message: 'Category deleted successfully' }, 
+    return NextResponse.json({},
       { status: 200 }
     );
   } catch (error) {

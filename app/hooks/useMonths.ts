@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import apiClient from '@/lib/api-client';
-import { MonthDTO } from '@/application/dtos/month/MonthDTO';
+import { MonthDTO } from '@/domains/Months/MonthDTO';
 import { toast } from 'sonner';
 import { Month } from '@/app/types';
 
@@ -62,6 +62,9 @@ export function useMonths() {
       dedupingInterval: 60000, // 1 minute
     }
   );
+
+  console.log(data);
+  
   
   // // Update query parameters
   // const setPage = (page: number) => {
@@ -186,7 +189,7 @@ export function useMonths() {
   };
   
   return {
-    months: data?.data || [],
+    months: data || [],
     pagination: data?.pagination || { total: 0, page: 1, pages: 1 },
     isLoading,
     error,

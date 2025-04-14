@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makeMonthUseCases, makeTransactionUseCases } from '@/infrastructure/di/container';
-import { MonthMapper } from '@/infrastructure/mappers/MonthMapper';
-import { DomainException } from '@/domain/exceptions/DomainException';
-import { MonthNotFoundException } from '@/domain/exceptions/MonthException';
-import { MonthDTO } from '@/application/dtos/month/MonthDTO';
+import { MonthMapper } from '@/domains/Months/MonthMapper';
+import { DomainException } from '@/domains/Shared/DomainException';
+import { MonthNotFoundException } from '@/domains/Months/MonthException';
+import { MonthDTO } from '@/domains/Months/MonthDTO';
 
 // Create use cases through the dependency injection container
 const monthUseCases = makeMonthUseCases();

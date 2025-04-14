@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { makeCategoryUseCases } from '@/infrastructure/di/container';
-import { CategoryMapper } from '@/infrastructure/mappers/CategoryMapper';
-import { DomainException } from '@/domain/exceptions/DomainException';
+import { CategoryMapper } from '@/domains/Categories/CategoryMapper';
+import { DomainException } from '@/domains/Shared/DomainException';
 
 // Create use cases through the dependency injection container
 const categoryUseCases = makeCategoryUseCases();
@@ -9,9 +9,9 @@ const categoryUseCases = makeCategoryUseCases();
 export async function GET() {
   try {
     const categories = await categoryUseCases.index.execute();
-    const categoryDTOs = categories.map(CategoryMapper.toDTO);
     
-    return NextResponse.json({ data: categoryDTOs }, {
+    const categoryDTOs = categories.map((category) => CategoryMapper.toDTO(category));
+    return NextResponse.json(categoryDTOs, {
       headers: {
         'Cache-Control': 'no-store, must-revalidate, max-age=0',
       }

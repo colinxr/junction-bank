@@ -1,7 +1,7 @@
 import useSWR from 'swr';
 import { toast } from 'sonner';
 import { Category } from '@/app/types';
-import { CategoryDTO } from '@/application/dtos/category/CategoryDTO';
+import { CategoryDTO } from '@/domains/Categories/CategoryDTO';
 import apiClient from '@/lib/api-client';
 
 const API_URL = '/api/categories';
@@ -102,8 +102,10 @@ export function useCategories() {
     return response.data;
   };
   
+  console.log(data);
+  
   return {
-    categories: data?.data || [],
+    categories: data || [],
     isLoading,
     error,
     getCategory,
