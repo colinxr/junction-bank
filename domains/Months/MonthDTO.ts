@@ -6,7 +6,7 @@ export interface MonthDTO {
   totalIncome: number;
   totalExpenses: number;
   cashflow: number;
-  createdAt: Date;
+  createdAt?: Date;
   spendingByCategory?: any;
 }
 

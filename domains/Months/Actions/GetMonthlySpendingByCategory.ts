@@ -27,7 +27,7 @@ export class GetMonthlySpendingByCategory {
         return new Map(
             usdSpending.map(item => [
                 item.categoryId,
-                item._sum.amountCAD?.toNumber() || 0
+                Number(item._sum.amountCAD) || 0
             ])
         );
     }
