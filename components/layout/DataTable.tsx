@@ -36,6 +36,7 @@ interface DataTableProps<TData, TValue> {
     options: any[]
   }[]
   onRowClick?: (row: TData) => void
+  initialSorting?: SortingState
 }
 
 export function DataTable<TData, TValue>({
@@ -44,8 +45,9 @@ export function DataTable<TData, TValue>({
   searchPlaceholder = "Search...",
   filterableColumns = [],
   onRowClick,
+  initialSorting = [],
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [sorting, setSorting] = useState<SortingState>(initialSorting)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [globalFilter, setGlobalFilter] = useState("")
   const [pagination, setPagination] = useState<PaginationState>({
@@ -98,8 +100,6 @@ export function DataTable<TData, TValue>({
         {filterableColumns?.map((filterColumn) => {
           const column = table.getColumn(filterColumn.id);
           if (!column) return null;
-          console.log(filterColumn.options);
-          
           return (
             <select
               key={filterColumn.id}
