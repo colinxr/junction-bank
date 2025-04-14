@@ -43,8 +43,8 @@ import { UpdateRecurringTransaction } from '@/domains/RecurringTransactions/Acti
 import { DeleteRecurringTransaction } from '@/domains/RecurringTransactions/Actions/DeleteRecurringTransaction';
 
 // Singleton repositories
-const categoryRepository: ICategoryRepository = new CategoryRepository(prisma);
-const monthRepository: IMonthRepository = new MonthRepository(prisma);
+const categoryRepository: ICategoryRepository = new CategoryRepository(prisma, redis);
+const monthRepository: IMonthRepository = new MonthRepository(prisma, redis);
 const transactionRepository: ITransactionRepository = new TransactionRepository(prisma, redis);
 const recurringTransactionRepository: IRecurringTransactionRepository = new RecurringTransactionRepository(prisma);
 
