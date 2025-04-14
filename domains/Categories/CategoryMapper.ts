@@ -26,7 +26,7 @@ export class CategoryMapper {
       name: domain.name,
       type: domain.type,
       notes: domain.notes,
-      createdAt: domain.createdAt?.toISOString()
+      createdAt: domain.createdAt
     };
   }
 } 

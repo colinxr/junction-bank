@@ -263,7 +263,7 @@ export class TransactionRepository implements ITransactionRepository {
     const result = spending.map(s => ({
       categoryId: s.categoryId,
       _sum: {
-        amountCAD: s._sum.amountCAD
+        amountCAD: Number(s._sum.amountCAD)
       }
     }));
 

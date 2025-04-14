@@ -1,5 +1,4 @@
-import { Prisma } from '@prisma/client';
-import { TransactionType } from '@/domain/entities/Transaction';
+import { TransactionType } from '@/domains/Transactions/Transaction';
 
 export interface Transaction {
   id: number
@@ -53,7 +52,7 @@ export interface Category {
 export interface USDSpending {
   categoryId: number;
   _sum: {
-      amountCAD: Prisma.Decimal | null;
+      amountCAD: Number | null;
   };
 }
 
@@ -61,7 +60,7 @@ export interface CategorySpending {
   categoryId: number;
   categoryName: string;
   _sum: {
-      amountCAD: Prisma.Decimal | null;
+      amountCAD: Number | null;
   };
   _count: {
       amountUSD: number;
