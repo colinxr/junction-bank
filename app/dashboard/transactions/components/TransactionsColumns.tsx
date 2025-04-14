@@ -63,7 +63,7 @@ export const columns: ColumnDef<Transaction>[] = [
       }).format(amount);
       
       return (
-        <div className={`text-center ${row.original.type === 'INCOME' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
+        <div className={`text-center ${row.original.type === 'Income' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
           {formatted}
         </div>
       )
@@ -81,7 +81,7 @@ export const columns: ColumnDef<Transaction>[] = [
       }).format(amount);
       
       return (
-        <div className={`text-center ${row.original.type === 'INCOME' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
+        <div className={`text-center ${row.original.type === 'Income' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}`}>
           {formatted}
         </div>
       )
