@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { makeTransactionUseCases } from '../../../../infrastructure/di/container';
+import { makeTransactionUseCases } from '@/infrastructure/di/container';
+import { TransactionMapper } from '@/domains/Transactions/TransactionMapper';
 
 const transactionUseCases = makeTransactionUseCases();
 
@@ -29,5 +30,6 @@ export async function PUT(
   const { name, amountCAD, amountUSD, category: categoryId, notes } = await request.json();
 
   const result = await transactionUseCases.update.execute(Number(id), { name, amountCAD, amountUSD, categoryId, notes });
-  return NextResponse.json(result, { status: 200 });
+  const transactionDTO = TransactionMapper.toDTO(result);
+  return NextResponse.json(transactionDTO, { status: 200 });
 }

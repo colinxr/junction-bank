@@ -7,7 +7,6 @@ import { columns } from "./components/columns";
 import { useMonths } from "@/app/hooks/useMonths";
 
 export default function MonthsPage() {
-    // Use our custom hook instead of direct SWR usage
     const {
       months,
       isLoading,

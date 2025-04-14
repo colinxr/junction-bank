@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { makeMonthUseCases } from '@/infrastructure/di/container';
-import { MonthMapper } from '@/infrastructure/mappers/MonthMapper';
-import { DomainException } from '@/domain/exceptions/DomainException';
+import { MonthMapper } from '@/domains/Months/MonthMapper';
+import { DomainException } from '@/domains/Shared/DomainException';
 
 // Create use cases through the dependency injection container
 const monthUseCases = makeMonthUseCases();
@@ -10,7 +10,9 @@ export async function GET() {
   try {
     const result = await monthUseCases.index.execute();
 
-    return NextResponse.json(result, {
+    const months = result.data.map((month) => MonthMapper.toDTO(month));
+
+    return NextResponse.json(months, {
       headers: {
         'Cache-Control': 'no-store, must-revalidate, max-age=0',
       }

@@ -1,7 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { makeRecurringTransactionUseCases } from '@/infrastructure/di/container';
-import { DomainException } from '@/domain/exceptions/DomainException';
-import { RecurringTransactionNotFoundException } from '@/domain/exceptions/RecurringTransactionException';
+import { DomainException } from '@/domains/Shared/DomainException';
+import { RecurringTransactionNotFoundException } from '@/domains/RecurringTransactions/RecurringTransactionException';
+import { RecurringTransactionMapper } from '@/domains/RecurringTransactions/RecurringTransactionMapper';
 
 const recurringTransactionUseCases = makeRecurringTransactionUseCases();
 
@@ -13,7 +14,9 @@ export async function GET(
         const id = (await params).id;
         const recurringTransaction = await recurringTransactionUseCases.show.execute(id);
 
-        return NextResponse.json(recurringTransaction, {
+        const recurringTransactionDTO = RecurringTransactionMapper.toDTO(recurringTransaction);
+
+        return NextResponse.json(recurringTransactionDTO, {
             headers: {
                 'Cache-Control': 'private, max-age=60'
             }
@@ -51,7 +54,9 @@ export async function PUT(
         const body = await request.json();
         const recurringTransaction = await recurringTransactionUseCases.update.execute(id, body);
 
-        return NextResponse.json(recurringTransaction, {
+        const recurringTransactionDTO = RecurringTransactionMapper.toDTO(recurringTransaction);
+
+        return NextResponse.json(recurringTransactionDTO, {
             headers: {
                 'Cache-Control': 'private, max-age=60'
             }
@@ -88,8 +93,7 @@ export async function DELETE(
         const id = (await params).id;
         await recurringTransactionUseCases.delete.execute(id);
 
-    return NextResponse.json(
-            { success: true, message: 'Recurring transaction deleted successfully' },
+        return NextResponse.json({},
             { status: 200 }
         );
     } catch (error) {
