@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { ColumnDef } from "@tanstack/react-table"
+import { ColumnDef, SortingState } from "@tanstack/react-table"
 import { DataTable } from "@/components/layout/DataTable"
 import { Transaction } from "@/app/types"
 import { ResourceDrawer } from "@/components/layout/ResourceDrawer"
@@ -41,6 +41,11 @@ export function TransactionsDataTable({
     },
   ]
 
+  // Set the initial sorting to date in descending order
+  const initialSorting: SortingState = [
+    { id: "date", desc: true }
+  ]
+
   return (
     <>
       <DataTable
@@ -49,6 +54,7 @@ export function TransactionsDataTable({
         filterableColumns={filterableColumns}
         searchPlaceholder="Search transactions..."
         onRowClick={handleRowClick}
+        initialSorting={initialSorting}
       />
 
       {selectedTransaction && (
