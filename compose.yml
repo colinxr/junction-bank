@@ -1,16 +1,39 @@
-version: '3.8'
-
 services:
-  db:
-    image: postgres:latest
-    environment:
-      POSTGRES_USER: testuser
-      POSTGRES_PASSWORD: testpass
-      POSTGRES_DB: testdb
+  # Next.js app
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "5433:5432" # Map host port 5433 to container port 5432
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://valkey:6379
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    depends_on:
+      valkey:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --quiet localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Valkey server (Redis-compatible)
+  valkey:
+    image: valkey/valkey:alpine
+    ports:
+      - "6379:6379"
     volumes:
-      - pgdata:/var/lib/postgresql/data # Persist data
+      - valkey-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 volumes:
-  pgdata:
+  valkey-data:

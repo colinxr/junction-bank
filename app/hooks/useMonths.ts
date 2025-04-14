@@ -62,9 +62,6 @@ export function useMonths() {
       dedupingInterval: 60000, // 1 minute
     }
   );
-
-  console.log(data);
-  
   
   // // Update query parameters
   // const setPage = (page: number) => {

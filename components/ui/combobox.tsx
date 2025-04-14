@@ -55,7 +55,6 @@ export function Combobox({
   }, [options, value]);
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    console.log(event.key);
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setHighlightedIndex((prev) => Math.min(prev + 1, options.length - 1));

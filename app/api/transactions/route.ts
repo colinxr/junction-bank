@@ -14,7 +14,6 @@ export async function GET(request: NextRequest) {
 
     const transactions = results.map((result) => TransactionMapper.toDTO(result));
     
-    // Set no-cache headers to prevent stale data
     return NextResponse.json(transactions, {
       headers: {
         'Cache-Control': 'no-store, must-revalidate, max-age=0',

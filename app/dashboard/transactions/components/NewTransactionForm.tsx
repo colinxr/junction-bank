@@ -91,12 +91,6 @@ export function NewTransactionForm({
       setIsSubmitting(false);
     }
   }
-
-  console.log(defaultValues);
-  
-
-  console.log(form.formState.defaultValues);
-
   
   return (
     <Form {...form}>

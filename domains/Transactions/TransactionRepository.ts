@@ -1,21 +1,33 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { ITransactionRepository } from "./ITransactionRepository";
-import { CategorySpendingDTO, TransactionDTO } from "./TransactionDTO";
+import { CategorySpendingDTO } from "./TransactionDTO";
 import { TransactionType } from "./Transaction";
-import { TransactionMapper } from "./TransactionMapper";
 import { TransactionModel } from "./TransactionModel";
 
 import { Transaction, USDSpending } from "@/app/types";
+import { RedisClient } from '../../lib/redis';
 
 export class TransactionRepository implements ITransactionRepository {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private prisma: PrismaClient, private redis: RedisClient) {}
 
   async index(monthId?: number): Promise<TransactionModel[]> {
-    // Get count for pagination
-    const totalCount = await this.prisma.transaction.count();
+    const cacheKey = `transactions:${monthId || 'all'}`;
+    
+    // Try to get from cache first
+    let transactions;
+    try {
+      const cachedData = await this.redis.get(cacheKey);
+      if (cachedData) {
+        console.log('Cache hit for transactions');
+        return JSON.parse(cachedData);
+      }
+    } catch (error) {
+      // Log but continue with database query
+      console.error('Redis cache error, falling back to database:', error);
+    }
 
-    // Execute query with pagination and filtering
-    return await this.prisma.transaction.findMany({
+    // Cache miss or error, fetch from database
+    transactions = await this.prisma.transaction.findMany({
       where: { monthId: monthId ?? undefined },
       orderBy: [
         { name: 'asc' }
@@ -28,9 +40,35 @@ export class TransactionRepository implements ITransactionRepository {
         }
       }
     });
+
+    // Store in cache (only attempt if we successfully fetched from the database)
+    try {
+      if (transactions) {
+        await this.redis.set(cacheKey, JSON.stringify(transactions), { EX: 600 }); // Cache for 10 minutes
+      }
+    } catch (error) {
+      // Just log and continue - caching is a performance optimization, not critical path
+      console.warn('Redis cache set error, but data was retrieved successfully:', error);
+    }
+
+    return transactions;
   }
 
   async show(id: number): Promise<TransactionModel | null> {
+    const cacheKey = `transaction:${id}`;
+    
+    try {
+      const cachedData = await this.redis.get(cacheKey);
+      if (cachedData) {
+        console.log(`Cache hit for transaction ${id}`);
+        return JSON.parse(cachedData);
+      }
+    } catch (error) {
+      console.error('Redis cache error:', error);
+    }
+
+    console.log(`Cache miss for transaction ${id}, fetching from database`);
+    
     const transaction = await this.prisma.transaction.findUnique({
       where: { id },
       include: {
@@ -43,6 +81,13 @@ export class TransactionRepository implements ITransactionRepository {
     });
 
     if (!transaction) return null;
+    
+    // Store in cache
+    try {
+      await this.redis.set(cacheKey, JSON.stringify(transaction), { EX: 600 }); // Cache for 10 minutes
+    } catch (error) {
+      console.error('Redis cache set error:', error);
+    }
     
     return transaction;
   }
@@ -63,7 +108,7 @@ export class TransactionRepository implements ITransactionRepository {
     };
 
     // Create transaction
-    return await this.prisma.transaction.create({
+    const transaction = await this.prisma.transaction.create({
       data: prismaData as any,
       include: {
         category: {
@@ -73,6 +118,15 @@ export class TransactionRepository implements ITransactionRepository {
         }
       }
     });
+
+    try {
+      await this.redis.del(`transactions:${transactionData.monthId}`);
+      await this.redis.del(`transactions:all`);
+    } catch (error) {
+      console.error('Redis cache invalidation error:', error);
+    }
+
+    return transaction;
   }
 
   async update(id: number, data: Partial<Transaction>): Promise<TransactionModel> {
@@ -85,19 +139,68 @@ export class TransactionRepository implements ITransactionRepository {
     if (data.type !== undefined) updateData.type = data.type as TransactionType;
     if (data.categoryId !== undefined) updateData.category = { connect: { id: data.categoryId } };
     
-    return await this.prisma.transaction.update({
+    const transaction = await this.prisma.transaction.update({
       where: { id },
-      data: updateData
+      data: updateData,
+      include: {
+        category: {
+          select: {
+            name: true
+          }
+        }
+      }
     });
+
+    try {
+      await this.redis.del(`transaction:${id}`);
+      await this.redis.del(`transactions:${transaction.monthId}`);
+      await this.redis.del(`transactions:all`);
+    } catch (error) {
+      console.error('Redis cache invalidation error:', error);
+    }
+
+    return transaction;
   }
 
   async destroy(id: number): Promise<void> {
+    // Get the transaction before deleting to know which month cache to invalidate
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { id },
+      select: { monthId: true }
+    });
+
     await this.prisma.transaction.delete({
       where: { id }
     });
+
+    // Invalidate related caches
+    if (transaction) {
+      try {
+        await this.redis.del(`transaction:${id}`);
+        await this.redis.del(`transactions:${transaction.monthId}`);
+        await this.redis.del(`transactions:all`);
+      } catch (error) {
+        console.error('Redis cache invalidation error:', error);
+      }
+    }
   }
 
   async getTotalSpendingByCategory(monthId: number): Promise<CategorySpendingDTO[]> {
+    const cacheKey = `spending:category:${monthId}`;
+    
+    // Try to get from cache first
+    try {
+      const cachedData = await this.redis.get(cacheKey);
+      if (cachedData) {
+        console.log(`Cache hit for category spending ${monthId}`);
+        return JSON.parse(cachedData);
+      }
+    } catch (error) {
+      console.error('Redis cache error:', error);
+    }
+
+    console.log(`Cache miss for category spending ${monthId}, fetching from database`);
+    
     const spending = await this.prisma.transaction.groupBy({
       by: ['categoryId'],
       where: { monthId, },
@@ -114,15 +217,39 @@ export class TransactionRepository implements ITransactionRepository {
     });
 
     // Merge category names with spending data
-    return spending.map(s => ({
+    const result = spending.map(s => ({
       categoryId: s.categoryId,
       categoryName: categories.find(c => c.id === s.categoryId)?.name || '',
       totalSpent: Number(s._sum?.amountCAD || 0),
       transactionCount: s._count?.amountUSD || 0
     }));
+
+    // Store in cache
+    try {
+      await this.redis.set(cacheKey, JSON.stringify(result), { EX: 600 }); // Cache for 10 minutes
+    } catch (error) {
+      console.error('Redis cache set error:', error);
+    }
+
+    return result;
   }
 
   async getUSDSpendingByCategory(monthId: number): Promise<USDSpending[]> {
+    const cacheKey = `spending:usd:${monthId}`;
+    
+    // Try to get from cache first
+    try {
+      const cachedData = await this.redis.get(cacheKey);
+      if (cachedData) {
+        console.log(`Cache hit for USD spending ${monthId}`);
+        return JSON.parse(cachedData);
+      }
+    } catch (error) {
+      console.error('Redis cache error:', error);
+    }
+
+    console.log(`Cache miss for USD spending ${monthId}, fetching from database`);
+    
     const spending = await this.prisma.transaction.groupBy({
       by: ['categoryId'],
       where: {
@@ -133,12 +260,21 @@ export class TransactionRepository implements ITransactionRepository {
       _count: { id: true }
     });
 
-    return spending.map(s => ({
+    const result = spending.map(s => ({
       categoryId: s.categoryId,
       _sum: {
         amountCAD: s._sum.amountCAD
       }
     }));
+
+    // Store in cache
+    try {
+      await this.redis.set(cacheKey, JSON.stringify(result), { EX: 600 }); // Cache for 10 minutes
+    } catch (error) {
+      console.error('Redis cache set error:', error);
+    }
+
+    return result;
   }
 }
 
