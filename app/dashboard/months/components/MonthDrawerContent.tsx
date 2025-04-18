@@ -22,7 +22,7 @@ export function MonthDrawerContent({
       </div>
       
       {/* Financial Summary */}
-      <MonthSummaryCard monthId={month.id} />
+      <MonthSummaryCard month={month} />
 
       {/* Transactions Section */}
       <Card>

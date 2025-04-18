@@ -1,12 +1,15 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useMonthDetail } from "@/app/hooks/useMonths"
 import { Card, CardContent } from "@/components/ui/card"
 import { MetricDisplay } from "./MetricDisplay"
 import { CategoryCard } from "./CategoryCard"
+import { Month } from "@/app/types"
 
 interface MonthSummaryProps {
-  monthId: number
+  monthId?: number,
+  month: Month,
   className?: string
 }
 
@@ -17,11 +20,36 @@ interface CategoryData {
   totalAmountUSD: string
 }
 
-export function MonthSummaryCard({ monthId, className }: MonthSummaryProps) {
-  // Use the hook to fetch month details
-  const { monthDetail, isLoading } = useMonthDetail(monthId);
+export function MonthSummaryCard({ month, className }: MonthSummaryProps) {
+  const [categories, setCategories] = useState<CategoryData[]>(month.spendingByCategory || []);
+  const [loadingCategories, setLoadingCategories] = useState<boolean>(false);
 
-  console.log(monthDetail);
+  useEffect(() => {
+    // If the month doesn't have category data, fetch it
+    if (!month.spendingByCategory && month.id) {
+      const fetchCategories = async () => {
+        try {
+          setLoadingCategories(true);
+          const response = await fetch(`/api/months/${month.id}/categories`);
+          if (response.ok) {
+            const data = await response.json();
+            setCategories(data.spendingByCategory || []);
+          }
+        } catch (error) {
+          console.error("Error fetching categories:", error);
+        } finally {
+          setLoadingCategories(false);
+        }
+      };
+      
+      fetchCategories();
+    } else if (month.spendingByCategory) {
+      // Update categories if they're provided in the month prop
+      setCategories(month.spendingByCategory);
+    }
+  }, [month.id, month.spendingByCategory]);
+
+  console.log(month);
   
   return (
     <>
@@ -30,55 +58,55 @@ export function MonthSummaryCard({ monthId, className }: MonthSummaryProps) {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricDisplay 
               label="Total Income"
-              isLoading={isLoading}
-              value={monthDetail?.formattedIncome}
+              isLoading={false}
+              value={month.totalIncome}
               valueClassName="font-medium text-green-600"
             />
             
             <MetricDisplay 
               label="Total Expenses"
-              isLoading={isLoading}
-              value={monthDetail?.formattedExpenses}
+              isLoading={false}
+              value={month.totalExpenses}
               valueClassName="font-medium text-red-600"
             />
 
             <MetricDisplay 
               label="Cashflow"
-              isLoading={isLoading}
-              value={monthDetail?.formattedCashflow}
-              valueClassName={`font-medium ${monthDetail?.cashflow >= 0 ? 'text-green-600' : 'text-red-600'}`}
+              isLoading={false}
+              value={month.cashflow}
+              valueClassName={`font-medium ${month?.cashflow && month.cashflow >= 0 ? 'text-green-600' : 'text-red-600'}`}
             />
 
             <MetricDisplay 
               label="Transactions"
-              isLoading={isLoading}
-              value={monthDetail?.transactionCount}
+              isLoading={false}
+              value={month.transactionCount}
             />
 
             <MetricDisplay 
               label="Projected Daily Budget"
-              isLoading={isLoading}
-              value={monthDetail?.formattedProjectedDailyBudget}
+              isLoading={false}
+              value={month.projectedDailyBudget}
             />
 
             <MetricDisplay 
               label="Remaining Daily Budget"
-              isLoading={isLoading}
-              value={monthDetail?.formattedRemainingDailyBudget}
+              isLoading={false}
+              value={month.remainingDailyBudget}
             />
 
             <MetricDisplay 
               label="Actual Daily Spend"
-              isLoading={isLoading}
-              value={monthDetail?.formattedActualDailySpend}
+              isLoading={false}
+              value={month.actualDailySpend}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <MetricDisplay 
               label="Notes"
-              isLoading={isLoading}
-              value={monthDetail?.notes || "No notes"}
+              isLoading={false}
+              value={month.notes || "No notes"}
             />
           </div>
         </CardContent>
@@ -88,15 +116,21 @@ export function MonthSummaryCard({ monthId, className }: MonthSummaryProps) {
         <CardContent>
           <p className="text-md text-xl font-semibold">Spending by Category</p>
           <div className="grid grid-cols-4 gap-4 mt-4">
-            {monthDetail?.spendingByCategory?.map((category: CategoryData) => (
-              <CategoryCard
-                key={category.categoryId}
-                categoryId={category.categoryId}
-                categoryName={category.categoryName}
-                totalAmountCAD={category.totalAmountCAD}
-                totalAmountUSD={category.totalAmountUSD}
-              />
-            ))}
+            {loadingCategories ? (
+              <p>Loading categories...</p>
+            ) : categories.length > 0 ? (
+              categories.map((category: CategoryData) => (
+                <CategoryCard
+                  key={category.categoryId}
+                  categoryId={category.categoryId}
+                  categoryName={category.categoryName}
+                  totalAmountCAD={category.totalAmountCAD}
+                  totalAmountUSD={category.totalAmountUSD}
+                />
+              ))
+            ) : (
+              <p>No spending categories found</p>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -131,29 +131,23 @@ export class Month {
   }
 
   // Financial calculation methods
-  public getDailyBudget(): number {
-    // Remaining cashflow divided by days left in the month
+  public getProjectedDailyBudget(): number {
+    return (this.totalIncome - this.recurringExpenses) / this.getTotalDaysInMonth();
+  }
+
+  public getRemainingDailyBudget(): number {
     const daysLeft = this.getDaysLeftInMonth();
-    
-    // If no days left or not current month, return 0
-    if (daysLeft === 0) return 0;
     
     return this.getCashflow() / daysLeft;
   }
 
-  public getDailySpendRate(): number {
+  public getActualDailySpend(): number {
     // Non-recurring expenses divided by days elapsed in the month so far
     const daysPassed = this.getDaysPassedInMonth();
-    
+      
     // If no days passed, return 0 to avoid division by zero
     if (daysPassed === 0) return 0;
-    
-    return this.getNonRecurringExpenses() / daysPassed;
-  }
 
-  public getAverageDailySpend(): number {
-    // Non-recurring expenses divided by total days in the month
-    const totalDays = this.getTotalDaysInMonth();
-    return this.getNonRecurringExpenses() / totalDays;
+    return this.getNonRecurringExpenses() / daysPassed;
   }
 } 

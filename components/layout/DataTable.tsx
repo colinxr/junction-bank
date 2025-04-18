@@ -73,14 +73,8 @@ export function DataTable<TData, TValue>({
     },
   })
 
-  console.log(filterableColumns);
-
   const handleFilterChange = (columnId: string, value: string) => {
-    console.log('wtf');
-    
     const column = table.getColumn(columnId);
-    console.log(value);
-    console.log(column);
     if (column) {
       column.setFilterValue(value);
     }

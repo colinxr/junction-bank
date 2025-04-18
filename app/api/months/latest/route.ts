@@ -24,6 +24,8 @@ export async function GET() {
     // Get current month based on current date
     const currentDate = new Date();
     const month = await monthUseCases.findByDate.execute(currentDate);
+    console.log(month);
+    
 
     if (!month || month.id === undefined) {
       return NextResponse.json({ error: 'Current month not found' }, { status: 404 });
@@ -34,6 +36,8 @@ export async function GET() {
     
     // Convert to DTO
     const monthDTO = MonthMapper.toDTO(month);
+
+    console.log(monthDTO);
     
     // Combine into the response format
     const response: MonthDetailDTO = {

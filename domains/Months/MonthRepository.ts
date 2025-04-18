@@ -100,22 +100,27 @@ export class MonthRepository implements IMonthRepository {
 
   async findByDate(month: number, year: number): Promise<Month | null> {
     const cacheKey = `month:date:${month}:${year}`;
+    console.log(cacheKey);
     
-    // Try to get from cache first
-    try {
-      const cachedData = await this.redis.get(cacheKey);
-      if (cachedData) {
-        console.log(`Cache hit for month ${month}/${year}`);
-        if (cachedData === 'null') return null; // Handle null case
-        return MonthMapper.toDomain(JSON.parse(cachedData));
-      }
-    } catch (error) {
-      console.error('Redis cache error, falling back to database:', error);
-    }
+    
+    // // Try to get from cache first
+    // try {
+    //   const cachedData = await this.redis.get(cacheKey);
+    //   if (cachedData) {
+    //     console.log(`Cache hit for month ${month}/${year}`);
+    //     if (cachedData === 'null') return null; // Handle null case
+    //     return MonthMapper.toDomain(JSON.parse(cachedData));
+    //   }
+    // } catch (error) {
+    //   console.error('Redis cache error, falling back to database:', error);
+    // }
     
     const result = await this.prisma.month.findFirst({
       where: { month, year }
     });
+
+    console.log(result);
+    
 
     // Store in cache (even if null)
     try {

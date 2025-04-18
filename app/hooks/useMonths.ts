@@ -19,23 +19,29 @@ const fetcher = async (url: string) => {
 };
 
 // Hook for fetching a single month with financial details
-export function useMonthDetail(id: number) {
-
-  const { data, error, isLoading } = useSWR(`${API_URL}/${id}`, fetcher, {
-    revalidateOnFocus: false,
-      dedupingInterval: 30000, // 30 seconds
+export function useMonthDetail(id: number, key = 'default') {
+  const { data, error, isLoading } = useSWR(
+    id ? [`${API_URL}/${id}`, key] : null, 
+    ([url]) => fetcher(url),
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000, // Increase to 1 minute
+      keepPreviousData: true, // Keep showing old data while loading
     }
   );
+
+  console.log(data);
+  
   
   // Format currency values if data is available
   const formattedData = data ? {
     ...data,
-    formattedIncome: formatCurrency(data.totalIncome),
-    formattedExpenses: formatCurrency(data.totalExpenses),
-    formattedCashflow: formatCurrency(data.cashflow),
-    formattedProjectedDailyBudget: formatCurrency(data.projectedDailyBudget),
-    formattedRemainingDailyBudget: formatCurrency(data.remainingDailyBudget),
-    formattedActualDailySpend: formatCurrency(data.actualDailySpend)
+    totalIncome: formatCurrency(data.totalIncome),
+    totalExpenses: formatCurrency(data.totalExpenses),
+    cashflow: formatCurrency(data.cashflow),
+    projectedDailyBudget: formatCurrency(data.projectedDailyBudget),
+    remainingDailyBudget: formatCurrency(data.remainingDailyBudget),
+    actualDailySpend: formatCurrency(data.actualDailySpend)
   } : null;
   
   return {

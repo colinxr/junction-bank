@@ -8,14 +8,6 @@ datasource db {
   directUrl = env("NEXT_PUBLIC_DIRECT_URL")
 }
 
-// Define the TransactionType enum
-enum TransactionType {
-  Income  @map("Income")
-  Expense @map("Expense")
-
-  @@map("transaction_type")
-}
-
 model User {
   id                    String                 @id @db.Uuid
   email                 String                 @unique
@@ -33,25 +25,25 @@ model Category {
   type                  String
   notes                 String?
   createdAt             DateTime               @default(now()) @map("created_at")
+  isRecurring           Boolean                @default(false) @map("is_recurring")
   recurringTransactions RecurringTransaction[]
   transactions          Transaction[]
-  isRecurring           Boolean                @default(false) @map("is_recurring")
 
   @@index([name])
   @@map("categories")
 }
 
 model Month {
-  id               Int           @id @default(autoincrement())
-  month            Int
-  year             Int
-  notes            String?
-  createdAt        DateTime      @default(now()) @map("created_at")
-  totalExpenses    Decimal       @default(0) @map("total_expenses") @db.Decimal(10, 2)
-  totalIncome      Decimal       @default(0) @map("total_income") @db.Decimal(10, 2)
-  recurringExpenses Decimal      @default(0) @map("recurring_expenses") @db.Decimal(10, 2)
-  transactionCount Int           @default(0) @map("transaction_count")
-  transactions     Transaction[]
+  id                Int           @id @default(autoincrement())
+  month             Int
+  year              Int
+  notes             String?
+  createdAt         DateTime      @default(now()) @map("created_at")
+  totalExpenses     Decimal       @default(0) @map("total_expenses") @db.Decimal(10, 2)
+  totalIncome       Decimal       @default(0) @map("total_income") @db.Decimal(10, 2)
+  transactionCount  Int           @default(0) @map("transaction_count")
+  recurringExpenses Decimal       @default(0) @map("recurring_expenses") @db.Decimal(10, 2)
+  transactions      Transaction[]
 
   @@unique([month, year])
   @@index([month, year])
@@ -68,8 +60,8 @@ model Transaction {
   categoryId Int             @map("category_id")
   notes      String?
   date       DateTime        @db.Date
-  type       TransactionType @default(Expense)
   createdAt  DateTime        @default(now()) @map("created_at")
+  type       TransactionType @default(Expense)
   category   Category        @relation(fields: [categoryId], references: [id])
   month      Month           @relation(fields: [monthId], references: [id])
   user       User            @relation(fields: [userId], references: [id])
@@ -89,12 +81,19 @@ model RecurringTransaction {
   categoryId Int             @map("category_id")
   notes      String?
   dayOfMonth Int?            @map("day_of_month")
-  type       TransactionType @default(Expense)
   createdAt  DateTime        @default(now()) @map("created_at")
+  type       TransactionType @default(Expense)
   category   Category        @relation(fields: [categoryId], references: [id])
   user       User            @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([categoryId])
   @@map("recurring_transactions")
+}
+
+enum TransactionType {
+  Income  @map("Income")
+  Expense @map("Expense")
+
+  @@map("transaction_type")
 }

@@ -1,6 +1,7 @@
 import { Month as PrismaMonth } from '@prisma/client';
 import { Month } from './Month';
 import { MonthDTO } from './MonthDTO';
+import { formatCurrency } from '../../lib/utils';
 
 export class MonthMapper {
   static toDomain(raw: PrismaMonth): Month {
@@ -36,17 +37,17 @@ export class MonthMapper {
       month: domain.month,
       year: domain.year,
       notes: domain.notes,
-      totalIncome: domain.totalIncome,
-      totalExpenses: domain.totalExpenses,
-      recurringExpenses: domain.recurringExpenses,
-      nonRecurringExpenses: domain.getNonRecurringExpenses(),
-      cashflow: domain.getCashflow(),
+      totalIncome: parseFloat(domain.totalIncome.toFixed(2)),
+      totalExpenses: parseFloat(domain.totalExpenses.toFixed(2)),
+      recurringExpenses: parseFloat(domain.recurringExpenses.toFixed(2)),
+      nonRecurringExpenses: parseFloat(domain.getNonRecurringExpenses().toFixed(2)),
+      cashflow: parseFloat(domain.getCashflow().toFixed(2)),
       createdAt: domain.createdAt,
       spendingByCategory,
       // New financial planning metrics
-      projectedDailyBudget: domain.getDailyBudget(),
-      remainingDailyBudget: domain.getDailySpendRate(),
-      actualDailySpend: domain.getAverageDailySpend(),
+      projectedDailyBudget: parseFloat(domain.getProjectedDailyBudget().toFixed(2)),
+      remainingDailyBudget: parseFloat(domain.getRemainingDailyBudget().toFixed(2)),
+      actualDailySpend: parseFloat(domain.getActualDailySpend().toFixed(2)),
       // Date information
       totalDaysInMonth: domain.getTotalDaysInMonth(),
       daysLeft: domain.getDaysLeftInMonth(),
