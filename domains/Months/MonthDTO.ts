@@ -5,9 +5,20 @@ export interface MonthDTO {
   notes?: string;
   totalIncome: number;
   totalExpenses: number;
+  recurringExpenses: number;
+  nonRecurringExpenses: number;
   cashflow: number;
   createdAt?: Date;
   spendingByCategory?: any;
+  projectedDailyBudget: number;
+  remainingDailyBudget: number;
+  actualDailySpend: number;
+  totalDaysInMonth: number;
+  daysLeft: number;
+  daysPassed: number;
+  isCurrentMonth: boolean;
+  isInPast: boolean;
+  isInFuture: boolean;
 }
 
 export interface CreateMonthDTO {

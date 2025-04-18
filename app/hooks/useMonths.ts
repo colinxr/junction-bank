@@ -3,6 +3,7 @@ import apiClient from '@/lib/api-client';
 import { MonthDTO } from '@/domains/Months/MonthDTO';
 import { toast } from 'sonner';
 import { Month } from '@/app/types';
+import { formatCurrency } from '@/lib/utils';
 
 const API_URL = '/api/months';
 
@@ -18,16 +19,33 @@ const fetcher = async (url: string) => {
 };
 
 // Hook for fetching a single month with financial details
-export function useMonthDetail(id: number) {
-
-  const { data, error, isLoading } = useSWR(`${API_URL}/${id}`, fetcher, {
-    revalidateOnFocus: false,
-      dedupingInterval: 30000, // 30 seconds
+export function useMonthDetail(id: number, key = 'default') {
+  const { data, error, isLoading } = useSWR(
+    id ? [`${API_URL}/${id}`, key] : null, 
+    ([url]) => fetcher(url),
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000, // Increase to 1 minute
+      keepPreviousData: true, // Keep showing old data while loading
     }
   );
+
+  console.log(data);
+  
+  
+  // Format currency values if data is available
+  const formattedData = data ? {
+    ...data,
+    totalIncome: formatCurrency(data.totalIncome),
+    totalExpenses: formatCurrency(data.totalExpenses),
+    cashflow: formatCurrency(data.cashflow),
+    projectedDailyBudget: formatCurrency(data.projectedDailyBudget),
+    remainingDailyBudget: formatCurrency(data.remainingDailyBudget),
+    actualDailySpend: formatCurrency(data.actualDailySpend)
+  } : null;
   
   return {
-    monthDetail: data,
+    monthDetail: formattedData,
     error,
     isLoading,
   };

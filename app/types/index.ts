@@ -25,6 +25,23 @@ export interface Month {
   cashflow?: number
   totalIncome?: number
   totalExpenses?: number
+  recurringExpenses?: number
+  nonRecurringExpenses?: number
+  projectedDailyBudget?: number
+  remainingDailyBudget?: number
+  actualDailySpend?: number
+  totalDaysInMonth?: number
+  daysLeft?: number
+  daysPassed?: number
+  isCurrentMonth?: boolean
+  isInPast?: boolean
+  isInFuture?: boolean
+  spendingByCategory?: Array<{
+    categoryId: number;
+    categoryName: string;
+    totalAmountCAD: string;
+    totalAmountUSD: string;
+  }>
 } 
 
 // Define our recurring transaction type

@@ -1,46 +1,69 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { MonthDrawerContent } from "./months/components/MonthDrawerContent";
+import { Month } from "@/app/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import { format } from "date-fns";
+
 export default function DashboardPage() {
+  const [month, setMonth] = useState<Month | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const currentDate = new Date();
+  const formattedDate = format(currentDate, "MMMM d, yyyy");
+
+  useEffect(() => {
+    async function fetchLatestMonth() {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/months/latest");
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to fetch current month");
+        }
+        
+        const data = await response.json();
+        console.log(data);
+        
+        setMonth(data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching latest month:", err);
+        const errorMessage = err instanceof Error ? err.message : "Failed to load current month data";
+        setError(errorMessage);
+        toast.error("Error", {
+          description: errorMessage,
+          icon: <AlertCircle className="h-4 w-4" />
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchLatestMonth();
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <h1 className="text-3xl font-bold">Dashboard - {formattedDate}</h1>
       </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-xl border bg-card p-6 shadow">
-          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 className="tracking-tight text-sm font-medium">Current Balance</h3>
-          </div>
-          <div className="text-2xl font-bold">$12,450.50</div>
-          <p className="text-xs text-muted-foreground">
-            +2.5% from last month
-          </p>
+      
+      {loading && (
+        <div className="space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-[200px] w-full" />
+          <Skeleton className="h-[300px] w-full" />
         </div>
-        <div className="rounded-xl border bg-card p-6 shadow">
-          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 className="tracking-tight text-sm font-medium">Monthly Spending</h3>
-          </div>
-          <div className="text-2xl font-bold">$3,240.75</div>
-          <p className="text-xs text-muted-foreground">
-            -4.1% from last month
-          </p>
-        </div>
-        <div className="rounded-xl border bg-card p-6 shadow">
-          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 className="tracking-tight text-sm font-medium">Savings Goal</h3>
-          </div>
-          <div className="text-2xl font-bold">65%</div>
-          <p className="text-xs text-muted-foreground">
-            $6,500 of $10,000 target
-          </p>
-        </div>
-      </div>
-      <div className="rounded-xl border p-6 shadow">
-        <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
-        <p className="text-muted-foreground">
-          Your recent transactions will appear here. Visit the Transactions page for a complete history.
-        </p>
-      </div>
+      )}
+      
+      {!loading && !error && month && (
+        <MonthDrawerContent resource={month} />
+      )}
     </div>
   );
 } 
