@@ -27,6 +27,8 @@ export default function DashboardPage() {
         }
         
         const data = await response.json();
+        console.log(data);
+        
         setMonth(data);
         setError(null);
       } catch (err) {

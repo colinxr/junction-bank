@@ -4,6 +4,18 @@ import { Month } from './Month';
 import { MonthMapper } from './MonthMapper';
 import { RedisClient } from '@/lib/redis';
 
+// Define types for raw query results
+interface CategorySpending {
+  categoryId: number;
+  categoryName: string;
+  totalAmountCAD: string;
+  totalAmountUSD: string;
+}
+
+interface TotalResult {
+  total: string | number;
+}
+
 export class MonthRepository implements IMonthRepository {
   constructor(private prisma: PrismaClient, private redis: RedisClient) {}
 
@@ -120,7 +132,7 @@ export class MonthRepository implements IMonthRepository {
     return MonthMapper.toDomain(result);
   }
 
-  async store(monthData: Omit<Month, 'id' | 'createdAt' | 'totalIncome' | 'totalExpenses'>): Promise<Month> {
+  async store(monthData: Omit<Month, 'id' | 'createdAt' | 'totalIncome' | 'totalExpenses' | 'recurringExpenses'>): Promise<Month> {
     const prismaData = MonthMapper.toPersistence(monthData);
 
     const created = await this.prisma.month.create({
@@ -144,6 +156,7 @@ export class MonthRepository implements IMonthRepository {
     if (data.month !== undefined) updateData.month = data.month;
     if (data.year !== undefined) updateData.year = data.year;
     if (data.notes !== undefined) updateData.notes = data.notes;
+    // We don't manually update recurring expenses as it's handled by database triggers
 
     const updated = await this.prisma.month.update({
       where: { id },
@@ -248,16 +261,14 @@ export class MonthRepository implements IMonthRepository {
         }
       }
     });
-
+    
     if (!month) {
       return { hasTransactions: false, count: 0 };
     }
-
-    const transactionCount = month.transactions.length;
-
+    
     const result = {
-      hasTransactions: transactionCount > 0,
-      count: transactionCount
+      hasTransactions: month.transactions.length > 0,
+      count: month.transactions.length
     };
     
     // Store in cache
@@ -266,7 +277,211 @@ export class MonthRepository implements IMonthRepository {
     } catch (error) {
       console.warn('Redis cache set error, but data was retrieved successfully:', error);
     }
-
+    
     return result;
+  }
+
+  async getMonthDetails(id: number): Promise<{ month: Month | null, spendingByCategory: CategorySpending[] }> {
+    const cacheKey = `month:${id}:details`;
+    
+    // Try to get from cache first
+    try {
+      const cachedData = await this.redis.get(cacheKey);
+      if (cachedData) {
+        console.log(`Cache hit for month ${id} details`);
+        const data = JSON.parse(cachedData);
+        return {
+          month: data.month ? MonthMapper.toDomain(data.month) : null,
+          spendingByCategory: data.spendingByCategory as CategorySpending[]
+        };
+      }
+    } catch (error) {
+      console.error('Redis cache error, falling back to database:', error);
+    }
+    
+    // Step 1: Get the month data
+    const month = await this.prisma.month.findUnique({
+      where: { id }
+    });
+    
+    if (!month) {
+      return { month: null, spendingByCategory: [] };
+    }
+    
+    // Step 2: Get spending by category
+    const spendingByCategory = await this.prisma.$queryRaw<CategorySpending[]>`
+      SELECT 
+        c.id AS "categoryId",
+        c.name AS "categoryName",
+        CONCAT('$', CAST(SUM(t.amount_cad) AS TEXT)) AS "totalAmountCAD",
+        CONCAT('$', CAST(SUM(t.amount_usd) AS TEXT)) AS "totalAmountUSD"
+      FROM transactions t
+      JOIN categories c ON t.category_id = c.id
+      WHERE t.month_id = ${id} AND t.type = 'Expense'
+      GROUP BY c.id, c.name
+      ORDER BY SUM(t.amount_cad) DESC
+    `;
+    
+    const result = {
+      month: MonthMapper.toDomain(month),
+      spendingByCategory
+    };
+    
+    // Store in cache
+    try {
+      await this.redis.set(cacheKey, JSON.stringify({
+        month,
+        spendingByCategory
+      }), { EX: 1800 }); // Cache for 30 minutes
+    } catch (error) {
+      console.warn('Redis cache set error, but data was retrieved successfully:', error);
+    }
+    
+    return result;
+  }
+
+  async updateTotals(monthId: number): Promise<void> {
+    const month = await this.prisma.month.findUnique({
+      where: { id: monthId }
+    });
+
+    if (!month) return;
+
+    // Calculate total income
+    const incomeResult = await this.prisma.$queryRaw<TotalResult[]>`
+      SELECT COALESCE(SUM(amount_cad), 0) AS total
+      FROM transactions
+      WHERE month_id = ${monthId} AND type = 'Income'
+    `;
+    const totalIncome = Number(incomeResult[0].total);
+
+    // Calculate total expenses
+    const expensesResult = await this.prisma.$queryRaw<TotalResult[]>`
+      SELECT COALESCE(SUM(amount_cad), 0) AS total
+      FROM transactions
+      WHERE month_id = ${monthId} AND type = 'Expense'
+    `;
+    const totalExpenses = Number(expensesResult[0].total);
+
+    // Calculate recurring expenses (from transactions in categories marked as recurring)
+    const recurringExpensesResult = await this.prisma.$queryRaw<TotalResult[]>`
+      SELECT COALESCE(SUM(t.amount_cad), 0) AS total
+      FROM transactions t
+      JOIN categories c ON t.category_id = c.id
+      WHERE t.month_id = ${monthId} AND t.type = 'Expense' AND c.is_recurring = true
+    `;
+    const recurringExpenses = Number(recurringExpensesResult[0].total);
+
+    // Calculate transaction count
+    const transactionCount = await this.prisma.transaction.count({
+      where: { monthId }
+    });
+
+    // Update the month record
+    await this.prisma.month.update({
+      where: { id: monthId },
+      data: {
+        totalIncome,
+        totalExpenses,
+        recurringExpenses,
+        transactionCount
+      }
+    });
+
+    // Invalidate caches
+    try {
+      await this.redis.del(`month:${monthId}`);
+      await this.redis.del(`month:${monthId}:details`);
+      await this.redis.del('months:all');
+      await this.redis.del(`month:date:${month.month}:${month.year}`);
+    } catch (error) {
+      console.error('Redis cache invalidation error:', error);
+    }
+  }
+
+  /**
+   * Recalculate recurring expenses for all months or a specific month
+   * This is useful after changing which categories are considered recurring
+   * or after importing data
+   */
+  async recalculateRecurringExpenses(monthId?: number): Promise<void> {
+    try {
+      if (monthId) {
+        // Recalculate for a specific month
+        const month = await this.prisma.month.findUnique({
+          where: { id: monthId }
+        });
+
+        if (!month) return;
+
+        // Calculate recurring expenses for this month
+        const recurringExpensesResult = await this.prisma.$queryRaw<TotalResult[]>`
+          SELECT COALESCE(SUM(t.amount_cad), 0) AS total
+          FROM transactions t
+          JOIN categories c ON t.category_id = c.id
+          WHERE t.month_id = ${monthId} AND t.type = 'Expense' AND c.is_recurring = true
+        `;
+        const recurringExpenses = Number(recurringExpensesResult[0].total);
+
+        // Update the month record
+        await this.prisma.month.update({
+          where: { id: monthId },
+          data: { recurringExpenses }
+        });
+
+        // Invalidate caches for this month
+        await this.redis.del(`month:${monthId}`);
+        await this.redis.del(`month:${monthId}:details`);
+        await this.redis.del(`month:date:${month.month}:${month.year}`);
+      } else {
+        // Recalculate for all months
+        await this.prisma.$executeRaw`
+          UPDATE months m
+          SET recurring_expenses = (
+              SELECT COALESCE(SUM(t.amount_cad), 0)
+              FROM transactions t
+              JOIN categories c ON t.category_id = c.id
+              WHERE t.month_id = m.id
+              AND c.is_recurring = true
+              AND t.type = 'Expense'
+          )
+        `;
+
+        // Invalidate all month-related caches
+        await this.redis.del('months:all');
+        
+        // Invalidate month detail caches by prefixes
+        await this.invalidateMonthCaches();
+      }
+
+      console.log(`Successfully recalculated recurring expenses for ${monthId ? `month ${monthId}` : 'all months'}`);
+    } catch (error) {
+      console.error('Error recalculating recurring expenses:', error);
+      throw error;
+    }
+  }
+
+  // Helper method to invalidate month-related caches
+  private async invalidateMonthCaches(): Promise<void> {
+    try {
+      // Since we don't have a keys method, we'll use specific patterns
+      // that we know are used in our caching strategy
+      
+      // Get all months
+      const months = await this.prisma.month.findMany({
+        select: { id: true, month: true, year: true }
+      });
+
+      // Delete specific caches for each month
+      for (const month of months) {
+        await this.redis.del(`month:${month.id}`);
+        await this.redis.del(`month:${month.id}:details`);
+        await this.redis.del(`month:${month.id}:transactions`);
+        await this.redis.del(`month:date:${month.month}:${month.year}`);
+        await this.redis.del(`month:exists:${month.month}:${month.year}`);
+      }
+    } catch (error) {
+      console.error('Error invalidating month caches:', error);
+    }
   }
 } 

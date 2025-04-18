@@ -35,6 +35,7 @@ model Category {
   createdAt             DateTime               @default(now()) @map("created_at")
   recurringTransactions RecurringTransaction[]
   transactions          Transaction[]
+  isRecurring           Boolean                @default(false) @map("is_recurring")
 
   @@index([name])
   @@map("categories")
@@ -48,6 +49,7 @@ model Month {
   createdAt        DateTime      @default(now()) @map("created_at")
   totalExpenses    Decimal       @default(0) @map("total_expenses") @db.Decimal(10, 2)
   totalIncome      Decimal       @default(0) @map("total_income") @db.Decimal(10, 2)
+  recurringExpenses Decimal      @default(0) @map("recurring_expenses") @db.Decimal(10, 2)
   transactionCount Int           @default(0) @map("transaction_count")
   transactions     Transaction[]
 

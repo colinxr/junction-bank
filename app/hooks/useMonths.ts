@@ -3,6 +3,7 @@ import apiClient from '@/lib/api-client';
 import { MonthDTO } from '@/domains/Months/MonthDTO';
 import { toast } from 'sonner';
 import { Month } from '@/app/types';
+import { formatCurrency } from '@/lib/utils';
 
 const API_URL = '/api/months';
 
@@ -26,8 +27,19 @@ export function useMonthDetail(id: number) {
     }
   );
   
+  // Format currency values if data is available
+  const formattedData = data ? {
+    ...data,
+    formattedIncome: formatCurrency(data.totalIncome),
+    formattedExpenses: formatCurrency(data.totalExpenses),
+    formattedCashflow: formatCurrency(data.cashflow),
+    formattedProjectedDailyBudget: formatCurrency(data.projectedDailyBudget),
+    formattedRemainingDailyBudget: formatCurrency(data.remainingDailyBudget),
+    formattedActualDailySpend: formatCurrency(data.actualDailySpend)
+  } : null;
+  
   return {
-    monthDetail: data,
+    monthDetail: formattedData,
     error,
     isLoading,
   };
