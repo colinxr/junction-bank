@@ -94,22 +94,38 @@ export class TransactionRepository implements ITransactionRepository {
 
   async store(transactionData: Omit<Transaction, 'id' | 'validate' | 'isIncome' | 'isExpense'>): Promise<TransactionModel> {
     // Extract only the fields Prisma needs and convert to the format it expects
-    const prismaData = {
-      userId: transactionData.userId,
+    const prismaData: any = {
       name: transactionData.name,
       amountCAD: transactionData.amountCAD,
       amountUSD: transactionData.amountUSD || null,
-      categoryId: transactionData.categoryId,
       notes: transactionData.notes || null,
       // Convert domain enum to string for Prisma
       type: transactionData.type === TransactionType.INCOME ? 'Income' : 'Expense',
-      monthId: transactionData.monthId,
-      date: transactionData.date
+      date: transactionData.date,
+      category: {
+        connect: {
+          id: transactionData.categoryId
+        }
+      },
+      month: {
+        connect: {
+          id: transactionData.monthId
+        }
+      },
     };
+
+    // Only include user connection if userId is defined
+    if (transactionData.userId) {
+      prismaData.user = {
+        connect: {
+          id: transactionData.userId
+        }
+      };
+    }
 
     // Create transaction
     const transaction = await this.prisma.transaction.create({
-      data: prismaData as any,
+      data: prismaData,
       include: {
         category: {
           select: {

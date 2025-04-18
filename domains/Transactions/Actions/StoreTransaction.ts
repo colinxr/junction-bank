@@ -18,8 +18,11 @@ export class StoreTransaction {
   async execute(data: TransactionCreateDTO): Promise<TransactionModel> {
     const transactionDate = new Date(data.date);
     
+    
     const monthId = await this.getMonthId(transactionDate);
     const { amountCAD, amountUSD } = await this.getCurrencyAmount(data);
+    console.log(data.userId);
+    
     
     const transaction = TransactionEntity.create({
       userId: data.userId,
@@ -31,6 +34,7 @@ export class StoreTransaction {
       type: data.type as TransactionType
     });
     
+
     return await this.transactionRepository.store({
       userId: transaction.userId!,
       name: transaction.name,

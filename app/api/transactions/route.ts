@@ -28,10 +28,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
+    const headers = request.headers;
     
     // Execute use case with input data
     const transaction = await transactionUseCases.store.execute({
-      userId: data.userId,
+      userId: headers.get('x-user-id')!,
       name: data.name,
       amountCAD: data.amountCAD,
       amountUSD: data.amountUSD,
