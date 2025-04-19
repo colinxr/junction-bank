@@ -3,6 +3,7 @@ import { RecurringTransaction, TransactionType } from '../RecurringTransaction';
 import { CreateRecurringTransactionDTO } from '../RecurringTransactionDTO';
 import { CurrencyService } from '@/domains/Currency/Service/CurrencyService';
 
+
 export class StoreRecurringTransaction {
   constructor(
     private recurringTransactionRepository: IRecurringTransactionRepository,
@@ -10,23 +11,17 @@ export class StoreRecurringTransaction {
   ) {}
 
   async execute(data: CreateRecurringTransactionDTO): Promise<RecurringTransaction> {
-    // Handle currency conversion using the currency service (USD to CAD only)
-    const { amountCAD, amountUSD } = await this.currencyService.processCurrencyAmounts({
-      amountCAD: data.amountCAD,
-      amountUSD: data.amountUSD
-    });
-
+    const money = await this.getCurrencyAmount(data);
     const recurringTransaction = RecurringTransaction.create({
-      userId: data.userId,
-      name: data.name,
-      amountCAD: amountCAD,
-      amountUSD: amountUSD,
-      categoryId: data.categoryId,
-      notes: data.notes,
-      dayOfMonth: data.dayOfMonth,
-      type: data.type as TransactionType
+      ...data,
+      ...money
     });
 
     return await this.recurringTransactionRepository.store(recurringTransaction);
+  }
+
+  private async getCurrencyAmount(data: TransactionCreateDTO): Promise<{amountCAD: number, amountUSD: number | undefined}> {
+    // Use the centralized currency service to handle conversion (USD to CAD only)
+    return await this.currencyService.processCurrencyAmounts(data.amountCAD, data.amountUSD);
   }
 } 

@@ -51,6 +51,7 @@ const monthRepository: IMonthRepository = new MonthRepository(prisma, redis);
 const transactionRepository: ITransactionRepository = new TransactionRepository(prisma, redis);
 const recurringTransactionRepository: IRecurringTransactionRepository = new RecurringTransactionRepository(prisma);
 
+// Singleton services
 const exchangeRateService: IExchangeRateApiService = new ExchangeRateApiService();
 
 export const makeCurrencyActions = () => {
@@ -75,8 +76,8 @@ export const makeMonthUseCases = () => {
   return {
     index: new IndexMonths(monthRepository),
     show: new ShowMonth(monthRepository),
-    findByDate: new FindMonthByDate(monthRepository),
     store: new StoreMonth(monthRepository),
+    findByDate: new FindMonthByDate(monthRepository),
     update: new UpdateMonth(monthRepository),
     delete: new DestroyMonth(monthRepository),
   };
@@ -86,8 +87,8 @@ const currencyService: CurrencyService = new CurrencyService(exchangeRateService
 export const makeTransactionUseCases = () => {
   return {
     index: new IndexTransactions(transactionRepository),
-    store: new StoreTransaction(transactionRepository, monthRepository, currencyService),
     show: new ShowTransaction(transactionRepository),
+    store: new StoreTransaction(transactionRepository, monthRepository, currencyService),
     update: new UpdateTransaction(transactionRepository, currencyService),
     destroy: new DeleteTransaction(transactionRepository),
     getSpendingByCategory: new GetMonthlySpendingByCategory(transactionRepository)
