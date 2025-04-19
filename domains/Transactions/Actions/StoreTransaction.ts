@@ -1,5 +1,5 @@
 import { ITransactionRepository } from '../ITransactionRepository';
-import { Transaction as TransactionEntity, TransactionType } from '@/domains/Transactions/Transaction';
+import { Transaction, TransactionType } from '@/domains/Transactions/Transaction';
 import { TransactionCreateDTO } from '../TransactionDTO';
 import { TransactionModel } from '../TransactionModel';
 
@@ -16,33 +16,14 @@ export class StoreTransaction {
   ) {}
 
   async execute(data: TransactionCreateDTO): Promise<TransactionModel> {
-    const transactionDate = new Date(data.date);
-    
-    const monthId = await this.getMonthId(transactionDate);
+    const date = new Date(data.date);
+    const monthId = await this.getMonthId(date);
     const money = await this.getCurrencyAmount(data);
+
+    const transaction = Transaction.create({ ...data, ...money, monthId });
     
-    const transaction = TransactionEntity.create({
-      userId: data.userId,
-      name: data.name,
-      amountCAD: money.amountCAD!,
-      amountUSD: money.amountUSD,
-      categoryId: data.categoryId,
-      notes: data.notes,
-      type: data.type as TransactionType
-    });
     
-    return await this.transactionRepository.store({
-      userId: transaction.userId!,
-      name: transaction.name,
-      amountCAD: transaction.amountCAD,
-      amountUSD: transaction.amountUSD || null,
-      categoryId: transaction.categoryId,
-      notes: transaction.notes || null,
-      type: transaction.type,
-      monthId,
-      date: transactionDate,
-      createdAt: new Date().toISOString()
-    });
+    return await this.transactionRepository.store(transaction);
   }
 
   private async getMonthId(transactionDate: Date): Promise<number> {
