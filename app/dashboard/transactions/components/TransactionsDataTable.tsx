@@ -24,6 +24,9 @@ export function TransactionsDataTable({
   const { editTransaction, deleteTransaction } = useTransactions()
   const { categories, isLoading, error } = useCategories()
 
+  console.log(selectedTransaction);
+  
+
   const handleRowClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction)
     setIsDrawerOpen(true)

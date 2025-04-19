@@ -51,17 +51,15 @@ export function ResourceDrawer<T>({
 }: ResourceDrawerProps<T>) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  
+
   // Cast id to string or number, assuming T has an 'id' property
   const handleDelete = () => {
     setIsDeleteDialogOpen(true)
   }
   
   const confirmDelete = () => {
-    const resourceWithId = resource as unknown as { id: string | number }
-    if (onDelete && resourceWithId.id) {
-      const id = Number(resourceWithId.id)
-      onDelete(Number(id))
+    if (onDelete) {
+      onDelete(Number(resource.id))
       setIsDeleteDialogOpen(false)
       onClose() // Close the drawer after deletion
     }

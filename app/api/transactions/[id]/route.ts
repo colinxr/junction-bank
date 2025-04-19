@@ -10,9 +10,9 @@ export async function DELETE(
 ) {
   try {
     const id = (await params).id;
-    const result = await transactionUseCases.destroy.execute(Number(id));
+    await transactionUseCases.destroy.execute(Number(id));
     
-    return NextResponse.json(result, { status: 200 });
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error('Error deleting transaction:', error);
     return NextResponse.json(

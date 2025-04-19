@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/infrastructure/subpabase/server';
+import { createClient } from '@/infrastructure/supabase/server';
 import { cookies } from 'next/headers';
 
 // Define types
