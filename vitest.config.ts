@@ -1,4 +1,5 @@
-import { defineConfig } from 'vitest/config';
+/// <reference types="vitest" />
+import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths'; // Optional: if you use path aliases
 
 export default defineConfig({
