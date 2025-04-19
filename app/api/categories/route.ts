@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
-import { makeCategoryUseCases } from '@/infrastructure/di/container';
+import { makeCategoryActions } from '@/infrastructure/di/container';
 import { CategoryMapper } from '@/domains/Categories/CategoryMapper';
 import { DomainException } from '@/domains/Shared/DomainException';
 
 // Create use cases through the dependency injection container
-const categoryUseCases = makeCategoryUseCases();
+const categoryActions = makeCategoryActions();
 
 export async function GET() {
   try {
-    const categories = await categoryUseCases.index.execute();
+    const categories = await categoryActions.index.execute();
     
     const categoryDTOs = categories.map((category) => CategoryMapper.toDTO(category));
     return NextResponse.json(categoryDTOs, {
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const data = await request.json();
     
     // Execute use case
-    const category = await categoryUseCases.store.execute({
+    const category = await categoryActions.store.execute({
       name: data.name,
       type: data.type,
       notes: data.notes

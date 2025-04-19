@@ -1,18 +1,17 @@
 import { ExchangeRateVO } from "../Entity/ExchangeRate";
 import { InvalidAmountException } from "../Exception/CurrencyException";
-import { GetUsdToCadRate } from "./GetUsdToCadRate";
+import { ExchangeRate } from "../Entity/ExchangeRate";
 
 export class ConvertUsdToCad {
-  constructor(private readonly getUsdToCadRate: GetUsdToCadRate) {}
-
   /**
    * Converts a USD amount to CAD
    * @param amountUSD The amount in USD to convert
+   * @param rate The exchange rate to use for conversion
    * @throws {InvalidAmountException} When amount is invalid
    * @throws {ExchangeRateFetchException} When unable to fetch rate
    * @throws {StaleExchangeRateException} When rate is stale
    */
-  async execute(amountUSD: number): Promise<number> {
+  async execute(amountUSD: number, rate: ExchangeRate): Promise<number> {
     if (typeof amountUSD !== 'number' || isNaN(amountUSD)) {
       throw new InvalidAmountException("Amount must be a valid number");
     }
@@ -22,8 +21,6 @@ export class ConvertUsdToCad {
     }
 
     try {
-      const rate = await this.getUsdToCadRate.execute();
-      
       if (rate instanceof ExchangeRateVO) {
         return rate.convert(amountUSD);
       }

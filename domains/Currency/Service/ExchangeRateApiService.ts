@@ -1,8 +1,8 @@
 import { ExchangeRate, ExchangeRateVO } from "../Entity/ExchangeRate";
 import { ExchangeRateFetchException } from "../Exception/CurrencyException";
-import { ICurrencyService } from "./ICurrencyService";
+import { IExchangeRateApiService } from "./IExchangeRateApiService";
 
-export class ExchangeRateApiService implements ICurrencyService {
+export class ExchangeRateApiService implements IExchangeRateApiService {
   private cachedRate: ExchangeRateVO | null = null;
   private readonly apiUrl = "https://api.exchangerate-api.com/v4/latest/USD";
 

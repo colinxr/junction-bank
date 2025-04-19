@@ -10,8 +10,8 @@ export class StoreRecurringTransaction {
   ) {}
 
   async execute(data: CreateRecurringTransactionDTO): Promise<RecurringTransaction> {
-    // Handle currency conversion using the currency service
-    const { amountCAD, amountUSD } = await this.currencyService.ensureBothCurrencies({
+    // Handle currency conversion using the currency service (USD to CAD only)
+    const { amountCAD, amountUSD } = await this.currencyService.processCurrencyAmounts({
       amountCAD: data.amountCAD,
       amountUSD: data.amountUSD
     });

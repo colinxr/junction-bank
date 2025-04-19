@@ -19,13 +19,13 @@ export class StoreTransaction {
     const transactionDate = new Date(data.date);
     
     const monthId = await this.getMonthId(transactionDate);
-    const { amountCAD, amountUSD } = await this.getCurrencyAmount(data);
+    const money = await this.getCurrencyAmount(data);
     
     const transaction = TransactionEntity.create({
       userId: data.userId,
       name: data.name,
-      amountCAD: amountCAD!,
-      amountUSD,
+      amountCAD: money.amountCAD!,
+      amountUSD: money.amountUSD,
       categoryId: data.categoryId,
       notes: data.notes,
       type: data.type as TransactionType
@@ -72,10 +72,7 @@ export class StoreTransaction {
   }
 
   private async getCurrencyAmount(data: TransactionCreateDTO): Promise<{amountCAD: number, amountUSD: number | undefined}> {
-    // Use the centralized currency service to ensure both currencies
-    return await this.currencyService.ensureBothCurrencies({
-      amountCAD: data.amountCAD,
-      amountUSD: data.amountUSD
-    });
+    // Use the centralized currency service to handle conversion (USD to CAD only)
+    return await this.currencyService.processCurrencyAmounts(data.amountCAD, data.amountUSD);
   }
 } 
