@@ -6,23 +6,20 @@ import { TransactionModel } from '../TransactionModel';
 import { IMonthRepository } from '@/domains/Months/IMonthRepository';
 import { Month } from '@/domains/Months/Month';
 
-import { ICurrencyConversionService } from '@/domains/Shared/ICurrencyConversionService';
+import { CurrencyService } from '@/domains/Currency/Service/CurrencyService';
 
 export class StoreTransaction {
   constructor(
     private transactionRepository: ITransactionRepository,
     private monthRepository: IMonthRepository,
-    private currencyService: ICurrencyConversionService
+    private currencyService: CurrencyService
   ) {}
 
   async execute(data: TransactionCreateDTO): Promise<TransactionModel> {
     const transactionDate = new Date(data.date);
     
-    
     const monthId = await this.getMonthId(transactionDate);
     const { amountCAD, amountUSD } = await this.getCurrencyAmount(data);
-    console.log(data.userId);
-    
     
     const transaction = TransactionEntity.create({
       userId: data.userId,
@@ -34,7 +31,6 @@ export class StoreTransaction {
       type: data.type as TransactionType
     });
     
-
     return await this.transactionRepository.store({
       userId: transaction.userId!,
       name: transaction.name,
@@ -76,33 +72,10 @@ export class StoreTransaction {
   }
 
   private async getCurrencyAmount(data: TransactionCreateDTO): Promise<{amountCAD: number, amountUSD: number | undefined}> {
-    // If both amounts are provided, return them as is
-    if (data.amountCAD && data.amountUSD) {
-      return {
-        amountCAD: data.amountCAD,
-        amountUSD: data.amountUSD
-      };
-    }
-    
-    // If only CAD amount is provided, convert to USD
-    if (data.amountCAD) {
-      const usdMoney = await this.currencyService.convertCADtoUSD(data.amountCAD);
-      return {
-        amountCAD: data.amountCAD,
-        amountUSD: usdMoney.amount
-      };
-    }
-    
-    // If only USD amount is provided, convert to CAD
-    if (data.amountUSD) {
-      const cadMoney = await this.currencyService.convertUSDtoCAD(data.amountUSD);
-      return {
-        amountCAD: cadMoney.amount,
-        amountUSD: data.amountUSD
-      };
-    }
-    
-    // Default case (should not happen if validation is in place)
-    throw new Error('Either amountCAD or amountUSD must be provided');
+    // Use the centralized currency service to ensure both currencies
+    return await this.currencyService.ensureBothCurrencies({
+      amountCAD: data.amountCAD,
+      amountUSD: data.amountUSD
+    });
   }
 } 
