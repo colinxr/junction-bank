@@ -2,7 +2,7 @@ import useSWR from 'swr';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Transaction } from '@/app/types';
-import apiClient from '../../lib/api-client';
+import apiClient from '@/infrastructure/api-client';
 
 const API_URL = '/api/transactions';
 
