@@ -60,6 +60,7 @@ export class TransactionMapper {
     // Handle both Transaction class and database model
     if (source instanceof TransactionEntity) {
       return {
+        id: source.id,
         name: source.name,
         amountCAD: source.amountCAD,
         amountUSD: source.amountUSD,
@@ -71,6 +72,7 @@ export class TransactionMapper {
       };
     } else {
       return {
+        id: source.id,
         name: source.name!,
         amountCAD: getNumberValue(source.amountCAD)!,
         amountUSD: getNumberValue(source.amountUSD),

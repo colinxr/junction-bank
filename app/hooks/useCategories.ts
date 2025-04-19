@@ -2,7 +2,7 @@ import useSWR from 'swr';
 import { toast } from 'sonner';
 import { Category } from '@/app/types';
 import { CategoryDTO } from '@/domains/Categories/CategoryDTO';
-import apiClient from '@/lib/api-client';
+import apiClient from '@/infrastructure/api-client';
 
 const API_URL = '/api/categories';
 

@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma';
-import { redis } from '@/lib/redis' ; 
+import { prisma } from '@/infrastructure/prisma';
+import { redis } from '@/infrastructure/redis' ; 
 
 // Categories
 import { ICategoryRepository } from '@/domains/Categories/ICategoryRepository';
@@ -8,6 +8,13 @@ import { IndexCategories } from '@/domains/Categories/Actions/IndexCategories';
 import { ShowCategory } from '@/domains/Categories/Actions/ShowCategory';
 import { StoreCategory } from '@/domains/Categories/Actions/StoreCategory';
 import { DeleteCategory } from '@/domains/Categories/Actions/DeleteCategory';
+
+// Currency Domain
+import { IExchangeRateApiService } from '@/domains/Currency/Service/IExchangeRateApiService';
+import { CurrencyService } from '@/domains/Currency/Service/CurrencyService';
+import { ExchangeRateApiService } from '@/domains/Currency/Service/ExchangeRateApiService';
+import { GetUsdToCadRate } from '@/domains/Currency/Actions/GetUsdToCadRate';
+import { ConvertUsdToCad } from '@/domains/Currency/Actions/ConvertUsdToCad';
 
 // Months
 import { IMonthRepository } from '@/domains/Months/IMonthRepository';
@@ -20,22 +27,6 @@ import { UpdateMonth } from '@/domains/Months/Actions/UpdateMonth';
 import { DestroyMonth } from '@/domains/Months/Actions/DestroyMonth'; 
 import { GetMonthlySpendingByCategory } from '@/domains/Months/Actions/GetMonthlySpendingByCategory';
 
-// Transactions
-import { ITransactionRepository } from '@/domains/Transactions/ITransactionRepository';
-import { TransactionRepository } from '@/domains/Transactions/TransactionRepository';
-import { IndexTransactions } from '@/domains/Transactions/Actions/IndexTransactions';
-import { StoreTransaction } from '@/domains/Transactions/Actions/StoreTransaction';
-import { ShowTransaction } from '@/domains/Transactions/Actions/ShowTransaction';
-import { UpdateTransaction } from '@/domains/Transactions/Actions/UpdateTransaction';
-import { DeleteTransaction } from '@/domains/Transactions/Actions/DeleteTransaction';
-
-// Currency Domain
-import { IExchangeRateApiService } from '@/domains/Currency/Service/IExchangeRateApiService';
-import { CurrencyService } from '@/domains/Currency/Service/CurrencyService';
-import { ExchangeRateApiService } from '@/domains/Currency/Service/ExchangeRateApiService';
-import { GetUsdToCadRate } from '@/domains/Currency/Actions/GetUsdToCadRate';
-import { ConvertUsdToCad } from '@/domains/Currency/Actions/ConvertUsdToCad';
-
 // Recurring Transactions
 import { IRecurringTransactionRepository } from '@/domains/RecurringTransactions/IRecurringTransactionRepository';
 import { RecurringTransactionRepository } from '@/domains/RecurringTransactions/RecurringTransactionRepository';
@@ -44,6 +35,15 @@ import { ShowRecurringTransaction } from '@/domains/RecurringTransactions/Action
 import { StoreRecurringTransaction } from '@/domains/RecurringTransactions/Actions/StoreRecurringTransaction';
 import { UpdateRecurringTransaction } from '@/domains/RecurringTransactions/Actions/UpdateRecurringTransaction';
 import { DeleteRecurringTransaction } from '@/domains/RecurringTransactions/Actions/DeleteRecurringTransaction';
+
+// Transactions
+import { ITransactionRepository } from '@/domains/Transactions/ITransactionRepository';
+import { TransactionRepository } from '@/domains/Transactions/TransactionRepository';
+import { IndexTransactions } from '@/domains/Transactions/Actions/IndexTransactions';
+import { StoreTransaction } from '@/domains/Transactions/Actions/StoreTransaction';
+import { ShowTransaction } from '@/domains/Transactions/Actions/ShowTransaction';
+import { UpdateTransaction } from '@/domains/Transactions/Actions/UpdateTransaction';
+import { DeleteTransaction } from '@/domains/Transactions/Actions/DeleteTransaction';
 
 // Singleton repositories
 const categoryRepository: ICategoryRepository = new CategoryRepository(prisma, redis);
@@ -54,13 +54,6 @@ const recurringTransactionRepository: IRecurringTransactionRepository = new Recu
 // Singleton services
 const exchangeRateService: IExchangeRateApiService = new ExchangeRateApiService();
 
-export const makeCurrencyActions = () => {
-  return {
-    getUsdToCadRate: new GetUsdToCadRate(exchangeRateService),
-    convertUsdToCad: new ConvertUsdToCad(),
-  };
-};
-
 // Factory functions for use cases
 export const makeCategoryActions = () => {
   return {
@@ -68,6 +61,13 @@ export const makeCategoryActions = () => {
     show: new ShowCategory(categoryRepository),
     store: new StoreCategory(categoryRepository),
     delete: new DeleteCategory(categoryRepository)
+  };
+};
+
+export const makeCurrencyActions = () => {
+  return {
+    getUsdToCadRate: new GetUsdToCadRate(exchangeRateService),
+    convertUsdToCad: new ConvertUsdToCad(),
   };
 };
 
@@ -84,6 +84,16 @@ export const makeMonthUseCases = () => {
 }; 
 
 const currencyService: CurrencyService = new CurrencyService(exchangeRateService);
+export const makeRecurringTransactionUseCases = () => {
+  return {
+    index: new IndexRecurringTransactions(recurringTransactionRepository),
+    show: new ShowRecurringTransaction(recurringTransactionRepository),
+    store: new StoreRecurringTransaction(recurringTransactionRepository, currencyService),
+    update: new UpdateRecurringTransaction(recurringTransactionRepository, currencyService),
+    delete: new DeleteRecurringTransaction(recurringTransactionRepository)
+  };
+};
+
 export const makeTransactionUseCases = () => {
   return {
     index: new IndexTransactions(transactionRepository),
@@ -95,13 +105,4 @@ export const makeTransactionUseCases = () => {
   };
 };
 
-export const makeRecurringTransactionUseCases = () => {
-  return {
-    index: new IndexRecurringTransactions(recurringTransactionRepository),
-    show: new ShowRecurringTransaction(recurringTransactionRepository),
-    store: new StoreRecurringTransaction(recurringTransactionRepository, currencyService),
-    update: new UpdateRecurringTransaction(recurringTransactionRepository, currencyService),
-    delete: new DeleteRecurringTransaction(recurringTransactionRepository)
-  };
-};
 

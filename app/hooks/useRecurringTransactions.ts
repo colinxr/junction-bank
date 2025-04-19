@@ -1,7 +1,7 @@
 import useSWR from 'swr';
 import { toast } from 'sonner';
 import { RecurringTransaction } from '@/app/types';
-import apiClient from '@/lib/api-client';
+import apiClient from '@/infrastructure/api-client';
 const API_URL = '/api/transactions/recurring';
 
 // Fetcher function

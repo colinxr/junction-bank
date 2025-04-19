@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { createClient } from '@/lib/supabase/middleware'
+import { createClient } from '@/infrastructure/supabase/middleware'
 
 // Define route configurations
 const ROUTES = {

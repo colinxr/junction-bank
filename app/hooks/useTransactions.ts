@@ -2,7 +2,7 @@ import useSWR from 'swr';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Transaction } from '@/app/types';
-import apiClient from '../../lib/api-client';
+import apiClient from '@/infrastructure/api-client';
 
 const API_URL = '/api/transactions';
 
@@ -129,6 +129,8 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   const deleteTransaction = async (id: number) => {
     try {
       toast.success(`Deleting transaction ID: ${id}`);
+      console.log('got here');
+      
       
       // Optimistically update UI before the API call
       const optimisticData = {
@@ -148,6 +150,8 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
       toast.success('Transaction deleted successfully');
       return true;
     } catch (error) {
+      console.log(error);
+      
       console.error("Error deleting transaction:", error);
       toast.error("Failed to delete transaction. Please try again.");
       // Revalidate to restore the correct data

@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import apiClient from '@/lib/api-client';
+import apiClient from '@/infrastructure/api-client';
 import { MonthDTO } from '@/domains/Months/MonthDTO';
 import { toast } from 'sonner';
 import { Month } from '@/app/types';

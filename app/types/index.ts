@@ -16,6 +16,20 @@ export interface Transaction {
   createdAt: string
 }
 
+// Define our recurring transaction type
+export interface RecurringTransaction {
+  id: number;
+  name: string;
+  type?: "Income" | "Expense";
+  amountCAD?: number;
+  amountUSD?: number;
+  dayOfMonth?: number;
+  notes?: string;
+  categoryId: number; 
+  categoryName: string;
+  createdAt: Date;
+}
+
 export interface Month {
   id: number
   month: number
@@ -36,27 +50,8 @@ export interface Month {
   isCurrentMonth?: boolean
   isInPast?: boolean
   isInFuture?: boolean
-  spendingByCategory?: Array<{
-    categoryId: number;
-    categoryName: string;
-    totalAmountCAD: string;
-    totalAmountUSD: string;
-  }>
+  spendingByCategory?: SpendingByCategory
 } 
-
-// Define our recurring transaction type
-export interface RecurringTransaction {
-  id: number;
-  name: string;
-  type?: "Income" | "Expense";
-  amountCAD?: number;
-  amountUSD?: number;
-  dayOfMonth?: number;
-  notes?: string;
-  categoryId: number; 
-  categoryName: string;
-  createdAt: Date;
-}
 
 export interface Category {
   id: number;
@@ -73,16 +68,16 @@ export interface USDSpending {
   };
 }
 
-export interface CategorySpending {
-  categoryId: number;
-  categoryName: string;
-  _sum: {
-      amountCAD: Number | null;
-  };
-  _count: {
-      amountUSD: number;
-  };
-}
+// export interface CategorySpending {
+//   categoryId: number;
+//   categoryName: string;
+//   _sum: {
+//       amountCAD: Number | null;
+//   };
+//   _count: {
+//       amountUSD: number;
+//   };
+// }
 
 export interface FormatedCategorySpending {
   categoryId: number;
@@ -91,3 +86,13 @@ export interface FormatedCategorySpending {
   totalAmountUSD: string;
   total: number;
 }
+
+export interface CategorySpending {
+  categoryId: number;
+  categoryName: string;
+  totalAmountCAD: string;
+  totalAmountUSD: string;
+  total: number;
+}
+
+export type SpendingByCategory = CategorySpending[]; 

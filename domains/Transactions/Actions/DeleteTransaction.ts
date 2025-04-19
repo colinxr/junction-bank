@@ -6,6 +6,8 @@ export class DeleteTransaction {
 
   async execute(id: number): Promise<void> {
     // Check if transaction exists
+    console.log('got inside actions');
+    
     const transaction = await this.transactionRepository.show(id);
     if (!transaction) {
       throw new TransactionNotFoundException(id);

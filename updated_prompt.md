@@ -367,7 +367,7 @@ infrastructure/
 Create `infrastructure/di/container.ts`:
 ```typescript
 import { PrismaClient } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/infrastructure/prisma';
 import { ICategoryRepository } from '../../domain/repositories/ICategoryRepository';
 import { PrismaCategoryRepository } from '../repositories/prisma/PrismaCategoryRepository';
 import { GetCategoriesUseCase } from '../../application/useCases/category/GetCategoriesUseCase';

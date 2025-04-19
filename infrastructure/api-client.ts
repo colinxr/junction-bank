@@ -1,5 +1,5 @@
 import axios from "axios";
-import { createClient as createClientBrowser } from "@/lib/supabase/client";
+import { createClient as createClientBrowser } from "@/infrastructure/supabase/client";
 import { toast } from "sonner";
 
 const baseURL =
