@@ -29,9 +29,12 @@ import { ShowTransaction } from '@/domains/Transactions/Actions/ShowTransaction'
 import { UpdateTransaction } from '@/domains/Transactions/Actions/UpdateTransaction';
 import { DeleteTransaction } from '@/domains/Transactions/Actions/DeleteTransaction';
 
-// Currency Conversion
-import { ICurrencyConversionService } from '@/domains/Shared/ICurrencyConversionService';
-import { CurrencyConversionService } from '@/domains/Shared/CurrencyConversionService';
+// Currency Domain
+import { IExchangeRateApiService } from '@/domains/Currency/Service/IExchangeRateApiService';
+import { CurrencyService } from '@/domains/Currency/Service/CurrencyService';
+import { ExchangeRateApiService } from '@/domains/Currency/Service/ExchangeRateApiService';
+import { GetUsdToCadRate } from '@/domains/Currency/Actions/GetUsdToCadRate';
+import { ConvertUsdToCad } from '@/domains/Currency/Actions/ConvertUsdToCad';
 
 // Recurring Transactions
 import { IRecurringTransactionRepository } from '@/domains/RecurringTransactions/IRecurringTransactionRepository';
@@ -48,11 +51,17 @@ const monthRepository: IMonthRepository = new MonthRepository(prisma, redis);
 const transactionRepository: ITransactionRepository = new TransactionRepository(prisma, redis);
 const recurringTransactionRepository: IRecurringTransactionRepository = new RecurringTransactionRepository(prisma);
 
-// Singleton services
-const currencyService: ICurrencyConversionService = new CurrencyConversionService();
+const exchangeRateService: IExchangeRateApiService = new ExchangeRateApiService();
+
+export const makeCurrencyActions = () => {
+  return {
+    getUsdToCadRate: new GetUsdToCadRate(exchangeRateService),
+    convertUsdToCad: new ConvertUsdToCad(),
+  };
+};
 
 // Factory functions for use cases
-export const makeCategoryUseCases = () => {
+export const makeCategoryActions = () => {
   return {
     index: new IndexCategories(categoryRepository),
     show: new ShowCategory(categoryRepository),
@@ -73,12 +82,13 @@ export const makeMonthUseCases = () => {
   };
 }; 
 
+const currencyService: CurrencyService = new CurrencyService(exchangeRateService);
 export const makeTransactionUseCases = () => {
   return {
     index: new IndexTransactions(transactionRepository),
     store: new StoreTransaction(transactionRepository, monthRepository, currencyService),
     show: new ShowTransaction(transactionRepository),
-    update: new UpdateTransaction(transactionRepository),
+    update: new UpdateTransaction(transactionRepository, currencyService),
     destroy: new DeleteTransaction(transactionRepository),
     getSpendingByCategory: new GetMonthlySpendingByCategory(transactionRepository)
   };
@@ -88,8 +98,9 @@ export const makeRecurringTransactionUseCases = () => {
   return {
     index: new IndexRecurringTransactions(recurringTransactionRepository),
     show: new ShowRecurringTransaction(recurringTransactionRepository),
-    store: new StoreRecurringTransaction(recurringTransactionRepository),
-    update: new UpdateRecurringTransaction(recurringTransactionRepository),
+    store: new StoreRecurringTransaction(recurringTransactionRepository, currencyService),
+    update: new UpdateRecurringTransaction(recurringTransactionRepository, currencyService),
     delete: new DeleteRecurringTransaction(recurringTransactionRepository)
   };
 };
+

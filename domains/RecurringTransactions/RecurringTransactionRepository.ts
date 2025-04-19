@@ -102,7 +102,9 @@ export class RecurringTransactionRepository implements IRecurringTransactionRepo
     
     // Implementation to create regular transactions from recurring ones
     for (const rt of recurringTransactions) {
-      // Create a transaction for each recurring transaction
+      // Make sure both USD and CAD values are passed to the transaction
+      // The currency values from recurring transactions should already have proper conversions
+      // from when they were created or updated
       await this.prisma.transaction.create({
         data: {
           userId: rt.userId,

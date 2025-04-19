@@ -28,19 +28,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    const headers = request.headers;
-    
-    // Execute use case with input data
+    const userId = request.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+
     const transaction = await transactionUseCases.store.execute({
-      userId: headers.get('x-user-id')!,
-      name: data.name,
-      amountCAD: data.amountCAD,
-      amountUSD: data.amountUSD,
-      date: data.date,
-      categoryId: data.categoryId,
-      notes: data.notes,
-      type: data.type,
-      monthId: data.monthId
+      userId,
+      ...data
     });
 
     const transactionDTO = TransactionMapper.toDTO(transaction);

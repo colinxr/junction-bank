@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { makeCategoryUseCases } from '@/infrastructure/di/container';
+import { makeCategoryActions } from '@/infrastructure/di/container';
 import { DomainException } from '@/domains/Shared/DomainException';
 import { CategoryMapper } from '@/domains/Categories/CategoryMapper';
 import { CategoryNotFoundException } from '@/domains/Categories/CategoryException';
 
 // Create use cases through the dependency injection container
-const categoryUseCases = makeCategoryUseCases();
+const categoryActions = makeCategoryActions();
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +13,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const category = await categoryUseCases.show.execute(Number(id));
+    const category = await categoryActions.show.execute(Number(id));
     
     const categoryDTO = CategoryMapper.toDTO(category);
     return NextResponse.json(categoryDTO, { 
@@ -51,7 +51,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = (await params);
-    await categoryUseCases.delete.execute(Number(id));
+    await categoryActions.delete.execute(Number(id));
     
     return NextResponse.json({},
       { status: 200 }

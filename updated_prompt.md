@@ -379,7 +379,7 @@ import { DeleteCategoryUseCase } from '../../application/useCases/category/Delet
 const categoryRepository: ICategoryRepository = new PrismaCategoryRepository(prisma);
 
 // Factory functions for use cases
-export const makeCategoryUseCases = () => {
+export const makeCategoryActions = () => {
   return {
     getCategories: new GetCategoriesUseCase(categoryRepository),
     getCategory: new GetCategoryUseCase(categoryRepository),
@@ -513,16 +513,16 @@ export class PrismaCategoryRepository implements ICategoryRepository {
 Update `app/api/categories/route.ts`:
 ```typescript
 import { NextResponse } from 'next/server';
-import { makeCategoryUseCases } from '@/infrastructure/di/container';
+import { makeCategoryActions } from '@/infrastructure/di/container';
 import { CategoryMapper } from '@/infrastructure/mappers/CategoryMapper';
 import { DomainException } from '@/domain/exceptions/DomainException';
 
 // Create use cases through the dependency injection container
-const categoryUseCases = makeCategoryUseCases();
+const categoryActions = makeCategoryActions();
 
 export async function GET() {
   try {
-    const categories = await categoryUseCases.getCategories.execute();
+    const categories = await categoryActions.getCategories.execute();
     const categoryDTOs = categories.map(CategoryMapper.toDTO);
     
     return NextResponse.json({ data: categoryDTOs }, {
@@ -552,7 +552,7 @@ export async function POST(request: Request) {
     const data = await request.json();
     
     // Execute use case
-    const category = await categoryUseCases.createCategory.execute({
+    const category = await categoryActions.createCategory.execute({
       name: data.name,
       type: data.type,
       notes: data.notes
@@ -583,13 +583,13 @@ export async function POST(request: Request) {
 Update `app/api/categories/[id]/route.ts`:
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
-import { makeCategoryUseCases } from '@/infrastructure/di/container';
+import { makeCategoryActions } from '@/infrastructure/di/container';
 import { CategoryMapper } from '@/infrastructure/mappers/CategoryMapper';
 import { DomainException } from '@/domain/exceptions/DomainException';
 import { CategoryNotFoundException } from '@/domain/exceptions/CategoryException';
 
 // Create use cases through the dependency injection container
-const categoryUseCases = makeCategoryUseCases();
+const categoryActions = makeCategoryActions();
 
 export async function GET(
   request: NextRequest,
@@ -597,7 +597,7 @@ export async function GET(
 ) {
   try {
     const id = Number(params.id);
-    const category = await categoryUseCases.getCategory.execute(id);
+    const category = await categoryActions.getCategory.execute(id);
     const categoryDTO = CategoryMapper.toDTO(category);
     
     return NextResponse.json(categoryDTO, { 
@@ -635,7 +635,7 @@ export async function DELETE(
 ) {
   try {
     const id = Number(params.id);
-    await categoryUseCases.deleteCategory.execute(id);
+    await categoryActions.deleteCategory.execute(id);
     
     return NextResponse.json(
       { success: true, message: 'Category deleted successfully' }, 
