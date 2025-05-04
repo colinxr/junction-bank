@@ -20,10 +20,18 @@ export class StoreTransaction {
     const monthId = await this.getMonthId(date);
     const money = await this.getCurrencyAmount(data);
 
-    const transaction = Transaction.create({ ...data, ...money, monthId });
-    
-    
-    return await this.transactionRepository.store(transaction);
+    // Pass plain object to repository instead of Transaction instance
+    return await this.transactionRepository.store({
+      userId: data.userId,
+      name: data.name,
+      categoryId: data.categoryId,
+      notes: data.notes,
+      monthId,
+      type: data.type as TransactionType,
+      amountCAD: money.amountCAD,
+      amountUSD: money.amountUSD,
+      date: new Date(data.date)
+    });
   }
 
   private async getMonthId(transactionDate: Date): Promise<number> {
@@ -54,6 +62,14 @@ export class StoreTransaction {
 
   private async getCurrencyAmount(data: TransactionCreateDTO): Promise<{amountCAD: number, amountUSD: number | undefined}> {
     // Use the centralized currency service to handle conversion (USD to CAD only)
-    return await this.currencyService.processCurrencyAmounts(data.amountCAD, data.amountUSD);
+    const result = await this.currencyService.processCurrencyAmounts(
+      data.amountCAD as number, 
+      data.amountUSD as number
+    );
+    
+    return {
+      amountCAD: result.amountCAD ?? 0,
+      amountUSD: result.amountUSD
+    };
   }
 } 

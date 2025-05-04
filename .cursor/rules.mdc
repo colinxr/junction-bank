@@ -43,3 +43,6 @@ Follow these rules when you write code:
 - always name component files with PascalCase; always name lib files using camelCase
 
 
+all test should be written in files next to the implementation. they should live in the same directory as the file they are testing
+
+

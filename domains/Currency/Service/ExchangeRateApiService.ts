@@ -1,5 +1,4 @@
 import { ExchangeRate, ExchangeRateVO } from "../Entity/ExchangeRate";
-import { ExchangeRateFetchException } from "../Exception/CurrencyException";
 import { IExchangeRateApiService } from "./IExchangeRateApiService";
 
 export class ExchangeRateApiService implements IExchangeRateApiService {

@@ -7,7 +7,7 @@ import { InvalidAmountException } from '../Exception/CurrencyException';
 describe('ConvertUsdToCad', () => {
   const mockExecute = vi.fn();
   const mockGetUsdToCadRate = { execute: mockExecute } as unknown as GetUsdToCadRate;
-  const converter = new ConvertUsdToCad(mockGetUsdToCadRate);
+  const converter = new ConvertUsdToCad();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -17,7 +17,7 @@ describe('ConvertUsdToCad', () => {
     const mockRate = new ExchangeRateVO(1.35);
     mockExecute.mockImplementation(() => Promise.resolve(mockRate));
 
-    const result = await converter.execute(100);
+    const result = await converter.execute(100, mockRate);
     expect(result).toBe(135.00);
     expect(mockExecute).toHaveBeenCalledTimes(1);
   });
@@ -26,17 +26,21 @@ describe('ConvertUsdToCad', () => {
     const mockRate = new ExchangeRateVO(1.35);
     mockExecute.mockImplementation(() => Promise.resolve(mockRate));
 
-    const result = await converter.execute(10.50);
+    const result = await converter.execute(10.50, mockRate);
     expect(result).toBe(14.18);
   });
 
   it('should throw InvalidAmountException for negative amounts', async () => {
-    await expect(converter.execute(-100)).rejects.toThrow(InvalidAmountException);
+    const mockRate = new ExchangeRateVO(1.35);
+
+    await expect(converter.execute(-100, mockRate)).rejects.toThrow(InvalidAmountException);
     expect(mockExecute).not.toHaveBeenCalled();
   });
 
   it('should throw InvalidAmountException for NaN', async () => {
-    await expect(converter.execute(NaN)).rejects.toThrow(InvalidAmountException);
+    const mockRate = new ExchangeRateVO(1.35);
+
+    await expect(converter.execute(NaN, mockRate)).rejects.toThrow(InvalidAmountException);
     expect(mockExecute).not.toHaveBeenCalled();
   });
 
@@ -44,14 +48,16 @@ describe('ConvertUsdToCad', () => {
     const mockRate = new ExchangeRateVO(1.35);
     mockExecute.mockImplementation(() => Promise.resolve(mockRate));
 
-    const result = await converter.execute(0);
+    const result = await converter.execute(0, mockRate);
     expect(result).toBe(0.00);
   });
 
   it('should propagate errors from GetUsdToCadRate', async () => {
     const error = new Error('Rate fetch failed');
     mockExecute.mockImplementation(() => Promise.reject(error));
+    const mockRate = new ExchangeRateVO(1.35);
 
-    await expect(converter.execute(100)).rejects.toThrow('Rate fetch failed');
+
+    await expect(converter.execute(100, mockRate)).rejects.toThrow('Rate fetch failed');
   });
 }); 

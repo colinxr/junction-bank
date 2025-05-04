@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { MonthRepository } from '@/domains/Months/MonthRepository';
-import { redis } from '@/lib/redis';
+import { redis } from '@/infrastructure/redis';
 import { DomainException } from '@/domains/Shared/DomainException';
 
 // POST /api/months/recalculate

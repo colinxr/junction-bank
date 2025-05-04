@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Category } from '../../app/types'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -33,6 +32,7 @@ interface DataTableProps<TData, TValue> {
   filterableColumns?: {
     id: string
     title: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     options: any[]
   }[]
   onRowClick?: (row: TData) => void

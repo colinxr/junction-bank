@@ -6,11 +6,11 @@ export interface Transaction {
   monthId: number
   name: string
   amountCAD: number
-  amountUSD: number | null
+  amountUSD?: number
   categoryId: number
   categoryName: string,
   category?: Category,
-  notes: string | null
+  notes?: string,
   date: Date
   type: TransactionType
   createdAt: string
@@ -64,7 +64,7 @@ export interface Category {
 export interface USDSpending {
   categoryId: number;
   _sum: {
-      amountCAD: Number | null;
+      amountCAD: number | null;
   };
 }
 

@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { ICategoryRepository } from './ICategoryRepository';
 import { Category } from './Category';
 import { CategoryMapper } from './CategoryMapper';
-import { RedisClient } from '@/lib/redis';
+import { RedisClient } from '@/infrastructure/redis';
 
 export class CategoryRepository implements ICategoryRepository {
   constructor(private prisma: PrismaClient, private redis: RedisClient) {}

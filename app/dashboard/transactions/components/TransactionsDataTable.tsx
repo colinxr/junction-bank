@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { ColumnDef, SortingState } from "@tanstack/react-table"
 import { DataTable } from "@/components/layout/DataTable"
 import { Transaction } from "@/app/types"
@@ -22,7 +22,7 @@ export function TransactionsDataTable({
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const { editTransaction, deleteTransaction } = useTransactions()
-  const { categories, isLoading, error } = useCategories()
+  const { categories } = useCategories()
 
   console.log(selectedTransaction);
   

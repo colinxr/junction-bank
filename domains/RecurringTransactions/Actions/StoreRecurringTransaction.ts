@@ -14,14 +14,24 @@ export class StoreRecurringTransaction {
     const money = await this.getCurrencyAmount(data);
     const recurringTransaction = RecurringTransaction.create({
       ...data,
+      type: data.type as TransactionType,
       ...money
     });
 
     return await this.recurringTransactionRepository.store(recurringTransaction);
   }
 
-  private async getCurrencyAmount(data: TransactionCreateDTO): Promise<{amountCAD: number, amountUSD: number | undefined}> {
+  private async getCurrencyAmount(data: CreateRecurringTransactionDTO): Promise<{amountCAD: number, amountUSD: number | undefined}> {
     // Use the centralized currency service to handle conversion (USD to CAD only)
-    return await this.currencyService.processCurrencyAmounts(data.amountCAD, data.amountUSD);
+    const currencyData = await this.currencyService.processCurrencyAmounts(
+      data.amountCAD as number, 
+      data.amountUSD as number
+    );
+    
+    // Ensure amountCAD is always defined as a number
+    return {
+      amountCAD: currencyData.amountCAD ?? 0,
+      amountUSD: currencyData.amountUSD
+    };
   }
 } 

@@ -5,7 +5,7 @@ import { TransactionType } from "./Transaction";
 import { TransactionModel } from "./TransactionModel";
 
 import { Transaction, USDSpending } from "@/app/types";
-import { RedisClient } from '../../lib/redis';
+import { RedisClient } from '@/infrastructure/redis';
 
 export class TransactionRepository implements ITransactionRepository {
   constructor(private prisma: PrismaClient, private redis: RedisClient) {}

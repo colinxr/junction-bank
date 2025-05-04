@@ -35,11 +35,11 @@ export class UpdateTransaction {
         updateData.amountCAD = data.amountCAD;
         updateData.amountUSD = undefined;
       } else {
-        // Use currency service to ensure both currencies are properly converted
-        const result = await this.currencyService.ensureBothCurrencies({
-          amountCAD: data.amountCAD,
-          amountUSD: data.amountUSD
-        });
+        // Use currency service to handle amount conversion
+        const result = await this.currencyService.processCurrencyAmounts(
+          data.amountCAD as number, 
+          data.amountUSD as number
+        );
         
         updateData.amountCAD = result.amountCAD;
         updateData.amountUSD = result.amountUSD;

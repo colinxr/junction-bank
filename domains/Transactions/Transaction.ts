@@ -28,8 +28,8 @@ export class Transaction {
     categoryName?: string;
     notes?: string;
     type?: TransactionType;
-    date?: Date;
-    monthId?: number;
+    date: Date;
+    monthId: number;
     createdAt?: Date;
   }) {
     this.id = props.id;
@@ -56,8 +56,8 @@ export class Transaction {
     categoryName?: string;
     notes?: string;
     type?: TransactionType;
-    date?: Date;
-    monthId?: number;
+    date: Date;
+    monthId: number;
     createdAt?: Date;
   }): Transaction {
     return new Transaction(props);

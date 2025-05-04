@@ -20,7 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-export interface ResourceDrawerProps<T> {
+export interface ResourceDrawerProps<T extends { id: number | string }> {
   resource: T
   isOpen: boolean
   onClose: () => void
@@ -38,7 +38,7 @@ export interface ResourceDrawerContentProps<T> {
   onDelete?: (id: number ) => Promise<boolean> | void
 }
 
-export function ResourceDrawer<T>({
+export function ResourceDrawer<T extends { id: number | string }>({
   resource,
   isOpen,
   onClose,

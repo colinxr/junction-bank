@@ -1,6 +1,6 @@
 import { ExchangeRate } from "../Entity/ExchangeRate";
 
-export interface ICurrencyService {
+export interface IExchangeRateApiService {
   /**
    * Fetches the current USD to CAD exchange rate
    * Should implement caching behavior internally

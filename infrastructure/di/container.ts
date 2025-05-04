@@ -83,7 +83,7 @@ export const makeMonthUseCases = () => {
   };
 }; 
 
-const currencyService: CurrencyService = new CurrencyService(exchangeRateService);
+const currencyService: CurrencyService = new CurrencyService();
 export const makeRecurringTransactionUseCases = () => {
   return {
     index: new IndexRecurringTransactions(recurringTransactionRepository),

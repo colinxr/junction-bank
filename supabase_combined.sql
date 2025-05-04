@@ -1,0 +1,1093 @@
+-- Disable all triggers
+SET session_replication_role = 'replica';
+
+
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 15.8
+-- Dumped by pg_dump version 16.8 (Homebrew)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA public;
+
+
+--
+-- Name: transaction_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.transaction_type AS ENUM (
+    'Income',
+    'Expense'
+);
+
+
+--
+-- Name: set_transaction_type(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_transaction_type() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  SELECT 
+    CASE 
+      WHEN c.type = 'income' THEN 'Income'::"transaction_type"
+      ELSE 'Expense'::"transaction_type"
+    END
+  INTO NEW.type
+  FROM "categories" c
+  WHERE c.id = NEW.category_id;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: update_month_on_transaction_delete(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_month_on_transaction_delete() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF OLD.type = 'Income' THEN
+    UPDATE months
+    SET 
+      total_income = total_income - OLD.amount_cad,
+      transaction_count = transaction_count - 1
+    WHERE id = OLD.month_id;
+  ELSE
+    UPDATE months
+    SET 
+      total_expenses = total_expenses - OLD.amount_cad,
+      transaction_count = transaction_count - 1
+    WHERE id = OLD.month_id;
+  END IF;
+  
+  RETURN OLD;
+END;
+$$;
+
+
+--
+-- Name: update_month_on_transaction_insert(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_month_on_transaction_insert() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF NEW.type = 'Income' THEN
+    UPDATE months
+    SET 
+      total_income = total_income + NEW.amount_cad,
+      transaction_count = transaction_count + 1
+    WHERE id = NEW.month_id;
+  ELSE
+    UPDATE months
+    SET 
+      total_expenses = total_expenses + NEW.amount_cad,
+      transaction_count = transaction_count + 1
+    WHERE id = NEW.month_id;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: update_month_on_transaction_update(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_month_on_transaction_update() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  -- Handle type changes (Income <-> Expense)
+  IF OLD.type != NEW.type THEN
+    IF OLD.type = 'Income' THEN
+      -- Changed from Income to Expense
+      UPDATE months
+      SET 
+        total_income = total_income - OLD.amount_cad,
+        total_expenses = total_expenses + NEW.amount_cad
+      WHERE id = NEW.month_id;
+    ELSE
+      -- Changed from Expense to Income
+      UPDATE months
+      SET 
+        total_expenses = total_expenses - OLD.amount_cad,
+        total_income = total_income + NEW.amount_cad
+      WHERE id = NEW.month_id;
+    END IF;
+  ELSE
+    -- No type change, just amount change
+    IF NEW.type = 'Income' THEN
+      UPDATE months
+      SET 
+        total_income = total_income - OLD.amount_cad + NEW.amount_cad
+      WHERE id = NEW.month_id;
+    ELSE
+      UPDATE months
+      SET 
+        total_expenses = total_expenses - OLD.amount_cad + NEW.amount_cad
+      WHERE id = NEW.month_id;
+    END IF;
+  END IF;
+  
+  -- If month_id changed, we need to update both months
+  IF OLD.month_id != NEW.month_id THEN
+    -- Decrement count in old month
+    UPDATE months
+    SET transaction_count = transaction_count - 1
+    WHERE id = OLD.month_id;
+    
+    -- Increment count in new month
+    UPDATE months
+    SET transaction_count = transaction_count + 1
+    WHERE id = NEW.month_id;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: validate_transaction_type(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.validate_transaction_type() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  category_type TEXT;
+BEGIN
+  -- Get the category type
+  SELECT type INTO category_type
+  FROM "categories"
+  WHERE id = NEW.category_id;
+  
+  -- Validate type consistency
+  IF (category_type = 'income' AND NEW.type != 'Income') OR
+     (category_type != 'income' AND NEW.type != 'Expense') THEN
+    RAISE EXCEPTION 'Transaction type must match category type';
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: _prisma_migrations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public._prisma_migrations (
+    id character varying(36) NOT NULL,
+    checksum character varying(64) NOT NULL,
+    finished_at timestamp with time zone,
+    migration_name character varying(255) NOT NULL,
+    logs text,
+    rolled_back_at timestamp with time zone,
+    started_at timestamp with time zone DEFAULT now() NOT NULL,
+    applied_steps_count integer DEFAULT 0 NOT NULL
+);
+
+
+--
+-- Name: categories; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.categories (
+    id integer NOT NULL,
+    name text NOT NULL,
+    type text NOT NULL,
+    notes text,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    is_recurring boolean DEFAULT false NOT NULL
+);
+
+
+--
+-- Name: categories_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.categories_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: categories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.categories_id_seq OWNED BY public.categories.id;
+
+
+--
+-- Name: months; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.months (
+    id integer NOT NULL,
+    month integer NOT NULL,
+    year integer NOT NULL,
+    notes text,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    total_expenses numeric(10,2) DEFAULT 0 NOT NULL,
+    total_income numeric(10,2) DEFAULT 0 NOT NULL,
+    transaction_count integer DEFAULT 0 NOT NULL,
+    recurring_expenses numeric(10,2) DEFAULT 0 NOT NULL
+);
+
+
+--
+-- Name: months_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.months_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: months_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.months_id_seq OWNED BY public.months.id;
+
+
+--
+-- Name: recurring_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.recurring_transactions (
+    id integer NOT NULL,
+    user_id uuid NOT NULL,
+    name text NOT NULL,
+    amount_cad numeric(10,2) NOT NULL,
+    amount_usd numeric(10,2),
+    category_id integer NOT NULL,
+    notes text,
+    day_of_month integer,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    type public.transaction_type DEFAULT 'Expense'::public.transaction_type NOT NULL
+);
+
+
+--
+-- Name: recurring_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.recurring_transactions_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: recurring_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.recurring_transactions_id_seq OWNED BY public.recurring_transactions.id;
+
+
+--
+-- Name: transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.transactions (
+    id integer NOT NULL,
+    user_id uuid NOT NULL,
+    month_id integer NOT NULL,
+    name text NOT NULL,
+    amount_cad numeric(10,2) NOT NULL,
+    amount_usd numeric(10,2),
+    category_id integer NOT NULL,
+    notes text,
+    date date NOT NULL,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    type public.transaction_type DEFAULT 'Expense'::public.transaction_type NOT NULL
+);
+
+
+--
+-- Name: transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.transactions_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.transactions_id_seq OWNED BY public.transactions.id;
+
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.users (
+    id uuid NOT NULL,
+    email text NOT NULL,
+    password_hash text,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
+-- Name: categories id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.categories ALTER COLUMN id SET DEFAULT nextval('public.categories_id_seq'::regclass);
+
+
+--
+-- Name: months id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.months ALTER COLUMN id SET DEFAULT nextval('public.months_id_seq'::regclass);
+
+
+--
+-- Name: recurring_transactions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.recurring_transactions ALTER COLUMN id SET DEFAULT nextval('public.recurring_transactions_id_seq'::regclass);
+
+
+--
+-- Name: transactions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transactions ALTER COLUMN id SET DEFAULT nextval('public.transactions_id_seq'::regclass);
+
+
+--
+-- Name: _prisma_migrations _prisma_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public._prisma_migrations
+    ADD CONSTRAINT _prisma_migrations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: categories categories_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.categories
+    ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: months months_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.months
+    ADD CONSTRAINT months_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: recurring_transactions recurring_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.recurring_transactions
+    ADD CONSTRAINT recurring_transactions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: transactions transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transactions
+    ADD CONSTRAINT transactions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: categories_name_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX categories_name_idx ON public.categories USING btree (name);
+
+
+--
+-- Name: categories_name_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX categories_name_key ON public.categories USING btree (name);
+
+
+--
+-- Name: months_month_year_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX months_month_year_idx ON public.months USING btree (month, year);
+
+
+--
+-- Name: months_month_year_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX months_month_year_key ON public.months USING btree (month, year);
+
+
+--
+-- Name: recurring_transactions_category_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX recurring_transactions_category_id_idx ON public.recurring_transactions USING btree (category_id);
+
+
+--
+-- Name: recurring_transactions_user_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX recurring_transactions_user_id_idx ON public.recurring_transactions USING btree (user_id);
+
+
+--
+-- Name: transactions_category_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX transactions_category_id_idx ON public.transactions USING btree (category_id);
+
+
+--
+-- Name: transactions_month_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX transactions_month_id_idx ON public.transactions USING btree (month_id);
+
+
+--
+-- Name: transactions_user_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX transactions_user_id_idx ON public.transactions USING btree (user_id);
+
+
+--
+-- Name: users_email_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email);
+
+
+--
+-- Name: recurring_transactions recurring_transaction_type_insert_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER recurring_transaction_type_insert_trigger BEFORE INSERT ON public.recurring_transactions FOR EACH ROW EXECUTE FUNCTION public.set_transaction_type();
+
+
+--
+-- Name: recurring_transactions recurring_transaction_type_update_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER recurring_transaction_type_update_trigger BEFORE UPDATE OF category_id ON public.recurring_transactions FOR EACH ROW EXECUTE FUNCTION public.set_transaction_type();
+
+
+--
+-- Name: recurring_transactions recurring_transaction_type_validate_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER recurring_transaction_type_validate_trigger BEFORE UPDATE OF type ON public.recurring_transactions FOR EACH ROW EXECUTE FUNCTION public.validate_transaction_type();
+
+
+--
+-- Name: transactions transaction_delete_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER transaction_delete_trigger AFTER DELETE ON public.transactions FOR EACH ROW EXECUTE FUNCTION public.update_month_on_transaction_delete();
+
+
+--
+-- Name: transactions transaction_insert_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER transaction_insert_trigger AFTER INSERT ON public.transactions FOR EACH ROW EXECUTE FUNCTION public.update_month_on_transaction_insert();
+
+
+--
+-- Name: transactions transaction_type_insert_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER transaction_type_insert_trigger BEFORE INSERT ON public.transactions FOR EACH ROW EXECUTE FUNCTION public.set_transaction_type();
+
+
+--
+-- Name: transactions transaction_type_update_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER transaction_type_update_trigger BEFORE UPDATE OF category_id ON public.transactions FOR EACH ROW EXECUTE FUNCTION public.set_transaction_type();
+
+
+--
+-- Name: transactions transaction_type_validate_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER transaction_type_validate_trigger BEFORE UPDATE OF type ON public.transactions FOR EACH ROW EXECUTE FUNCTION public.validate_transaction_type();
+
+
+--
+-- Name: transactions transaction_update_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER transaction_update_trigger AFTER UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION public.update_month_on_transaction_update();
+
+
+--
+-- Name: recurring_transactions recurring_transactions_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.recurring_transactions
+    ADD CONSTRAINT recurring_transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
+-- Name: recurring_transactions recurring_transactions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.recurring_transactions
+    ADD CONSTRAINT recurring_transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
+-- Name: transactions transactions_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transactions
+    ADD CONSTRAINT transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
+-- Name: transactions transactions_month_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transactions
+    ADD CONSTRAINT transactions_month_id_fkey FOREIGN KEY (month_id) REFERENCES public.months(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
+-- Name: transactions transactions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transactions
+    ADD CONSTRAINT transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+
+
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 15.8
+-- Dumped by pg_dump version 16.8 (Homebrew)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Data for Name: _prisma_migrations; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) FROM stdin;
+b259c411-e410-4e51-bf0a-0d1bc899814e	821509607d38e4bc1c1ca11ae97abbc0004437e210e525ebca895abdfccda6dc	2025-03-27 17:17:56.489314+00	20250319144147_init	\N	\N	2025-03-27 17:17:55.835881+00	1
+9bc1ea7e-53a9-493c-bcf8-79c5238bff24	39f831f187799fa3e20eda747d0b5d2baac02ca0b5156b074731739a931ece45	2025-03-27 17:17:57.194361+00	20250320213224_update_user_model	\N	\N	2025-03-27 17:17:56.695356+00	1
+fccf3a9e-b436-4ed2-a6ca-96210c4985db	fb775a796180c8d7d7e771dfb890dfaa13bf75e3b0b2c266f74989905cbf6b7c	2025-03-27 17:17:57.913491+00	20250324000417_add_month_summary_triggers copy	\N	\N	2025-03-27 17:17:57.395813+00	1
+8816cfe1-4518-4971-bc2c-46f8f69cc4e3	c8ebf7b4a0393db466d926377e649b2d6a45c976a0f838b74eed06fc4e5796e5	2025-03-27 17:17:58.694021+00	20250324010904_add_recurring_transactions	\N	\N	2025-03-27 17:17:58.175161+00	1
+4223c43e-8492-476a-ac5a-90e8cd6cb650	534601b3a3bf4aaa79249d38d831e3191d3b5f6110e5a15a20690be8ebb9b258	2025-03-27 17:17:59.394104+00	20250326190018_remove_transaction_type	\N	\N	2025-03-27 17:17:58.896717+00	1
+523c7431-d607-4dd6-8dde-b3722c1fc5aa	8955ca2428aa625c63f2186dba07e8401b33db64cf92f63e0f7800f862319dfb	2025-03-27 17:18:00.11437+00	20250326190332_remove_recurring_transaction_type	\N	\N	2025-03-27 17:17:59.595558+00	1
+6800deb2-60f3-4667-9b28-ec1066a09866	122d743a0403e77ad7e0ed9447f5b8826f2fbdbc55612d936eff004dd13c2eec	2025-03-27 17:18:00.794244+00	20250326195720_update_triggers_for_no_type	\N	\N	2025-03-27 17:18:00.305902+00	1
+732f58f4-49af-43f9-9a7c-c3f295b1c908	32664efd8996ad8bcf6b335254b6f65bde064417b00aee19e9ffccff89058111	2025-03-27 20:32:59.729136+00	20250327000000_add_transaction_type_enum	\N	\N	2025-03-27 20:32:59.315353+00	1
+bf8a4da8-dba1-45a3-921d-2465540b286a	8c5d2619933786f8a48ca310a2ed2867a334b60f3cf9c97bdb0041221baea0ed	2025-04-18 19:19:30.415345+00	20250418191929_add_recurring_expenses	\N	\N	2025-04-18 19:19:30.0105+00	1
+\.
+
+
+--
+-- Data for Name: categories; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.categories (id, name, type, notes, created_at, is_recurring) FROM stdin;
+23	☕︎ Coffee	expense	\N	2025-03-31 21:33:06.635	f
+24	🛒 Groceries	expense	\N	2025-03-31 21:33:07.436	f
+25	🏥 Therapy	expense	\N	2025-03-31 21:33:08.241	f
+26	🏠 House	expense	\N	2025-03-31 21:33:09.081	f
+27	👫 Dates	expense	\N	2025-03-31 21:33:09.98	f
+30	🍴 Eating Out	expense	\N	2025-03-31 21:33:12.541	f
+34	💰Income	income	\N	2025-03-31 21:33:15.858	f
+31	🎉 Shows/Going Out/Fun	expense	\N	2025-03-31 21:33:13.391	f
+29	🏥 Health & Personal Care	expense	Cosmetics, Meds, Weed, Doctor Stuff, etc.	2025-03-31 21:33:11.701	f
+28	🚗 Transportation	expense	Uber, Gas, Transit, 	2025-03-31 21:33:10.826	f
+32	🎁 Gifts	expense	Gifts for each other and other people	2025-03-31 21:33:14.233	f
+33	🎲 Other	expense	RRaaandom!	2025-03-31 21:33:15.047	f
+35	😼 Bessie	expense	\N	2025-04-01 23:08:52.145	f
+36	📦 Amazon	expense	Favourite Rental Spot	2025-04-18 01:45:44.475	f
+37	👹 Work 	expense	Expenses to be paid back	2025-04-18 01:46:09.236	f
+40	🛍️ Clothes	expense	\N	2025-04-18 01:50:10.67	f
+42	😻 Bessie	expense	\N	2025-04-18 01:51:09.596	f
+45	Date	expense	Auto-generated category from CSV import	2025-04-18 02:24:22.115	f
+46	👹 Work	expense	Auto-generated category from CSV import	2025-04-18 02:24:45.02	f
+21	🏘️ Rent	expense	\N	2025-03-31 21:33:04.679	t
+22	💵 Bills	expense	\N	2025-03-31 21:33:05.771	t
+\.
+
+
+--
+-- Data for Name: months; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.months (id, month, year, notes, created_at, total_expenses, total_income, transaction_count, recurring_expenses) FROM stdin;
+5	3	2025	EOM Balance: $3,083	2025-03-31 21:32:38.837	8652.08	13223.00	171	4230.14
+7	4	2025	\N	2025-04-02 00:02:15.523	9086.44	12415.72	137	4265.58
+\.
+
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.users (id, email, password_hash, created_at) FROM stdin;
+accab14e-9467-49e2-bba5-dcc5583743c3	colinxr@gmail.com	$2b$10$LTtdoXkW3hskq6UnsHSd0ObXe5JphSpRpPO/ljCUgUvbKPenfKFBO	2025-03-31 21:32:10.179
+\.
+
+
+--
+-- Data for Name: recurring_transactions; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.recurring_transactions (id, user_id, name, amount_cad, amount_usd, category_id, notes, day_of_month, created_at, type) FROM stdin;
+24	accab14e-9467-49e2-bba5-dcc5583743c3	1933 Rodney Drive	3019.16	2100.00	21	\N	1	2025-04-01 23:53:43.06	Expense
+25	accab14e-9467-49e2-bba5-dcc5583743c3	Anatta	7251.00	\N	34	15th and last of the month	\N	2025-04-01 23:54:38.168	Income
+26	accab14e-9467-49e2-bba5-dcc5583743c3	Storage Unit - Toronto	259.40	\N	22	\N	\N	2025-04-01 23:55:26.387	Expense
+27	accab14e-9467-49e2-bba5-dcc5583743c3	Lemonade - Insurance	35.58	24.75	22	\N	\N	2025-04-01 23:55:48.993	Expense
+28	accab14e-9467-49e2-bba5-dcc5583743c3	Everybody - Gym Membership	47.44	33.00	22	\N	25	2025-04-01 23:56:14.137	Expense
+29	accab14e-9467-49e2-bba5-dcc5583743c3	Google One - Krys	14.36	9.99	22	\N	\N	2025-04-01 23:56:35.592	Expense
+30	accab14e-9467-49e2-bba5-dcc5583743c3	Spotify - Subscription - Colin	14.34	\N	22	\N	\N	2025-04-01 23:57:47.007	Expense
+31	accab14e-9467-49e2-bba5-dcc5583743c3	Rogers - Utility Bill - Colin	16.95	\N	22	\N	\N	2025-04-01 23:58:04.842	Expense
+32	accab14e-9467-49e2-bba5-dcc5583743c3	Magic Castle	107.83	75.00	22	\N	\N	2025-04-01 23:58:36.557	Expense
+33	accab14e-9467-49e2-bba5-dcc5583743c3	New York Times - Subscription - Colin	4.50	\N	22	\N	\N	2025-04-01 23:58:55.545	Expense
+34	accab14e-9467-49e2-bba5-dcc5583743c3	Hulu - Subscription - Krys	27.30	18.99	22	\N	\N	2025-04-01 23:59:20.592	Expense
+35	accab14e-9467-49e2-bba5-dcc5583743c3	Disney Plus	17.25	12.00	22	\N	\N	2025-04-01 23:59:47.584	Expense
+36	accab14e-9467-49e2-bba5-dcc5583743c3	YouTube Premium - Subscription	14.96	\N	22	\N	\N	2025-04-02 00:00:06.721	Expense
+37	accab14e-9467-49e2-bba5-dcc5583743c3	Public Mobile - Utility Bill - colin	38.42	\N	22	\N	\N	2025-04-02 00:00:31.643	Expense
+38	accab14e-9467-49e2-bba5-dcc5583743c3	Pet Insurance - Bessie	89.49	\N	22	\N	\N	2025-04-02 00:00:49.592	Expense
+39	accab14e-9467-49e2-bba5-dcc5583743c3	T-Mobile - Utility - Krys	269.28	187.30	22	\N	\N	2025-04-02 00:01:18.547	Expense
+\.
+
+
+--
+-- Data for Name: transactions; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.transactions (id, user_id, month_id, name, amount_cad, amount_usd, category_id, notes, date, created_at, type) FROM stdin;
+275	accab14e-9467-49e2-bba5-dcc5583743c3	5	FOOD FOR HEALTH LOS ANGELES CA	21.12	14.76	33	Imported transaction for 03/17/2025	2025-03-17	2025-03-31 22:02:58.072	Expense
+276	accab14e-9467-49e2-bba5-dcc5583743c3	5	SQ BRU COFFEEBAR LOS FELIZ CA	22.90	16.00	23	Imported transaction for 03/17/2025	2025-03-17	2025-03-31 22:02:59.058	Expense
+277	accab14e-9467-49e2-bba5-dcc5583743c3	5	CASH APP KRYS T OAKLAND CA	28.62	20.00	33	Imported transaction for 03/17/2025	2025-03-17	2025-03-31 22:03:00.006	Expense
+278	accab14e-9467-49e2-bba5-dcc5583743c3	5	SQ NOW INSTANT LOS ANGELES CA	7.16	5.00	33	Imported transaction for 03/17/2025	2025-03-17	2025-03-31 22:03:01.007	Expense
+279	accab14e-9467-49e2-bba5-dcc5583743c3	5	TST PHO 87 LOS ANGELES CA	33.36	23.31	30	Imported transaction for 03/17/2025	2025-03-17	2025-03-31 22:03:01.992	Expense
+280	accab14e-9467-49e2-bba5-dcc5583743c3	5	TST ALCOVE CAFE LOS ANGELES CA	22.24	15.54	30	Imported transaction for 03/17/2025	2025-03-17	2025-03-31 22:03:02.992	Expense
+281	accab14e-9467-49e2-bba5-dcc5583743c3	5	DISNEY PLUS RECURRING BURBANK CA	17.17	12.00	22	Imported transaction for 03/14/2025	2025-03-14	2025-03-31 22:03:04.032	Expense
+282	accab14e-9467-49e2-bba5-dcc5583743c3	5	LADOT METER PARKING LOS ANGELES CA	2.86	2.00	28	Imported transaction for 03/14/2025	2025-03-14	2025-03-31 22:03:05.188	Expense
+283	accab14e-9467-49e2-bba5-dcc5583743c3	5	WEB VENMO PAYMENT	57.24	40.00	33	Imported transaction for 03/13/2025	2025-03-13	2025-03-31 22:03:06.191	Expense
+284	accab14e-9467-49e2-bba5-dcc5583743c3	5	HULU SANTA MONICA CA	27.17	18.99	22	Imported transaction for 03/13/2025	2025-03-13	2025-03-31 22:03:07.192	Expense
+285	accab14e-9467-49e2-bba5-dcc5583743c3	5	SQ SOMISOMI LOS ANGELES CA	11.38	7.95	33	Imported transaction for 03/13/2025	2025-03-13	2025-03-31 22:03:08.212	Expense
+286	accab14e-9467-49e2-bba5-dcc5583743c3	5	SQ KORAKU GROUP INC LOS ANGELES CA	59.07	41.28	30	Imported transaction for 03/13/2025	2025-03-13	2025-03-31 22:03:09.211	Expense
+287	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	59.00	41.23	28	Imported transaction for 03/13/2025	2025-03-13	2025-03-31 22:03:10.187	Expense
+288	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	1.43	1.00	28	Imported transaction for 03/13/2025	2025-03-13	2025-03-31 22:03:11.192	Expense
+289	accab14e-9467-49e2-bba5-dcc5583743c3	5	SQ DONUT FRIEND DTLA LOS ANGELES CA	19.75	13.80	30	Imported transaction for 03/13/2025	2025-03-13	2025-03-31 22:03:12.187	Expense
+290	accab14e-9467-49e2-bba5-dcc5583743c3	5	LA METRO TAP WEB SAL LOS ANGELES CA	21.47	15.00	28	Imported transaction for 03/13/2025	2025-03-13	2025-03-31 22:03:13.188	Expense
+291	accab14e-9467-49e2-bba5-dcc5583743c3	5	GOFNDME IN LOVING MEM JACKSONS POI ON CAN	0.70	0.49	33	Imported transaction for 03/12/2025	2025-03-12	2025-03-31 22:03:14.167	Expense
+292	accab14e-9467-49e2-bba5-dcc5583743c3	5	WEB VENMO PAYMENT	31.48	22.00	33	Imported transaction for 03/12/2025	2025-03-12	2025-03-31 22:03:15.133	Expense
+293	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM Q297F9HC3 SEATTLE WA	15.03	10.50	33	Imported transaction for 03/12/2025	2025-03-12	2025-03-31 22:03:16.133	Expense
+294	accab14e-9467-49e2-bba5-dcc5583743c3	5	TST JENI S SPLENDID I LOS ANGELES CA	26.27	18.36	30	Imported transaction for 03/12/2025	2025-03-12	2025-03-31 22:03:17.096	Expense
+295	accab14e-9467-49e2-bba5-dcc5583743c3	5	WWW CSCSW COM MELVILLE NY	7.16	5.00	22	Imported transaction for 03/12/2025	2025-03-12	2025-03-31 22:03:18.047	Expense
+296	accab14e-9467-49e2-bba5-dcc5583743c3	5	GOFNDME IN LOVING MEM JACKSONS POI ON CAN	24.90	17.40	33	Imported transaction for 03/12/2025	2025-03-12	2025-03-31 22:03:19.037	Expense
+297	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	15.64	10.93	28	Imported transaction for 03/12/2025	2025-03-12	2025-03-31 22:03:20.112	Expense
+298	accab14e-9467-49e2-bba5-dcc5583743c3	5	IDEEGEO GROUP LTD NAPIER NZL	1.50	1.05	33	Imported transaction for 03/11/2025	2025-03-11	2025-03-31 22:03:21.093	Expense
+299	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	15.87	11.09	28	Imported transaction for 03/11/2025	2025-03-11	2025-03-31 22:03:22.122	Expense
+300	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	1.43	1.00	28	Imported transaction for 03/11/2025	2025-03-11	2025-03-31 22:03:23.131	Expense
+301	accab14e-9467-49e2-bba5-dcc5583743c3	5	IDEEGEO GROUP LTD NAPIER NZL	53.65	37.49	33	Imported transaction for 03/11/2025	2025-03-11	2025-03-31 22:03:24.112	Expense
+302	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	17.09	11.94	28	Imported transaction for 03/11/2025	2025-03-11	2025-03-31 22:03:25.128	Expense
+303	accab14e-9467-49e2-bba5-dcc5583743c3	5	WEB VENMO PAYMENT	28.62	20.00	33	Imported transaction for 03/10/2025	2025-03-10	2025-03-31 22:03:26.113	Expense
+304	accab14e-9467-49e2-bba5-dcc5583743c3	5	WHOLEFDS 2520 GLENDAL LOS ANGELES CA	30.57	21.36	24	Imported transaction for 03/10/2025	2025-03-10	2025-03-31 22:03:27.078	Expense
+305	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM BS4UA1MS3 SEATTLE WA	31.77	22.20	33	Imported transaction for 03/10/2025	2025-03-10	2025-03-31 22:03:28.047	Expense
+306	accab14e-9467-49e2-bba5-dcc5583743c3	5	APPLE COM BILL 866 712 7753 CA	4.28	2.99	22	Imported transaction for 03/10/2025	2025-03-10	2025-03-31 22:03:29.053	Expense
+307	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	16.59	11.59	28	Imported transaction for 03/10/2025	2025-03-10	2025-03-31 22:03:30.027	Expense
+308	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	1.43	1.00	33	Imported transaction for 03/10/2025	2025-03-10	2025-03-31 22:03:31.012	Expense
+309	accab14e-9467-49e2-bba5-dcc5583743c3	5	EB WHAT IS A WOMAN A 8014137200 CA	66.34	46.36	31	Imported transaction for 03/10/2025	2025-03-10	2025-03-31 22:03:31.992	Expense
+310	accab14e-9467-49e2-bba5-dcc5583743c3	5	LA METRO TAP WEB SAL LOS ANGELES CA	14.31	10.00	28	Imported transaction for 03/10/2025	2025-03-10	2025-03-31 22:03:32.992	Expense
+311	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	17.11	11.96	28	Imported transaction for 03/10/2025	2025-03-10	2025-03-31 22:03:33.972	Expense
+312	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM CF55B56U3 SEATTLE WA	69.10	48.29	33	Imported transaction for 03/07/2025	2025-03-07	2025-03-31 22:03:35.047	Expense
+313	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM 9I5W22UH3 SEATTLE WA	62.66	43.79	33	Imported transaction for 03/07/2025	2025-03-07	2025-03-31 22:03:36.302	Expense
+314	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM Q57QZ3VM3 SEATTLE WA	12.52	8.75	33	Imported transaction for 03/07/2025	2025-03-07	2025-03-31 22:03:37.313	Expense
+315	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON PRIME VF4MS2YT3 AMZN COM BIL WA	4.28	2.99	33	Imported transaction for 03/07/2025	2025-03-07	2025-03-31 22:03:38.332	Expense
+316	accab14e-9467-49e2-bba5-dcc5583743c3	5	WEB T-MOBILE PCS SVC	268.03	187.30	22	Imported transaction for 03/06/2025	2025-03-06	2025-03-31 22:03:39.347	Expense
+317	accab14e-9467-49e2-bba5-dcc5583743c3	5	WEB VENMO PAYMENT	198.78	138.91	33	Imported transaction for 03/06/2025	2025-03-06	2025-03-31 22:03:40.352	Expense
+318	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM EV2PW1NU3 SEATTLE WA	12.48	8.72	33	Imported transaction for 03/06/2025	2025-03-06	2025-03-31 22:03:41.403	Expense
+319	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM 9842F2803 SEATTLE WA	23.48	16.41	33	Imported transaction for 03/06/2025	2025-03-06	2025-03-31 22:03:42.437	Expense
+320	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM JH1OC6853 SEATTLE WA	53.21	37.18	33	Imported transaction for 03/06/2025	2025-03-06	2025-03-31 22:03:43.392	Expense
+321	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM 4O3UE2FW3 SEATTLE WA	28.19	19.70	33	Imported transaction for 03/06/2025	2025-03-06	2025-03-31 22:03:44.343	Expense
+345	accab14e-9467-49e2-bba5-dcc5583743c3	5	ZELLE TO DANTE BOONE	40.07	28.00	33	Imported transaction for 03/03/2025	2025-03-03	2025-03-31 22:04:08.567	Expense
+323	accab14e-9467-49e2-bba5-dcc5583743c3	5	EB FORREST GUMP A ONE 8014137200 CA	66.34	46.36	31	Imported transaction for 03/05/2025	2025-03-05	2025-03-31 22:03:46.332	Expense
+324	accab14e-9467-49e2-bba5-dcc5583743c3	5	ALBERTSONS 0387 LOS ANGELES CA	12.51	8.74	24	Imported transaction for 03/05/2025	2025-03-05	2025-03-31 22:03:47.333	Expense
+325	accab14e-9467-49e2-bba5-dcc5583743c3	5	ISLAND PACIFIC SUPER LOS ANGELES CA	102.53	71.65	24	Imported transaction for 03/05/2025	2025-03-05	2025-03-31 22:03:48.307	Expense
+326	accab14e-9467-49e2-bba5-dcc5583743c3	5	USPS KIOSK 0545409557 LOS ANGELES CA	10.45	7.30	33	Imported transaction for 03/04/2025	2025-03-04	2025-03-31 22:03:49.347	Expense
+327	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM AK2FA5BG3 SEATTLE WA	25.06	17.51	33	Imported transaction for 03/04/2025	2025-03-04	2025-03-31 22:03:50.357	Expense
+328	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM YA4X671X3 SEATTLE WA	13.90	9.71	33	Imported transaction for 03/04/2025	2025-03-04	2025-03-31 22:03:51.439	Expense
+329	accab14e-9467-49e2-bba5-dcc5583743c3	5	PRIME VIDEO NN4OO4JZ3 888 802 3080 WA	5.14	3.59	22	Imported transaction for 03/04/2025	2025-03-04	2025-03-31 22:03:52.427	Expense
+330	accab14e-9467-49e2-bba5-dcc5583743c3	5	ETSY COM BYKKOSEPATTER BROOKLYN NY	11.96	8.36	33	Imported transaction for 03/04/2025	2025-03-04	2025-03-31 22:03:53.547	Expense
+331	accab14e-9467-49e2-bba5-dcc5583743c3	5	WWW CSCSW COM MELVILLE NY	7.16	5.00	22	Imported transaction for 03/04/2025	2025-03-04	2025-03-31 22:03:54.492	Expense
+332	accab14e-9467-49e2-bba5-dcc5583743c3	5	WWW CSCSW COM MELVILLE NY	14.31	10.00	22	Imported transaction for 03/04/2025	2025-03-04	2025-03-31 22:03:55.446	Expense
+333	accab14e-9467-49e2-bba5-dcc5583743c3	5	WEB Property Managem WEB PMTS	3205.33	2239.90	21	Imported transaction for 03/03/2025	2025-03-03	2025-03-31 22:03:56.412	Expense
+346	accab14e-9467-49e2-bba5-dcc5583743c3	5	WFB - RSC - Aurora	200.00	\N	34		2025-03-20	2025-04-01 02:11:48.838	Income
+347	accab14e-9467-49e2-bba5-dcc5583743c3	5	Krys - TLOU - Noah	1006.39	700.00	34		2025-04-01	2025-04-01 02:12:09.915	Income
+348	accab14e-9467-49e2-bba5-dcc5583743c3	5	WFB - Syatt	7728.76	\N	34		2025-04-01	2025-04-01 02:13:05.382	Income
+349	accab14e-9467-49e2-bba5-dcc5583743c3	5	Date Night - Dinner	80.51	56.00	27		2025-04-01	2025-04-01 02:13:27.484	Expense
+351	accab14e-9467-49e2-bba5-dcc5583743c3	5	No Frills	58.56	\N	24		2025-04-01	2025-04-01 02:14:50.557	Expense
+353	accab14e-9467-49e2-bba5-dcc5583743c3	5	Doc's	9.00	\N	23		2025-03-06	2025-04-01 02:15:29.438	Expense
+354	accab14e-9467-49e2-bba5-dcc5583743c3	5	Eating Out	13.00	\N	30		2025-03-07	2025-04-01 02:15:55.759	Expense
+355	accab14e-9467-49e2-bba5-dcc5583743c3	5	Presto	30.00	\N	28		2025-03-09	2025-04-01 02:16:09.441	Expense
+356	accab14e-9467-49e2-bba5-dcc5583743c3	5	Terroni	26.90	\N	32	for lee reyes	2025-03-09	2025-04-01 02:16:34.505	Expense
+357	accab14e-9467-49e2-bba5-dcc5583743c3	5	Doc's	19.43	\N	23		2025-04-01	2025-04-01 02:16:51.879	Expense
+358	accab14e-9467-49e2-bba5-dcc5583743c3	5	No Frills	60.00	\N	24		2025-03-10	2025-04-01 02:17:09.246	Expense
+359	accab14e-9467-49e2-bba5-dcc5583743c3	5	Insurance	89.49	\N	22		2025-03-11	2025-04-01 02:17:27.881	Expense
+360	accab14e-9467-49e2-bba5-dcc5583743c3	5	Barbershop	50.00	\N	29		2025-03-11	2025-04-01 02:17:44.76	Expense
+361	accab14e-9467-49e2-bba5-dcc5583743c3	5	Doc's	10.40	\N	30		2025-03-11	2025-04-01 02:17:59.486	Expense
+362	accab14e-9467-49e2-bba5-dcc5583743c3	5	Colin - Phone Bill - Public Mobile	38.42	\N	22		2025-03-13	2025-04-01 02:18:27.877	Expense
+363	accab14e-9467-49e2-bba5-dcc5583743c3	5	PayPal	9.00	\N	33		2025-03-13	2025-04-01 02:18:41.281	Expense
+364	accab14e-9467-49e2-bba5-dcc5583743c3	5	Subscription - YouTube Premium	14.96	\N	22		2025-03-13	2025-04-01 02:19:10.618	Expense
+365	accab14e-9467-49e2-bba5-dcc5583743c3	5	Petti Fine Foods	35.97	\N	24		2025-03-13	2025-04-01 02:19:41.25	Expense
+366	accab14e-9467-49e2-bba5-dcc5583743c3	5	Caledon Ski Club	30.00	\N	31		2025-03-14	2025-04-01 02:20:04.565	Expense
+367	accab14e-9467-49e2-bba5-dcc5583743c3	5	United	213.00	\N	33		2025-03-15	2025-04-01 02:20:23.171	Expense
+368	accab14e-9467-49e2-bba5-dcc5583743c3	5	Subscription - NY Times	4.50	\N	22		2025-03-16	2025-04-01 02:21:13.023	Expense
+369	accab14e-9467-49e2-bba5-dcc5583743c3	5	Freshii	19.00	\N	30		2025-03-16	2025-04-01 02:21:31.784	Expense
+370	accab14e-9467-49e2-bba5-dcc5583743c3	5	Uber	34.00	\N	28		2025-03-16	2025-04-01 02:21:43.798	Expense
+371	accab14e-9467-49e2-bba5-dcc5583743c3	5	PayPal	16.00	\N	33		2025-03-17	2025-04-01 02:21:57.513	Expense
+372	accab14e-9467-49e2-bba5-dcc5583743c3	5	Colin - Rogers - Internet Bill	16.95	\N	22		2025-03-19	2025-04-01 02:22:26.761	Expense
+373	accab14e-9467-49e2-bba5-dcc5583743c3	5	Subscription - Colin - Spotify	14.34	\N	22		2025-03-28	2025-04-01 02:22:48.696	Expense
+374	accab14e-9467-49e2-bba5-dcc5583743c3	5	Colin - Anatta	1603.00	\N	34		2025-04-01	2025-04-01 02:23:22.693	Income
+375	accab14e-9467-49e2-bba5-dcc5583743c3	5	UCB	24.80	17.25	31		2025-03-24	2025-04-01 02:25:28.982	Expense
+376	accab14e-9467-49e2-bba5-dcc5583743c3	5	Coffee	23.15	16.10	23		2025-04-01	2025-04-01 02:25:49.282	Expense
+377	accab14e-9467-49e2-bba5-dcc5583743c3	5	Amazon	90.57	63.00	33		2025-03-24	2025-04-01 02:26:15.89	Expense
+378	accab14e-9467-49e2-bba5-dcc5583743c3	5	Amazon	75.55	52.55	33		2025-04-01	2025-04-01 02:26:30.329	Expense
+379	accab14e-9467-49e2-bba5-dcc5583743c3	5	Island Pacific	53.27	37.05	24		2025-03-24	2025-04-01 02:26:47.553	Expense
+380	accab14e-9467-49e2-bba5-dcc5583743c3	5	Tous Les Jour	9.63	6.70	33		2025-03-24	2025-04-01 02:27:06.491	Expense
+381	accab14e-9467-49e2-bba5-dcc5583743c3	5	California Market	44.57	31.00	24		2025-03-24	2025-04-01 02:27:21.028	Expense
+382	accab14e-9467-49e2-bba5-dcc5583743c3	5	Bru	6.83	4.75	23		2025-03-24	2025-04-01 02:27:41.216	Expense
+383	accab14e-9467-49e2-bba5-dcc5583743c3	5	CSV	23.26	16.18	33		2025-03-24	2025-04-01 02:28:00.99	Expense
+384	accab14e-9467-49e2-bba5-dcc5583743c3	5	super king	42.77	29.75	24		2025-03-24	2025-04-01 02:28:19.596	Expense
+385	accab14e-9467-49e2-bba5-dcc5583743c3	5	Trader Joes	58.77	40.88	24		2025-03-24	2025-04-01 02:28:33.408	Expense
+386	accab14e-9467-49e2-bba5-dcc5583743c3	5	Kiso	44.86	31.20	33		2025-03-24	2025-04-01 02:28:51.528	Expense
+387	accab14e-9467-49e2-bba5-dcc5583743c3	5	Uber	41.51	28.87	28		2025-03-24	2025-04-01 02:29:07.301	Expense
+388	accab14e-9467-49e2-bba5-dcc5583743c3	5	Uber	41.66	28.98	28		2025-03-25	2025-04-01 02:29:21.256	Expense
+389	accab14e-9467-49e2-bba5-dcc5583743c3	5	Laundry	14.38	10.00	22		2025-03-25	2025-04-01 02:29:37.101	Expense
+390	accab14e-9467-49e2-bba5-dcc5583743c3	5	Vidiots	35.22	24.50	31		2025-03-26	2025-04-01 02:29:54.209	Expense
+391	accab14e-9467-49e2-bba5-dcc5583743c3	5	Albertsons	29.40	20.45	24		2025-03-26	2025-04-01 02:30:09.701	Expense
+392	accab14e-9467-49e2-bba5-dcc5583743c3	5	Jeni's	10.02	6.97	31		2025-03-26	2025-04-01 02:30:28.906	Expense
+393	accab14e-9467-49e2-bba5-dcc5583743c3	5	Subscription - Krys - Google One	14.36	9.99	22		2025-03-26	2025-04-01 02:30:50.407	Expense
+394	accab14e-9467-49e2-bba5-dcc5583743c3	5	Guac Daddy	14.38	10.00	30		2025-03-26	2025-04-01 02:31:04.415	Expense
+395	accab14e-9467-49e2-bba5-dcc5583743c3	5	Cash App	28.75	20.00	33		2025-03-26	2025-04-01 02:31:21.945	Expense
+396	accab14e-9467-49e2-bba5-dcc5583743c3	5	Everybody - Gym Membership	47.44	33.00	22		2025-03-26	2025-04-01 02:31:44.022	Expense
+397	accab14e-9467-49e2-bba5-dcc5583743c3	5	SuperKing	51.92	36.11	24		2025-03-26	2025-04-01 02:32:07.708	Expense
+398	accab14e-9467-49e2-bba5-dcc5583743c3	5	Venmo Refund	50.81	35.34	34		2025-03-27	2025-04-01 02:32:26.433	Income
+399	accab14e-9467-49e2-bba5-dcc5583743c3	5	Amazon	74.31	51.69	33		2025-03-27	2025-04-01 02:32:45.909	Expense
+400	accab14e-9467-49e2-bba5-dcc5583743c3	5	Constellation Coffee	12.05	8.38	23		2025-03-28	2025-04-01 02:33:03.945	Expense
+334	accab14e-9467-49e2-bba5-dcc5583743c3	5	GELSON S MARKET LOS ANGELES CA	17.20	12.02	24	Imported transaction for 03/03/2025	2025-03-03	2025-03-31 22:03:57.383	Expense
+335	accab14e-9467-49e2-bba5-dcc5583743c3	5	TRADER JO TRADER JOES LOS ANGELES CA	1.85	1.29	24	Imported transaction for 03/03/2025	2025-03-03	2025-03-31 22:03:58.342	Expense
+336	accab14e-9467-49e2-bba5-dcc5583743c3	5	TRADER JO TRADER JOES LOS ANGELES CA	45.13	31.54	24	Imported transaction for 03/03/2025	2025-03-03	2025-03-31 22:03:59.358	Expense
+337	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	1.43	1.00	28	Imported transaction for 03/03/2025	2025-03-03	2025-03-31 22:04:00.332	Expense
+338	accab14e-9467-49e2-bba5-dcc5583743c3	5	CHARGEPOINT INC CAMPBELL CA	28.55	19.95	28	Imported transaction for 03/03/2025	2025-03-03	2025-03-31 22:04:01.332	Expense
+339	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	27.06	18.91	28	Imported transaction for 03/03/2025	2025-03-03	2025-03-31 22:04:02.353	Expense
+340	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	17.11	11.96	28	Imported transaction for 03/03/2025	2025-03-03	2025-03-31 22:04:03.453	Expense
+341	accab14e-9467-49e2-bba5-dcc5583743c3	5	CONSTELLATION COFFEE LOS ANGELES CA	11.85	8.28	23	Imported transaction for 03/03/2025	2025-03-03	2025-03-31 22:04:04.449	Expense
+342	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	17.14	11.98	28	Imported transaction for 03/03/2025	2025-03-03	2025-03-31 22:04:05.432	Expense
+343	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	15.51	10.84	28	Imported transaction for 03/03/2025	2025-03-03	2025-03-31 22:04:06.554	Expense
+344	accab14e-9467-49e2-bba5-dcc5583743c3	5	FOR PETS ONLY LOS ANGELES CA	15.64	10.93	33	Imported transaction for 03/03/2025	2025-03-03	2025-03-31 22:04:07.548	Expense
+237	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	41.31	28.87	28	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:19.7	Expense
+238	accab14e-9467-49e2-bba5-dcc5583743c3	5	SQ KISO LOS ANGELES CA	44.65	31.20	33	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:20.674	Expense
+239	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	1.43	1.00	28	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:21.632	Expense
+240	accab14e-9467-49e2-bba5-dcc5583743c3	5	TRADER JO TRADER JOES TOLUCA LAKE CA	58.50	40.88	24	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:22.628	Expense
+241	accab14e-9467-49e2-bba5-dcc5583743c3	5	SUPER KING MKT LOS ANGELES CA	42.57	29.75	24	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:23.632	Expense
+242	accab14e-9467-49e2-bba5-dcc5583743c3	5	CVS PHARM 09669 2530 LOS ANGELES CA	3.12	2.18	29	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:24.591	Expense
+243	accab14e-9467-49e2-bba5-dcc5583743c3	5	CVS PHARM 09669 2530 LOS ANGELES CA	20.81	14.54	29	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:25.887	Expense
+244	accab14e-9467-49e2-bba5-dcc5583743c3	5	SQ BRU COFFEEBAR LOS FELIZ CA	6.80	4.75	23	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:26.892	Expense
+245	accab14e-9467-49e2-bba5-dcc5583743c3	5	CALIFORNIA SUPERMARKET LOS ANGELES CA	44.33	30.98	24	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:27.867	Expense
+246	accab14e-9467-49e2-bba5-dcc5583743c3	5	TOUS LES JOURS LOS ANGELES CA	9.59	6.70	33	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:28.851	Expense
+247	accab14e-9467-49e2-bba5-dcc5583743c3	5	ISLAND PACIFIC SUPER LOS ANGELES CA	53.02	37.05	24	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:29.872	Expense
+248	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM VI6HH6XO3 SEATTLE WA	75.20	52.55	33	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:30.888	Expense
+249	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM UI1RU3M43 SEATTLE WA	90.51	63.25	33	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:31.892	Expense
+250	accab14e-9467-49e2-bba5-dcc5583743c3	5	UCB COMEDY LOS ANGELES CA	24.69	17.25	31	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:32.887	Expense
+251	accab14e-9467-49e2-bba5-dcc5583743c3	5	COPYCAT LA LOS ANGELES CA	2.86	2.00	33	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:33.994	Expense
+252	accab14e-9467-49e2-bba5-dcc5583743c3	5	SQ LOS FELIZ LOS ANGELES CA	23.04	16.10	23	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:34.992	Expense
+253	accab14e-9467-49e2-bba5-dcc5583743c3	5	LA METRO TAP WEB SAL LOS ANGELES CA	7.16	5.00	28	Imported transaction for 03/24/2025	2025-03-24	2025-03-31 22:02:35.947	Expense
+254	accab14e-9467-49e2-bba5-dcc5583743c3	5	TRADER JO TRADER JOES LOS ANGELES CA	46.91	32.78	24	Imported transaction for 03/21/2025	2025-03-21	2025-03-31 22:02:36.932	Expense
+255	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM BF0AM8LB3 SEATTLE WA	41.53	29.02	33	Imported transaction for 03/21/2025	2025-03-21	2025-03-31 22:02:37.953	Expense
+256	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	15.57	10.88	28	Imported transaction for 03/21/2025	2025-03-21	2025-03-31 22:02:38.943	Expense
+257	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	1.43	1.00	28	Imported transaction for 03/21/2025	2025-03-21	2025-03-31 22:02:39.952	Expense
+258	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	18.47	12.91	28	Imported transaction for 03/21/2025	2025-03-21	2025-03-31 22:02:40.943	Expense
+259	accab14e-9467-49e2-bba5-dcc5583743c3	5	WEB VENMO PAYMENT	50.57	35.34	33	Imported transaction for 03/20/2025	2025-03-20	2025-03-31 22:02:41.952	Expense
+260	accab14e-9467-49e2-bba5-dcc5583743c3	5	USPS PO 0 1825 N VERMO LOS ANGELES CA	71.26	49.80	33	Imported transaction for 03/20/2025	2025-03-20	2025-03-31 22:02:42.932	Expense
+261	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	28.49	19.91	28	Imported transaction for 03/20/2025	2025-03-20	2025-03-31 22:02:43.932	Expense
+262	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	1.43	1.00	28	Imported transaction for 03/20/2025	2025-03-20	2025-03-31 22:02:44.867	Expense
+263	accab14e-9467-49e2-bba5-dcc5583743c3	5	LYFT RIDE TUE 4PM SAN FRANCISC CA	52.46	36.66	28	Imported transaction for 03/20/2025	2025-03-20	2025-03-31 22:02:45.854	Expense
+264	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	15.17	10.60	28	Imported transaction for 03/20/2025	2025-03-20	2025-03-31 22:02:46.842	Expense
+265	accab14e-9467-49e2-bba5-dcc5583743c3	5	ALBERTSONS 0387 LOS ANGELES CA	22.30	15.58	24	Imported transaction for 03/20/2025	2025-03-20	2025-03-31 22:02:47.832	Expense
+266	accab14e-9467-49e2-bba5-dcc5583743c3	5	WEB The Academy of M PAYMENT	107.33	75.00	22	Imported transaction for 03/19/2025	2025-03-19	2025-03-31 22:02:48.852	Expense
+267	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM LC7621313 SEATTLE WA	36.02	25.17	33	Imported transaction for 03/19/2025	2025-03-19	2025-03-31 22:02:49.952	Expense
+268	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	1.43	1.00	28	Imported transaction for 03/19/2025	2025-03-19	2025-03-31 22:02:50.952	Expense
+269	accab14e-9467-49e2-bba5-dcc5583743c3	5	UBER TRIP 8005928996 CA	15.70	10.97	28	Imported transaction for 03/19/2025	2025-03-19	2025-03-31 22:02:51.927	Expense
+270	accab14e-9467-49e2-bba5-dcc5583743c3	5	ALBERTSONS 0387 LOS ANGELES CA	55.61	38.86	24	Imported transaction for 03/19/2025	2025-03-19	2025-03-31 22:02:52.937	Expense
+271	accab14e-9467-49e2-bba5-dcc5583743c3	5	ZELLE TO HALEY HERKERT	50.09	35.00	33	Imported transaction for 03/19/2025	2025-03-19	2025-03-31 22:02:53.907	Expense
+272	accab14e-9467-49e2-bba5-dcc5583743c3	5	ZELLE FROM NORBLACK NORWHITE INC.	214.65	150.00	34	Imported transaction for 03/18/2025	2025-03-18	2025-03-31 22:02:55.087	Income
+273	accab14e-9467-49e2-bba5-dcc5583743c3	5	MASABI LAXFLYAWAY 323 310 5292 CA	13.95	9.75	28	Imported transaction for 03/17/2025	2025-03-17	2025-03-31 22:02:56.072	Expense
+274	accab14e-9467-49e2-bba5-dcc5583743c3	5	AMAZON COM ED4015RF3 SEATTLE WA	10.95	7.65	33	Imported transaction for 03/17/2025	2025-03-17	2025-03-31 22:02:57.052	Expense
+401	accab14e-9467-49e2-bba5-dcc5583743c3	5	Lemonade - Insurance	35.58	24.75	22		2025-03-28	2025-04-01 02:33:25.114	Expense
+402	accab14e-9467-49e2-bba5-dcc5583743c3	5	Subscription - Krys - Spotify	17.24	11.99	22		2025-03-28	2025-04-01 02:33:42.959	Expense
+403	accab14e-9467-49e2-bba5-dcc5583743c3	5	Amazon	30.34	21.10	33		2025-03-28	2025-04-01 02:33:55.009	Expense
+404	accab14e-9467-49e2-bba5-dcc5583743c3	5	Krys - NBNW	215.65	150.00	34		2025-04-01	2025-04-01 02:34:52.717	Income
+405	accab14e-9467-49e2-bba5-dcc5583743c3	5	EI	591.00	\N	34		2025-03-07	2025-04-01 17:57:07.333	Income
+406	accab14e-9467-49e2-bba5-dcc5583743c3	5	Tax Return	1226.00	\N	34		2025-03-10	2025-04-01 17:57:29.49	Income
+352	accab14e-9467-49e2-bba5-dcc5583743c3	5	Colin - Storage Unit	259.40	0.00	22	test testing testing	2025-04-01	2025-04-01 02:15:04.952	Expense
+322	accab14e-9467-49e2-bba5-dcc5583743c3	5	HOUSE OF PIES LOS ANGELES CA	16.76	11.71	30	Imported transaction for 03/06/2025	2025-03-06	2025-03-31 22:03:45.359	Expense
+407	accab14e-9467-49e2-bba5-dcc5583743c3	5	Cash - 	359.42	250.00	34		2025-03-08	2025-04-01 23:10:30.136	Income
+350	accab14e-9467-49e2-bba5-dcc5583743c3	5	Ice Cream - Jenis	27.32	19.00	34	expensive!	2025-04-01	2025-04-01 02:13:41.482	Income
+408	accab14e-9467-49e2-bba5-dcc5583743c3	7	1933 Rodney Drive	3019.16	2100.00	21	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:17.366	Expense
+409	accab14e-9467-49e2-bba5-dcc5583743c3	7	Anatta	7251.00	\N	34	Auto-generated from recurring transaction: 15th and last of the month	2025-04-01	2025-04-02 00:02:18.106	Income
+410	accab14e-9467-49e2-bba5-dcc5583743c3	7	Storage Unit - Toronto	259.40	\N	22	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:18.894	Expense
+411	accab14e-9467-49e2-bba5-dcc5583743c3	7	Lemonade - Insurance	35.58	24.75	22	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:19.533	Expense
+412	accab14e-9467-49e2-bba5-dcc5583743c3	7	Everybody - Gym Membership	47.44	33.00	22	Auto-generated from recurring transaction: 	2025-04-25	2025-04-02 00:02:20.099	Expense
+413	accab14e-9467-49e2-bba5-dcc5583743c3	7	Google One - Krys	14.36	9.99	22	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:20.761	Expense
+414	accab14e-9467-49e2-bba5-dcc5583743c3	7	Spotify - Subscription - Colin	14.34	\N	22	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:21.33	Expense
+415	accab14e-9467-49e2-bba5-dcc5583743c3	7	Rogers - Utility Bill - Colin	16.95	\N	22	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:21.993	Expense
+416	accab14e-9467-49e2-bba5-dcc5583743c3	7	Magic Castle	107.83	75.00	22	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:22.621	Expense
+417	accab14e-9467-49e2-bba5-dcc5583743c3	7	New York Times - Subscription - Colin	4.50	\N	22	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:23.182	Expense
+418	accab14e-9467-49e2-bba5-dcc5583743c3	7	Hulu - Subscription - Krys	27.30	18.99	22	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:23.745	Expense
+419	accab14e-9467-49e2-bba5-dcc5583743c3	7	Disney Plus	17.25	12.00	22	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:24.364	Expense
+420	accab14e-9467-49e2-bba5-dcc5583743c3	7	YouTube Premium - Subscription	14.96	\N	22	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:25.031	Expense
+421	accab14e-9467-49e2-bba5-dcc5583743c3	7	Public Mobile - Utility Bill - colin	38.42	\N	22	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:25.706	Expense
+422	accab14e-9467-49e2-bba5-dcc5583743c3	7	Pet Insurance - Bessie	89.49	\N	22	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:26.275	Expense
+423	accab14e-9467-49e2-bba5-dcc5583743c3	7	T-Mobile - Utility - Krys	269.28	187.30	22	Auto-generated from recurring transaction: 	2025-04-01	2025-04-02 00:02:26.915	Expense
+424	accab14e-9467-49e2-bba5-dcc5583743c3	7	NBNW	215.65	150.00	34		2025-04-02	2025-04-02 00:03:04.752	Income
+425	accab14e-9467-49e2-bba5-dcc5583743c3	7	Albertsons	35.81	25.00	24		2025-04-03	2025-04-03 00:14:20.754	Expense
+426	accab14e-9467-49e2-bba5-dcc5583743c3	7	Maru	19.37	13.75	23		2025-04-04	2025-04-04 21:25:17.725	Expense
+452	accab14e-9467-49e2-bba5-dcc5583743c3	7	WEB  The Academy of M PAYMENT	103.90	75.00	22	Imported from CSV on 2025-04-17	2025-04-16	2025-04-18 02:23:44.364	Expense
+453	accab14e-9467-49e2-bba5-dcc5583743c3	7	Amazon COM EI05V0LP3 SEATTLE WA	36.44	26.30	36	Imported from CSV on 2025-04-17	2025-04-16	2025-04-18 02:23:46.382	Expense
+454	accab14e-9467-49e2-bba5-dcc5583743c3	7	Amazon COM FZ67Y6XA3 SEATTLE WA	71.44	51.57	36	Imported from CSV on 2025-04-17	2025-04-16	2025-04-18 02:23:48.361	Expense
+455	accab14e-9467-49e2-bba5-dcc5583743c3	7	Amazon COM ME0AA0433 SEATTLE WA	27.31	19.71	36	Imported from CSV on 2025-04-17	2025-04-16	2025-04-18 02:23:50.429	Expense
+456	accab14e-9467-49e2-bba5-dcc5583743c3	7	LASSENS NATURAL LOS ANGELES CA	17.51	12.64	24	Imported from CSV on 2025-04-17	2025-04-16	2025-04-18 02:23:52.461	Expense
+457	accab14e-9467-49e2-bba5-dcc5583743c3	7	SQ LOS FELIZ LOS ANGELES CA	9.35	6.75	23	Imported from CSV on 2025-04-17	2025-04-16	2025-04-18 02:23:54.492	Expense
+458	accab14e-9467-49e2-bba5-dcc5583743c3	7	WWW CSCSW COM MELVILLE NY	41.56	30.00	22	Imported from CSV on 2025-04-17	2025-04-16	2025-04-18 02:23:56.482	Expense
+459	accab14e-9467-49e2-bba5-dcc5583743c3	7	EVERYBODY LOS ANGELES CA	6.03	4.35	24	Imported from CSV on 2025-04-17	2025-04-16	2025-04-18 02:23:58.582	Expense
+460	accab14e-9467-49e2-bba5-dcc5583743c3	7	ZELLE FROM NORBLACK NORWHITE INC.	318.63	230.00	34	Imported from CSV on 2025-04-17	2025-04-16	2025-04-18 02:24:00.586	Income
+461	accab14e-9467-49e2-bba5-dcc5583743c3	7	CCD STRIPE TRANSFER	1.19	0.86	34	Imported from CSV on 2025-04-17	2025-04-16	2025-04-18 02:24:02.592	Income
+462	accab14e-9467-49e2-bba5-dcc5583743c3	7	ALBERTSONS 038 LOS ANGELES CA	33.87	24.45	24	Imported from CSV on 2025-04-17	2025-04-15	2025-04-18 02:24:04.57	Expense
+463	accab14e-9467-49e2-bba5-dcc5583743c3	7	GOODR LLC 8472329923 CA	52.55	37.93	40	Imported from CSV on 2025-04-17	2025-04-15	2025-04-18 02:24:06.55	Expense
+464	accab14e-9467-49e2-bba5-dcc5583743c3	7	CVS PHARM 09669 2530 LOS ANGELES CA	75.05	54.17	29	Imported from CSV on 2025-04-17	2025-04-14	2025-04-18 02:24:08.449	Expense
+465	accab14e-9467-49e2-bba5-dcc5583743c3	7	Date - In N Out - Mo and Beau	67.37	48.63	24	Imported from CSV on 2025-04-17	2025-04-14	2025-04-18 02:24:10.374	Expense
+466	accab14e-9467-49e2-bba5-dcc5583743c3	7	UBER TRIP 8005928996 CA	36.01	25.99	28	Imported from CSV on 2025-04-17	2025-04-14	2025-04-18 02:24:12.327	Expense
+467	accab14e-9467-49e2-bba5-dcc5583743c3	7	SQ LOVE BIRD FRIED CH BEAUMONT CA	9.18	6.63	30	Imported from CSV on 2025-04-17	2025-04-14	2025-04-18 02:24:14.287	Expense
+468	accab14e-9467-49e2-bba5-dcc5583743c3	7	SQ MAMA MUSUBI LOS ANGELES CA	20.63	14.89	30	Imported from CSV on 2025-04-17	2025-04-14	2025-04-18 02:24:16.289	Expense
+469	accab14e-9467-49e2-bba5-dcc5583743c3	7	SQUARESVILLE VINTAGE I LOS ANGELES CA	36.49	26.34	40	Imported from CSV on 2025-04-17	2025-04-14	2025-04-18 02:24:18.459	Expense
+470	accab14e-9467-49e2-bba5-dcc5583743c3	7	SQ BRU ☕︎ CoffeeBAR LOS FELIZ CA	20.54	14.83	23	Imported from CSV on 2025-04-17	2025-04-14	2025-04-18 02:24:20.908	Expense
+471	accab14e-9467-49e2-bba5-dcc5583743c3	7	IN N OUT SHERMAN OAKS SHERMAN OAKS CA	60.60	43.74	45	Imported from CSV on 2025-04-17	2025-04-14	2025-04-18 02:24:23.899	Expense
+472	accab14e-9467-49e2-bba5-dcc5583743c3	7	UBER TRIP 8005928996 CA	48.49	35.00	28	Imported from CSV on 2025-04-17	2025-04-14	2025-04-18 02:24:26.028	Expense
+473	accab14e-9467-49e2-bba5-dcc5583743c3	7	DBA RAFIKS STATI LOS ANGELES CA	37.21	26.86	33	Imported from CSV on 2025-04-17	2025-04-14	2025-04-18 02:24:28.253	Expense
+474	accab14e-9467-49e2-bba5-dcc5583743c3	7	GELSON S MARKET LOS ANGELES CA	12.98	9.37	24	Imported from CSV on 2025-04-17	2025-04-14	2025-04-18 02:24:30.618	Expense
+475	accab14e-9467-49e2-bba5-dcc5583743c3	7	TST VARRACO ☕︎ Coffee ROA PALM DESERT CA	98.53	71.12	33	Imported from CSV on 2025-04-17	2025-04-14	2025-04-18 02:24:32.793	Expense
+476	accab14e-9467-49e2-bba5-dcc5583743c3	7	PPD VENMO CASHOUT	38.10	27.50	34	Imported from CSV on 2025-04-17	2025-04-14	2025-04-18 02:24:34.992	Income
+477	accab14e-9467-49e2-bba5-dcc5583743c3	7	WEB VENMO PAYMENT	27.71	20.00	33	Imported from CSV on 2025-04-17	2025-04-11	2025-04-18 02:24:37.174	Expense
+478	accab14e-9467-49e2-bba5-dcc5583743c3	7	ZELLE TO MARLINDA PAXTON	55.41	40.00	33	Imported from CSV on 2025-04-17	2025-04-11	2025-04-18 02:24:39.38	Expense
+479	accab14e-9467-49e2-bba5-dcc5583743c3	7	CITY OF LA DWP LOS ANGELES CA	94.09	67.92	22	Imported from CSV on 2025-04-17	2025-04-10	2025-04-18 02:24:41.565	Expense
+480	accab14e-9467-49e2-bba5-dcc5583743c3	7	APPLE COM BILL CUPERTINO CA	4.14	2.99	22	Imported from CSV on 2025-04-17	2025-04-10	2025-04-18 02:24:43.778	Expense
+481	accab14e-9467-49e2-bba5-dcc5583743c3	7	UNITED HOUSTON TX	55.41	40.00	46	Imported from CSV on 2025-04-17	2025-04-10	2025-04-18 02:24:46.631	Expense
+482	accab14e-9467-49e2-bba5-dcc5583743c3	7	LAX AIRP ASHLADHIL T7 LOS ANGELES CA	70.18	50.66	30	Imported from CSV on 2025-04-17	2025-04-10	2025-04-18 02:24:48.711	Expense
+483	accab14e-9467-49e2-bba5-dcc5583743c3	7	UNITED UNITED COM TX	55.41	40.00	46	Imported from CSV on 2025-04-17	2025-04-10	2025-04-18 02:24:50.71	Expense
+484	accab14e-9467-49e2-bba5-dcc5583743c3	7	LYFT RIDE TUE 5AM SAN FRANCISC CA	76.18	54.99	46	Imported from CSV on 2025-04-17	2025-04-09	2025-04-18 02:24:52.66	Expense
+485	accab14e-9467-49e2-bba5-dcc5583743c3	7	Amazon COM SEATTLE WA	22.73	16.41	34	Imported from CSV on 2025-04-17	2025-04-09	2025-04-18 02:24:54.622	Income
+486	accab14e-9467-49e2-bba5-dcc5583743c3	7	ALBERTSONS 038 LOS ANGELES CA	14.78	10.67	24	Imported from CSV on 2025-04-17	2025-04-08	2025-04-18 02:24:56.63	Expense
+487	accab14e-9467-49e2-bba5-dcc5583743c3	7	WWW CSCSW COM MELVILLE NY	13.85	10.00	22	Imported from CSV on 2025-04-17	2025-04-08	2025-04-18 02:24:58.61	Expense
+488	accab14e-9467-49e2-bba5-dcc5583743c3	7	EVERYBODY LOS ANGELES CA	6.03	4.35	24	Imported from CSV on 2025-04-17	2025-04-08	2025-04-18 02:25:00.671	Expense
+489	accab14e-9467-49e2-bba5-dcc5583743c3	7	VETRXDIRECT CORALVILLE IA	88.82	64.11	42	Imported from CSV on 2025-04-17	2025-04-08	2025-04-18 02:25:02.585	Expense
+490	accab14e-9467-49e2-bba5-dcc5583743c3	7	WEB VENMO PAYMENT	6.93	5.00	33	Imported from CSV on 2025-04-17	2025-04-07	2025-04-18 02:25:04.651	Expense
+491	accab14e-9467-49e2-bba5-dcc5583743c3	7	TRADER JO TRADER JOES STUDIO CITY CA	74.35	53.67	24	Imported from CSV on 2025-04-17	2025-04-07	2025-04-18 02:25:06.69	Expense
+492	accab14e-9467-49e2-bba5-dcc5583743c3	7	SEPHORA STUDIO CITY 12 LOS ANGELES CA	13.99	10.10	29	Imported from CSV on 2025-04-17	2025-04-07	2025-04-18 02:25:08.691	Expense
+493	accab14e-9467-49e2-bba5-dcc5583743c3	7	JONS MARKETPLAC LOS ANGELES CA	27.33	19.73	24	Imported from CSV on 2025-04-17	2025-04-07	2025-04-18 02:25:10.716	Expense
+494	accab14e-9467-49e2-bba5-dcc5583743c3	7	Amazon PRIME 0227A0S43 AMZN COM BIL WA	4.14	2.99	22	Imported from CSV on 2025-04-17	2025-04-07	2025-04-18 02:25:12.697	Expense
+495	accab14e-9467-49e2-bba5-dcc5583743c3	7	ALBERTSONS 038 LOS ANGELES CA	20.03	14.46	24	Imported from CSV on 2025-04-17	2025-04-07	2025-04-18 02:25:14.791	Expense
+496	accab14e-9467-49e2-bba5-dcc5583743c3	7	ALBERTSONS 038 LOS ANGELES CA	19.19	13.85	24	Imported from CSV on 2025-04-17	2025-04-07	2025-04-18 02:25:16.773	Expense
+497	accab14e-9467-49e2-bba5-dcc5583743c3	7	ALBERTSONS 038 LOS ANGELES CA	66.33	47.88	24	Imported from CSV on 2025-04-17	2025-04-07	2025-04-18 02:25:18.77	Expense
+498	accab14e-9467-49e2-bba5-dcc5583743c3	7	LASSENS NATURAL LOS ANGELES CA	45.77	33.04	24	Imported from CSV on 2025-04-17	2025-04-07	2025-04-18 02:25:20.791	Expense
+499	accab14e-9467-49e2-bba5-dcc5583743c3	7	SQ LOS FELIZ LOS ANGELES CA	10.74	7.75	23	Imported from CSV on 2025-04-17	2025-04-07	2025-04-18 02:25:22.79	Expense
+500	accab14e-9467-49e2-bba5-dcc5583743c3	7	BICOLOR NAIL BOUTIQUE LOS ANGELES CA	96.98	70.00	29	Imported from CSV on 2025-04-17	2025-04-07	2025-04-18 02:25:24.786	Expense
+501	accab14e-9467-49e2-bba5-dcc5583743c3	7	SQ LOS FELIZ LOS ANGELES CA	18.70	13.50	23	Imported from CSV on 2025-04-17	2025-04-07	2025-04-18 02:25:26.817	Expense
+502	accab14e-9467-49e2-bba5-dcc5583743c3	7	CCD STRIPE TRANSFER	0.78	0.56	33	Imported from CSV on 2025-04-17	2025-04-07	2025-04-18 02:25:28.815	Expense
+503	accab14e-9467-49e2-bba5-dcc5583743c3	7	JONS MARKETPLAC LOS ANGELES CA	28.76	20.76	24	Imported from CSV on 2025-04-17	2025-04-04	2025-04-18 02:25:30.909	Expense
+504	accab14e-9467-49e2-bba5-dcc5583743c3	7	SP LOU WINE SHOP LOS ANGELES CA	95.63	69.03	32	Imported from CSV on 2025-04-17	2025-04-03	2025-04-18 02:25:32.905	Expense
+505	accab14e-9467-49e2-bba5-dcc5583743c3	7	SP LOU WINE SHOP LOS ANGELES CA	22.80	16.46	29	Imported from CSV on 2025-04-17	2025-04-03	2025-04-18 02:25:34.99	Expense
+506	accab14e-9467-49e2-bba5-dcc5583743c3	7	CHARGEPOINT INC CAMPBELL CA	27.64	19.95	22	Imported from CSV on 2025-04-17	2025-04-03	2025-04-18 02:25:36.99	Expense
+515	accab14e-9467-49e2-bba5-dcc5583743c3	7	Magic Castle	104.25	75.00	33	\N	2025-04-16	2025-04-19 22:44:38.647	Expense
+516	accab14e-9467-49e2-bba5-dcc5583743c3	7	RTP CREDIT UPRIGHT CITIZENS BRIGADE	47.26	34.00	34	Krys 	2025-04-19	2025-04-19 22:45:14.91	Income
+517	accab14e-9467-49e2-bba5-dcc5583743c3	7	Constellation Coffee	11.51	8.28	23	\N	2025-04-19	2025-04-19 22:45:31.414	Expense
+518	accab14e-9467-49e2-bba5-dcc5583743c3	7	Maru	10.12	7.28	23	\N	2025-04-19	2025-04-19 22:45:40.788	Expense
+519	accab14e-9467-49e2-bba5-dcc5583743c3	7	ColorPop	63.16	45.44	29	\N	2025-04-19	2025-04-19 22:46:04.096	Expense
+520	accab14e-9467-49e2-bba5-dcc5583743c3	7	Uniqlo	81.50	58.63	40	\N	2025-04-19	2025-04-19 22:46:26.659	Expense
+521	accab14e-9467-49e2-bba5-dcc5583743c3	7	Crossroad	138.62	99.73	40	krys and colin	2025-04-19	2025-04-19 22:46:51.216	Expense
+522	accab14e-9467-49e2-bba5-dcc5583743c3	7	Amazon	42.46	30.55	36	\N	2025-04-19	2025-04-19 22:47:12.907	Expense
+523	accab14e-9467-49e2-bba5-dcc5583743c3	7	Crossroads	58.94	42.40	40	blue shoes	2025-04-19	2025-04-19 22:47:35.315	Expense
+524	accab14e-9467-49e2-bba5-dcc5583743c3	7	Amazon	24.41	17.56	36	\N	2025-04-19	2025-04-19 22:48:11.396	Expense
+525	accab14e-9467-49e2-bba5-dcc5583743c3	7	Venmo Payment	41.70	30.00	33	\N	2025-04-19	2025-04-19 22:48:28.109	Expense
+526	accab14e-9467-49e2-bba5-dcc5583743c3	7	Homestate	46.16	33.21	30	dinner before uniqlo	2025-04-19	2025-04-19 22:48:44.794	Expense
+527	accab14e-9467-49e2-bba5-dcc5583743c3	7	Amazon	15.22	10.95	36	\N	2025-04-19	2025-04-19 22:48:57.448	Expense
+528	accab14e-9467-49e2-bba5-dcc5583743c3	7	Costco	165.62	119.15	24	\N	2025-04-19	2025-04-19 22:49:12.367	Expense
+529	accab14e-9467-49e2-bba5-dcc5583743c3	7	Albertsons	22.16	15.94	24	\N	2025-04-19	2025-04-19 22:49:22.339	Expense
+530	accab14e-9467-49e2-bba5-dcc5583743c3	7	Civil Coffee	16.68	12.00	23	\N	2025-04-19	2025-04-19 22:49:35.599	Expense
+531	accab14e-9467-49e2-bba5-dcc5583743c3	7	Everybody - Drink?	6.05	4.35	29	\N	2025-04-19	2025-04-19 22:50:03.132	Expense
+532	accab14e-9467-49e2-bba5-dcc5583743c3	7	Maru	33.71	24.25	23	\N	2025-04-19	2025-04-19 22:50:15.47	Expense
+533	accab14e-9467-49e2-bba5-dcc5583743c3	7	CHWYINC*GPAYZIOKZKATY7	183.42	131.96	33	\N	2025-04-19	2025-04-19 22:50:33.941	Expense
+534	accab14e-9467-49e2-bba5-dcc5583743c3	7	Maru	36.49	26.25	23	\N	2025-04-21	2025-04-28 17:34:24.897	Expense
+535	accab14e-9467-49e2-bba5-dcc5583743c3	7	Cash App	27.80	20.00	33	\N	2025-04-21	2025-04-28 17:34:46.481	Expense
+536	accab14e-9467-49e2-bba5-dcc5583743c3	7	Amazon	24.39	17.55	36	\N	2025-04-21	2025-04-28 17:35:06.548	Expense
+537	accab14e-9467-49e2-bba5-dcc5583743c3	7	Whole Foods	15.28	10.99	24	\N	2025-04-21	2025-04-28 17:35:31.276	Expense
+538	accab14e-9467-49e2-bba5-dcc5583743c3	7	venmo	19.11	13.75	33	\N	2025-04-21	2025-04-28 17:35:48.544	Expense
+539	accab14e-9467-49e2-bba5-dcc5583743c3	7	Oinkster	83.87	60.34	30	\N	2025-04-21	2025-04-28 17:36:11.037	Expense
+540	accab14e-9467-49e2-bba5-dcc5583743c3	7	India Sweets and Spice	13.75	9.89	24	\N	2025-04-21	2025-04-28 17:36:32.683	Expense
+541	accab14e-9467-49e2-bba5-dcc5583743c3	7	Amazon	30.50	21.94	36	\N	2025-04-28	2025-04-28 17:36:49.351	Expense
+542	accab14e-9467-49e2-bba5-dcc5583743c3	7	Redlands Galleria	44.59	32.08	32	\N	2025-04-22	2025-04-28 17:37:16.986	Expense
+543	accab14e-9467-49e2-bba5-dcc5583743c3	7	Lady Gaga	2990.77	2151.63	34	\N	2025-04-22	2025-04-28 17:37:35.147	Income
+544	accab14e-9467-49e2-bba5-dcc5583743c3	7	Albertsons	42.71	30.73	24	\N	2025-04-23	2025-04-28 17:37:55.706	Expense
+545	accab14e-9467-49e2-bba5-dcc5583743c3	7	Food Beverage - Redlands	26.91	19.36	30	\N	2025-04-22	2025-04-28 17:38:27.446	Expense
+546	accab14e-9467-49e2-bba5-dcc5583743c3	7	CF United	40.28	28.98	33	\N	2025-04-23	2025-04-28 17:38:47.536	Expense
+547	accab14e-9467-49e2-bba5-dcc5583743c3	7	WIT Water	13.15	9.46	33	\N	2025-04-23	2025-04-28 17:39:06.907	Expense
+548	accab14e-9467-49e2-bba5-dcc5583743c3	7	Venmo Cashout	216.84	156.00	34	class action lawsuit	2025-04-23	2025-04-28 17:39:38.436	Income
+549	accab14e-9467-49e2-bba5-dcc5583743c3	7	Shrimp Lover	54.02	38.86	30	\N	2025-04-21	2025-04-28 17:40:01.099	Expense
+550	accab14e-9467-49e2-bba5-dcc5583743c3	7	Cafe 1802	18.83	13.55	23	\N	2025-04-24	2025-04-28 17:40:23.2	Expense
+551	accab14e-9467-49e2-bba5-dcc5583743c3	7	Maru	9.04	6.50	23	\N	2025-04-24	2025-04-28 17:40:42.222	Expense
+552	accab14e-9467-49e2-bba5-dcc5583743c3	7	Everybody	6.25	4.50	24	\N	2025-04-24	2025-04-28 17:40:56.233	Expense
+553	accab14e-9467-49e2-bba5-dcc5583743c3	7	Lassens	17.46	12.56	24	\N	2025-04-24	2025-04-28 17:41:09.247	Expense
+554	accab14e-9467-49e2-bba5-dcc5583743c3	7	Vons	53.33	38.37	24	\N	2025-04-28	2025-04-28 17:41:26.099	Expense
+555	accab14e-9467-49e2-bba5-dcc5583743c3	7	Marifel's	208.50	150.00	33	cleaning fee for house in Ojai	2025-04-28	2025-04-28 17:42:03.604	Expense
+556	accab14e-9467-49e2-bba5-dcc5583743c3	7	Lady Gaga - Loren	1313.55	945.00	34	\N	2025-04-24	2025-04-28 17:42:24.512	Income
+557	accab14e-9467-49e2-bba5-dcc5583743c3	7	UCB - Spanish Aqui Presents	33.25	23.92	31	\N	2025-04-25	2025-04-28 17:42:48.92	Expense
+558	accab14e-9467-49e2-bba5-dcc5583743c3	7	Ojai Ice Cream	29.19	21.00	31	\N	2025-04-25	2025-04-28 17:47:53.141	Expense
+559	accab14e-9467-49e2-bba5-dcc5583743c3	7	IPS:METERS.PKGLOTPAY LOS ANGELES CA	11.12	8.00	33	\N	2025-04-28	2025-04-28 17:49:24.162	Expense
+560	accab14e-9467-49e2-bba5-dcc5583743c3	7	Etsy 	32.97	23.72	33	\N	2025-04-28	2025-04-28 17:49:36.061	Expense
+561	accab14e-9467-49e2-bba5-dcc5583743c3	7	Bertha's Strawberries	31.59	22.73	32	\N	2025-04-28	2025-04-28 17:49:54.831	Expense
+562	accab14e-9467-49e2-bba5-dcc5583743c3	7	TikTok Shop	59.90	43.09	40	\N	2025-04-28	2025-04-28 17:50:11.47	Expense
+563	accab14e-9467-49e2-bba5-dcc5583743c3	7	The Nest 	113.30	81.51	30	Ojai	2025-04-28	2025-04-28 17:50:30.045	Expense
+564	accab14e-9467-49e2-bba5-dcc5583743c3	7	Tik Tok Shop	26.95	19.39	33	\N	2025-04-28	2025-04-28 17:50:41.936	Expense
+565	accab14e-9467-49e2-bba5-dcc5583743c3	7	Good Hands	241.86	174.00	29	massages	2025-04-28	2025-04-28 17:50:58.853	Expense
+566	accab14e-9467-49e2-bba5-dcc5583743c3	7	island Pacific	234.91	169.00	24	\N	2025-04-28	2025-04-28 17:51:26.154	Expense
+567	accab14e-9467-49e2-bba5-dcc5583743c3	7	Albertsons	24.98	17.97	24	\N	2025-04-28	2025-04-28 17:51:41.646	Expense
+568	accab14e-9467-49e2-bba5-dcc5583743c3	7	The Sims	6.94	4.99	31	\N	2025-04-28	2025-04-28 17:51:54.132	Expense
+569	accab14e-9467-49e2-bba5-dcc5583743c3	7	bru	9.04	6.50	23	\N	2025-04-28	2025-04-28 17:52:05.538	Expense
+570	accab14e-9467-49e2-bba5-dcc5583743c3	7	tasty goody	22.70	16.33	23	\N	2025-04-28	2025-04-28 17:52:23.753	Expense
+571	accab14e-9467-49e2-bba5-dcc5583743c3	7	floral art by mia	24.41	17.56	32	\N	2025-04-28	2025-04-28 17:52:38.218	Expense
+572	accab14e-9467-49e2-bba5-dcc5583743c3	7	wings	45.68	32.86	30	\N	2025-04-28	2025-04-28 17:52:54.101	Expense
+573	accab14e-9467-49e2-bba5-dcc5583743c3	7	gas for sonia	46.04	33.12	33	\N	2025-04-28	2025-04-28 17:53:09.685	Expense
+574	accab14e-9467-49e2-bba5-dcc5583743c3	7	trader joes	46.04	33.12	24	\N	2025-04-28	2025-04-28 17:53:27.022	Expense
+575	accab14e-9467-49e2-bba5-dcc5583743c3	7	CVS	36.58	26.32	29	\N	2025-04-28	2025-04-28 17:53:46.45	Expense
+576	accab14e-9467-49e2-bba5-dcc5583743c3	7	Alfred Coffee	11.81	8.50	23	\N	2025-04-28	2025-04-28 17:54:02.416	Expense
+577	accab14e-9467-49e2-bba5-dcc5583743c3	7	Lassens	48.65	35.00	24	\N	2025-04-28	2025-04-28 17:54:17.241	Expense
+\.
+
+
+--
+-- Name: categories_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.categories_id_seq', 46, true);
+
+
+--
+-- Name: months_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.months_id_seq', 7, true);
+
+
+--
+-- Name: recurring_transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.recurring_transactions_id_seq', 40, true);
+
+
+--
+-- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.transactions_id_seq', 577, true);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+
+
+-- Re-enable all triggers
+SET session_replication_role = 'origin';
