@@ -12,6 +12,7 @@ RUN npm ci
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN npx prisma generate
 RUN npm run build
 
 # Final production image
@@ -29,14 +30,16 @@ RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 nextjs
 
 # Copy static assets & built app
+COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Ensure cache dir exists
-RUN mkdir .next && chown nextjs:nodejs .next
+RUN chown nextjs:nodejs .next
 
 USER nextjs
 
 EXPOSE 3000
-CMD ["next", "start"]
+CMD ["node", "server.js"]
+
