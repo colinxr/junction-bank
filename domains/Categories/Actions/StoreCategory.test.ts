@@ -13,9 +13,9 @@ describe('StoreCategory', () => {
     destroy: vi.fn(),
     findByName: vi.fn(),
     hasTransactions: vi.fn()
-  } as unknown as ICategoryRepository;
+  };
   
-  const storeCategory = new StoreCategory(mockRepository);
+  const storeCategory = new StoreCategory(mockRepository as unknown as ICategoryRepository);
   
   beforeEach(() => {
     vi.clearAllMocks();
