@@ -1,7 +1,6 @@
 import { Month as PrismaMonth } from '@prisma/client';
 import { Month } from './Month';
 import { MonthDTO } from './MonthDTO';
-import { formatCurrency } from '../../lib/utils';
 
 export class MonthMapper {
   static toDomain(raw: PrismaMonth): Month {

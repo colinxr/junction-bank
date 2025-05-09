@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useMonthDetail } from "@/app/hooks/useMonths"
 import { Card, CardContent } from "@/components/ui/card"
 import { MetricDisplay } from "./MetricDisplay"
 import { CategoryCard } from "./CategoryCard"

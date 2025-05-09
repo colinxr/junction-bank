@@ -18,7 +18,7 @@ export default defineConfig({
     },
 
     // Ensure setup/teardown timeouts are sufficient if migrations take time
-    setupFiles: ['./test/setup/setup.ts'],
+    setupFiles: [],
     testTimeout: 20000, // Default is 5000ms, increase if needed
     hookTimeout: 20000, // Increase timeout for hooks (like globalSetup) if migrations are slow
 

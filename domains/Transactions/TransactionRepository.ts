@@ -5,7 +5,7 @@ import { TransactionType } from "./Transaction";
 import { TransactionModel } from "./TransactionModel";
 
 import { Transaction, USDSpending } from "@/app/types";
-import { RedisClient } from '../../lib/redis';
+import { RedisClient } from '@/infrastructure/redis';
 
 export class TransactionRepository implements ITransactionRepository {
   constructor(private prisma: PrismaClient, private redis: RedisClient) {}
@@ -15,16 +15,16 @@ export class TransactionRepository implements ITransactionRepository {
     
     // Try to get from cache first
     let transactions;
-    try {
-      const cachedData = await this.redis.get(cacheKey);
-      if (cachedData) {
-        console.log('Cache hit for transactions');
-        return JSON.parse(cachedData);
-      }
-    } catch (error) {
-      // Log but continue with database query
-      console.error('Redis cache error, falling back to database:', error);
-    }
+    // try {
+    //   const cachedData = await this.redis.get(cacheKey);
+    //   if (cachedData) {
+    //     console.log('Cache hit for transactions');
+    //     return JSON.parse(cachedData);
+    //   }
+    // } catch (error) {
+    //   // Log but continue with database query
+    //   console.error('Redis cache error, falling back to database:', error);
+    // }
 
     // Cache miss or error, fetch from database
     transactions = await this.prisma.transaction.findMany({

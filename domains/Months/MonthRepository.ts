@@ -2,7 +2,7 @@ import { PrismaClient, Prisma } from '@prisma/client';
 import { IMonthRepository } from './IMonthRepository';
 import { Month } from './Month';
 import { MonthMapper } from './MonthMapper';
-import { RedisClient } from '@/lib/redis';
+import { RedisClient } from '@/infrastructure/redis';
 
 // Define types for raw query results
 interface CategorySpending {

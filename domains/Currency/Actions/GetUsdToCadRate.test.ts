@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GetUsdToCadRate } from './GetUsdToCadRate';
 import { ExchangeRateVO } from '../Entity/ExchangeRate';
-import { ICurrencyService } from '../Service/ICurrencyService';
+import { IExchangeRateApiService } from '../Service/IExchangeRateApiService';
 import { ExchangeRateFetchException, StaleExchangeRateException } from '../Exception/CurrencyException';
 
 describe('GetUsdToCadRate', () => {
-  const mockCurrencyService: ICurrencyService = {
+  const mockCurrencyService: IExchangeRateApiService = {
     getUsdToCadRate: vi.fn(),
     clearCache: vi.fn()
   };

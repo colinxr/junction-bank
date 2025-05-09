@@ -28,8 +28,18 @@ export class UpdateRecurringTransaction {
       }
     }
 
-    // Prepare update data without amounts initially
-    let updateData: Partial<RecurringTransaction> = {
+    // Prepare update data
+    type UpdateFields = {
+      name?: string;
+      categoryId?: number;
+      notes?: string;
+      dayOfMonth?: number;
+      type?: any;
+      amountCAD?: number;
+      amountUSD?: number;
+    };
+    
+    let updateData: UpdateFields = {
       name: data.name,
       categoryId: data.categoryId,
       notes: data.notes === null ? undefined : data.notes,
@@ -43,21 +53,27 @@ export class UpdateRecurringTransaction {
       
       if (isRemovingUsd) {
         // If explicitly removing USD amount
-        updateData.amountCAD = data.amountCAD;
-        updateData.amountUSD = undefined;
-      } else {
-        // Use currency service to ensure both currencies are properly converted
-        const result = await this.currencyService.ensureBothCurrencies({
+        updateData = {
+          ...updateData,
           amountCAD: data.amountCAD,
-          amountUSD: data.amountUSD
-        });
+          amountUSD: undefined
+        };
+      } else {
+        // Use currency service to handle amount conversion
+        const result = await this.currencyService.processCurrencyAmounts(
+          data.amountCAD as number, 
+          data.amountUSD as number
+        );
         
-        updateData.amountCAD = result.amountCAD;
-        updateData.amountUSD = result.amountUSD;
+        updateData = {
+          ...updateData,
+          amountCAD: result.amountCAD ?? 0,
+          amountUSD: result.amountUSD
+        };
       }
     }
 
     // Update the recurring transaction
-    return await this.recurringTransactionRepository.update(id, updateData);
+    return await this.recurringTransactionRepository.update(id, updateData as Partial<RecurringTransaction>);
   }
 } 

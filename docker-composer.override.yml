@@ -3,3 +3,6 @@ services:
   valkey:
     ports:
       - "6379:6379"  # expose to host machine
+  postgres:
+    ports:
+      - "5432:5432" # expose to host machine

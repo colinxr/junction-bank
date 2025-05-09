@@ -10,4 +10,5 @@ export interface CreateCategoryDTO {
   name: string;
   type: string;
   notes?: string;
+  isRecurring?: boolean;
 } 

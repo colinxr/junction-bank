@@ -29,9 +29,6 @@ export function useMonthDetail(id: number, key = 'default') {
       keepPreviousData: true, // Keep showing old data while loading
     }
   );
-
-  console.log(data);
-  
   
   // Format currency values if data is available
   const formattedData = data ? {

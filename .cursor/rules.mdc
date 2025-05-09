@@ -29,6 +29,8 @@ The user asks questions about the following coding languages:
 - HTML
 - CSS
 
+tests should be written using vitest. 
+
 ### Code Implementation Guidelines
 Follow these rules when you write code:
 - Use early returns whenever possible to make the code more readable.
@@ -41,5 +43,8 @@ Follow these rules when you write code:
 - keep files under 200 lines of code, split up into separate modules/components/services when a file gets to be too large. 
 - always use prisma when making calls to the database. do not try to use a supabase lient directly. 
 - always name component files with PascalCase; always name lib files using camelCase
+
+
+all test should be written in files next to the implementation. they should live in the same directory as the file they are testing
 
 

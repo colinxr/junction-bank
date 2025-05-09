@@ -1,5 +1,7 @@
 import { makeCurrencyActions } from "@/infrastructure/di/container";
 import { InvalidAmountException } from "../Exception/CurrencyException";
+import { GetUsdToCadRate } from "../Actions/GetUsdToCadRate";
+import { ConvertUsdToCad } from "../Actions/ConvertUsdToCad";
 
 export interface CurrencyAmount {
   amountCAD?: number;
