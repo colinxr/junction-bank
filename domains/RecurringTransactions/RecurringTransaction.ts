@@ -1,6 +1,6 @@
 export enum TransactionType {
-  Income = 'Income',
-  Expense = 'Expense'
+  INCOME = 'income',
+  EXPENSE = 'expense'
 }
 
 export class RecurringTransaction {
@@ -35,7 +35,7 @@ export class RecurringTransaction {
     this.categoryId = props.categoryId;
     this.notes = props.notes;
     this.dayOfMonth = props.dayOfMonth;
-    this.type = props.type || TransactionType.Expense;
+    this.type = props.type || TransactionType.EXPENSE;
     this.createdAt = props.createdAt;
 
     this.validate();
@@ -67,10 +67,10 @@ export class RecurringTransaction {
   }
 
   public isIncome(): boolean {
-    return this.type === TransactionType.Income;
+    return this.type === TransactionType.INCOME;
   }
 
   public isExpense(): boolean {
-    return this.type === TransactionType.Expense;
+    return this.type === TransactionType.EXPENSE;
   }
 } 
