@@ -12,7 +12,7 @@ export interface TransactionDTO {
 export interface TransactionCreateDTO {
   userId: string;
   name: string;
-  amountCAD: number;
+  amountCAD?: number;
   amountUSD?: number;
   categoryId: number;
   notes?: string;
