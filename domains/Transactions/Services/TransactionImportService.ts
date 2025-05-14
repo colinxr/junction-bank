@@ -21,74 +21,204 @@ export class TransactionImportService {
     validTransactions: TransactionImportDTO[], 
     errors: ImportError[] 
   }> {
-    // Default header mapping (CSV column name to TransactionCSVRecord property)
-    const headerMapping = options.headerMapping || {
-      'Date': 'date',
-      'Description': 'name',
-      'Amount': 'amount',
-      'Category': 'category',
-      'Category ID': 'categoryId',
-      'Notes': 'notes',
-      'Type': 'type'
-    };
+    try {
+      // Default header mapping (CSV column name to TransactionCSVRecord property)
+      // Based on the actual data structure seen in logs
+      const headerMapping = options.headerMapping || {
+        'Date': 'date',
+        'date': 'date',
+        'Name': 'name',
+        'name': 'name',
+        'AMOUNT CAD': 'amount_cad',
+        'Amount CAD': 'amount_cad',
+        'AMOUNT USD': 'amount_usd', 
+        'Amount USD': 'amount_usd',
+        'CategoryId': 'category_id',
+        'Category Id': 'category_id',
+        'notes': 'notes'
+      };
 
-    // Parse CSV
-    const parseResult = Papa.parse<Record<string, string>>(csvContent, {
-      header: true,
-      skipEmptyLines: true,
-    });
-
-    const records: TransactionCSVRecord[] = [];
-    const errors: ImportError[] = [];
-
-    // Map CSV records to TransactionCSVRecord objects
-    parseResult.data.forEach((row, index) => {
-      const record: Partial<TransactionCSVRecord> = {};
-      
-      // Map fields using headerMapping
-      for (const [csvHeader, recordField] of Object.entries(headerMapping)) {
-        if (row[csvHeader] !== undefined) {
-          record[recordField as keyof TransactionCSVRecord] = row[csvHeader];
-        }
-      }
-      
-      // Validate required fields
-      if (!record.date || !record.name || !record.amount) {
-        errors.push({
-          row: index + 1, // +1 for header row
-          message: 'Missing required fields (date, name, or amount)',
-          originalData: record as TransactionCSVRecord
-        });
-        return; // Skip this record
-      }
-      
-      records.push(record as TransactionCSVRecord);
-    });
-
-    // Process records into valid TransactionImportDTO objects
-    const validTransactions: TransactionImportDTO[] = [];
-    const pendingValidations: Promise<void>[] = [];
-
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const rowIndex = i + 1; // +1 for header row
-      
-      const validation = this.processRecord(record, userId, rowIndex, options)
-        .then(result => {
-          if (result.valid) {
-            validTransactions.push(result.transaction!);
-          } else {
-            errors.push(result.error!);
+      // Check if input is multipart form-data and extract actual CSV content
+      let cleanedContent = csvContent;
+      if (csvContent.includes('WebKitFormBoundary')) {
+        // Extract the actual CSV content from form data
+        const lines = csvContent.split('\n');
+        const csvLines = [];
+        
+        // Add headers manually - use exact case from original CSV
+        csvLines.push('Date,Name,AMOUNT CAD,AMOUNT USD,CategoryId,notes');
+        
+        // Clean up CSV content to ensure consistent field count
+        let cleanLines = [];
+        for (const line of lines) {
+          // Skip form boundary lines and metadata
+          if (line.includes('WebKitFormBoundary') || 
+              line.includes('Content-Disposition') || 
+              line.trim() === '') {
+            continue;
           }
-        });
+          
+          // Process __parsed_extra content
+          if (line.includes('__parsed_extra')) {
+            continue; // Skip the line with __parsed_extra
+          } else if (line.includes('[') && line.includes(']')) {
+            // This might be the array content from __parsed_extra
+            const arrayMatch = line.match(/\[(.*)\]/);
+            if (arrayMatch && arrayMatch[1]) {
+              try {
+                const parts = arrayMatch[1].split(',').map(p => p.trim().replace(/^'|'$/g, ''));
+                
+                if (parts.length >= 3) {
+                  // Assuming format: [name, empty, amount, category, ...]
+                  let date = '';
+                  const lineIndex = lines.indexOf(line);
+                  if (lineIndex > 0) {
+                    date = lines[lineIndex - 1].replace(/['"{}]/g, '').trim();
+                  }
+                  const name = parts[0];
+                  const amount = parts[2];
+                  const categoryId = parts[3] || '';
+                  
+                  csvLines.push(`${date},${name},${amount},,${categoryId},`);
+                }
+              } catch (err) {
+                console.error('Error processing array content:', err);
+              }
+            }
+          } else if (!line.startsWith('{') && !line.startsWith('}')) {
+            // Regular CSV content lines
+            csvLines.push(line);
+          }
+        }
+        
+        cleanedContent = csvLines.join('\n');
+      } else {
+        // For regular CSV input, normalize the field count
+        const lines = csvContent.split('\n');
+        const headerLine = lines[0];
+        const expectedFieldCount = headerLine.split(',').length;
+        
+        const normalizedLines = [headerLine];
+        
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          // Simple CSV field count validation/normalization
+          const fields = line.split(',');
+          
+          if (fields.length > expectedFieldCount) {
+            // Too many fields - combine extra fields into the last expected field
+            const normalFields = fields.slice(0, expectedFieldCount - 1);
+            const extraFields = fields.slice(expectedFieldCount - 1);
+            normalFields.push(extraFields.join(' '));
+            normalizedLines.push(normalFields.join(','));
+          } else if (fields.length < expectedFieldCount) {
+            // Too few fields - add empty fields to match expected count
+            while (fields.length < expectedFieldCount) {
+              fields.push('');
+            }
+            normalizedLines.push(fields.join(','));
+          } else {
+            // Field count matches expected
+            normalizedLines.push(line);
+          }
+        }
+        
+        cleanedContent = normalizedLines.join('\n');
+      }
+
+      // Parse CSV with more lenient settings
+      const parseOptions = {
+        header: true,
+        skipEmptyLines: true,
+        comments: '#', // Skip lines starting with #
+        dynamicTyping: false
+      };
       
-      pendingValidations.push(validation);
+      const parseResult = Papa.parse<Record<string, string>>(cleanedContent, parseOptions);
+
+      if (parseResult.errors && parseResult.errors.length > 0) {
+        console.error('Papa Parse errors:', parseResult.errors);
+      }
+
+      const records: TransactionCSVRecord[] = [];
+      const errors: ImportError[] = [];
+
+      // Map CSV records to TransactionCSVRecord objects
+      if (Array.isArray(parseResult.data)) {
+        console.log(parseResult.data);
+        
+        parseResult.data.forEach((row, index) => {
+          if (!row || typeof row !== 'object') {
+            console.error('Invalid row at index', index, row);
+            return;
+          }
+          
+          const record: Partial<TransactionCSVRecord> = {};
+          
+          // Skip content-type header row
+          if (row.Date?.startsWith('Content-Type:') || row.date?.startsWith('Content-Type:')) {
+            return;
+          }
+          
+          // Skip header row if it got parsed as data
+          if ((row.Date === 'Date' || row.date === 'date') && 
+              (row.Name === 'Name' || row.name === 'name')) {
+            return;
+          }
+          
+          // Map fields using headerMapping
+          for (const [csvHeader, recordField] of Object.entries(headerMapping)) {
+            if (row[csvHeader] !== undefined) {
+              record[recordField as keyof TransactionCSVRecord] = row[csvHeader];
+            }
+          }
+          
+          // Validate required fields
+          if (!record.date || !record.name) {
+            errors.push({
+              row: index + 1, // +1 for header row
+              message: 'Missing required fields (date, name, or amount_cad)',
+              originalData: record as TransactionCSVRecord
+            });
+            return; // Skip this record
+          }
+          
+          records.push(record as TransactionCSVRecord);
+        });
+      } else {
+        throw new Error('Papa Parse did not return an array of data');
+      }
+
+      // Process records into valid TransactionImportDTO objects
+      const validTransactions: TransactionImportDTO[] = [];
+      const pendingValidations: Promise<void>[] = [];
+
+      for (let i = 0; i < records.length; i++) {
+        const record = records[i];
+        const rowIndex = i + 1; // +1 for header row
+        
+        const validation = this.processRecord(record, userId, rowIndex, options)
+          .then(result => {
+            if (result.valid) {
+              validTransactions.push(result.transaction!);
+            } else {
+              errors.push(result.error!);
+            }
+          });
+        
+        pendingValidations.push(validation);
+      }
+
+      // Wait for all validations to complete
+      await Promise.all(pendingValidations);
+
+      return { validTransactions, errors };
+    } catch (err) {
+      console.error('Error in parseCSV:', err);
+      throw err;
     }
-
-    // Wait for all validations to complete
-    await Promise.all(pendingValidations);
-
-    return { validTransactions, errors };
   }
 
   /**
@@ -120,61 +250,74 @@ export class TransactionImportService {
         };
       }
 
-      // Parse amount
-      const amount = this.parseAmount(record.amount);
-      if (isNaN(amount)) {
+      // Ensure at least one amount field is provided
+      if (!record.amount_cad && !record.amount_usd) {
         return {
           valid: false,
           error: {
             row: rowIndex,
-            message: `Invalid amount format: ${record.amount}`,
+            message: 'At least one of amount_cad or amount_usd must be provided',
             originalData: record
           }
         };
       }
 
-      // Determine transaction type
-      let type = record.type?.toLowerCase() === 'income' 
-        ? TransactionType.INCOME 
-        : TransactionType.EXPENSE;
-      
-      // If amount is positive and no type specified, assume income
-      if (!record.type && amount > 0) {
-        type = TransactionType.INCOME;
-      }
-      // If amount is negative and no type specified, assume expense
-      else if (!record.type && amount < 0) {
-        type = TransactionType.EXPENSE;
+      // Parse CAD amount if available
+      let amountCAD: number | undefined;
+      if (record.amount_cad) {
+        amountCAD = this.parseAmount(record.amount_cad);
+        if (isNaN(amountCAD)) {
+          return {
+            valid: false,
+            error: {
+              row: rowIndex,
+              message: `Invalid CAD amount format: ${record.amount_cad}`,
+              originalData: record
+            }
+          };
+        }
       }
 
-      // Normalize amount to positive value (type determines if it's income/expense)
-      const normalizedAmount = Math.abs(amount);
+      // Parse USD amount if available
+      let amountUSD: number | undefined;
+      if (record.amount_usd) {
+        amountUSD = this.parseAmount(record.amount_usd);
+        if (isNaN(amountUSD)) {
+          return {
+            valid: false,
+            error: {
+              row: rowIndex,
+              message: `Invalid USD amount format: ${record.amount_usd}`,
+              originalData: record
+            }
+          };
+        }
+      }
+
+      // Determine transaction type based on amount sign (use whichever amount is available)
+      const amount = amountCAD !== undefined ? amountCAD : (amountUSD || 0);
+      let type = amount > 0 
+        ? TransactionType.INCOME 
+        : TransactionType.EXPENSE;
+
+      // Normalize amount to positive value
+      const normalizedAmountCAD = amountCAD !== undefined ? Math.abs(amountCAD) : undefined;
+      const normalizedAmountUSD = amountUSD !== undefined ? Math.abs(amountUSD) : undefined;
 
       // Determine categoryId
       let categoryId: number;
-      if (record.categoryId) {
-        categoryId = parseInt(record.categoryId, 10);
+      if (record.category_id) {
+        categoryId = parseInt(record.category_id, 10);
         if (isNaN(categoryId)) {
           return {
             valid: false,
             error: {
               row: rowIndex,
-              message: `Invalid category ID: ${record.categoryId}`,
+              message: `Invalid category ID: ${record.category_id}`,
               originalData: record
             }
           };
         }
-      } else if (record.category) {
-        // This would require category name to ID mapping
-        // For now, return error that category ID is required
-        return {
-          valid: false,
-          error: {
-            row: rowIndex,
-            message: 'Category ID is required for import',
-            originalData: record
-          }
-        };
       } else {
         return {
           valid: false,
@@ -184,21 +327,6 @@ export class TransactionImportService {
             originalData: record
           }
         };
-      }
-
-      // Validate category existence if validation function provided
-      if (options.validateCategories) {
-        const [categoryExists] = await options.validateCategories([categoryId]);
-        if (!categoryExists) {
-          return {
-            valid: false,
-            error: {
-              row: rowIndex,
-              message: `Category with ID ${categoryId} does not exist`,
-              originalData: record
-            }
-          };
-        }
       }
 
       // Find or create month for the transaction date
@@ -224,11 +352,12 @@ export class TransactionImportService {
         monthId = newMonth.id!;
       }
 
-      // Create valid transaction
+      // Create valid transaction with proper typing
       const transaction: TransactionImportDTO = {
         userId,
         name: record.name,
-        amountCAD: normalizedAmount,
+        amountCAD: normalizedAmountCAD,
+        amountUSD: normalizedAmountUSD,
         categoryId,
         notes: record.notes,
         type,
@@ -253,33 +382,50 @@ export class TransactionImportService {
    * Parse date string into Date object
    */
   private parseDate(dateString: string): Date | null {
-    // Try different date formats
-    const formats = [
+    // Define format (MM/DD/YYYY) for US format which matches the provided dates
+    const usFormat = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+    
+    const match = dateString.match(usFormat);
+    if (match) {
+      const [, monthStr, dayStr, yearStr] = match;
+      const month = parseInt(monthStr, 10) - 1; // JS months are 0-indexed
+      const day = parseInt(dayStr, 10);
+      const year = parseInt(yearStr, 10);
+      
+      const date = new Date(year, month, day);
+      
+      // Check if valid date
+      if (date.getFullYear() === year && 
+          date.getMonth() === month && 
+          date.getDate() === day) {
+        return date;
+      }
+    }
+    
+    // Fall back to other formats if the US format doesn't match
+    const otherFormats = [
       // ISO format (YYYY-MM-DD)
-      /^(\d{4})-(\d{1,2})-(\d{1,2})$/,
-      // US format (MM/DD/YYYY)
-      /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
+      { regex: /^(\d{4})-(\d{1,2})-(\d{1,2})$/, groups: [1, 2, 3], isIso: true },
       // European format (DD/MM/YYYY)
-      /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
+      { regex: /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, groups: [3, 2, 1] },
       // European format (DD.MM.YYYY)
-      /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/,
+      { regex: /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/, groups: [3, 2, 1] },
     ];
 
-    for (const format of formats) {
-      const match = dateString.match(format);
+    for (const format of otherFormats) {
+      const match = dateString.match(format.regex);
       if (match) {
         let year: number, month: number, day: number;
         
-        if (format === formats[0]) { // ISO
-          [, year, month, day] = match.map(Number);
-        } else if (format === formats[1]) { // US
-          [, month, day, year] = match.map(Number);
-        } else { // European
-          [, day, month, year] = match.map(Number);
+        if (format.isIso) {
+          year = parseInt(match[format.groups[0]], 10);
+          month = parseInt(match[format.groups[1]], 10) - 1;
+          day = parseInt(match[format.groups[2]], 10);
+        } else {
+          year = parseInt(match[format.groups[0]], 10);
+          month = parseInt(match[format.groups[1]], 10) - 1;
+          day = parseInt(match[format.groups[2]], 10);
         }
-        
-        // Adjust month for JavaScript's 0-indexed months
-        month -= 1;
         
         const date = new Date(year, month, day);
         

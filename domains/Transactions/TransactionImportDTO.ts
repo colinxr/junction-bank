@@ -6,9 +6,9 @@ import { TransactionType } from './Transaction';
 export interface TransactionCSVRecord {
   date: string;
   name: string;
-  amount: string;
-  category?: string;
-  categoryId?: string;
+  amount_cad: string;
+  amount_usd?: string;
+  category_id?: string;
   notes?: string;
   type?: string;
 }
@@ -19,7 +19,8 @@ export interface TransactionCSVRecord {
 export interface TransactionImportDTO {
   userId: string;
   name: string;
-  amountCAD: number;
+  amountCAD?: number;
+  amountUSD?: number;
   categoryId: number;
   notes?: string;
   type: TransactionType;

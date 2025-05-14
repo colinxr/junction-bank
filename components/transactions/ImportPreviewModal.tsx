@@ -67,14 +67,14 @@ export function ImportPreviewModal({
     setSelectedTransactions(prev => {
       const isSelected = prev.some(t => 
         t.name === transaction.name && 
-        t.date.getTime() === transaction.date.getTime() && 
+        new Date(t.date).getTime() === new Date(transaction.date).getTime() && 
         t.amountCAD === transaction.amountCAD
       );
 
       if (isSelected) {
         return prev.filter(t => 
           !(t.name === transaction.name && 
-          t.date.getTime() === transaction.date.getTime() && 
+          new Date(t.date).getTime() === new Date(transaction.date).getTime() && 
           t.amountCAD === transaction.amountCAD)
         );
       } else {
@@ -91,22 +91,22 @@ export function ImportPreviewModal({
     }
   };
 
-  const isSelected = (transaction: TransactionImportDTO) => {
+  const isTransactionSelected = (transaction: TransactionImportDTO) => {
     return selectedTransactions.some(t => 
       t.name === transaction.name && 
-      t.date.getTime() === transaction.date.getTime() && 
+      new Date(t.date).getTime() === new Date(transaction.date).getTime() && 
       t.amountCAD === transaction.amountCAD
     );
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString();
   };
 
-  const formatAmount = (amount: number) => {
+  const formatAmount = (amount: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'CAD'
+      currency: currency
     }).format(amount);
   };
 
@@ -146,7 +146,8 @@ export function ImportPreviewModal({
                   <TableHead>Date</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Amount CAD</TableHead>
+                  <TableHead className="text-right">Amount USD</TableHead>
                   <TableHead>Type</TableHead>
                 </TableRow>
               </TableHeader>
@@ -155,7 +156,7 @@ export function ImportPreviewModal({
                   <TableRow key={`${transaction.name}-${i}`}>
                     <TableCell>
                       <Checkbox 
-                        checked={isSelected(transaction)}
+                        checked={isTransactionSelected(transaction)}
                         onCheckedChange={() => toggleTransaction(transaction)}
                         aria-label={`Select ${transaction.name}`}
                         disabled={isLoading}
@@ -166,7 +167,12 @@ export function ImportPreviewModal({
                     <TableCell>ID: {transaction.categoryId}</TableCell>
                     <TableCell className="text-right">
                       <span className={transaction.type === TransactionType.INCOME ? "text-green-600" : "text-red-600"}>
-                        {formatAmount(transaction.amountCAD)}
+                        {transaction.amountCAD && formatAmount(transaction.amountCAD, 'CAD') || '-'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <span className={transaction.type === TransactionType.INCOME ? "text-green-600" : "text-red-600"}>
+                        {transaction.amountUSD && formatAmount(transaction.amountUSD, 'USD') || '-'}
                       </span>
                     </TableCell>
                     <TableCell>{transaction.type}</TableCell>
@@ -227,4 +233,4 @@ export function ImportPreviewModal({
       </DialogContent>
     </Dialog>
   );
-} 
+}
