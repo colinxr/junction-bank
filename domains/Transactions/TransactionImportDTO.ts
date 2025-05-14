@@ -43,7 +43,7 @@ export interface TransactionImportResultDTO {
  * Error details for failed imports
  */
 export interface ImportError {
-  row: number;
+  row?: number;
   message: string;
   originalData?: TransactionCSVRecord;
 } 

@@ -7,6 +7,7 @@ import { TransactionImportDTO, TransactionImportResultDTO } from "./TransactionI
 
 import { Transaction, USDSpending } from "@/app/types";
 import { RedisClient } from '@/infrastructure/redis';
+import { Prisma } from "@prisma/client";
 
 export class TransactionRepository implements ITransactionRepository {
   constructor(private prisma: PrismaClient, private redis: RedisClient) {}
@@ -16,16 +17,16 @@ export class TransactionRepository implements ITransactionRepository {
     
     // Try to get from cache first
     let transactions;
-    // try {
-    //   const cachedData = await this.redis.get(cacheKey);
-    //   if (cachedData) {
-    //     console.log('Cache hit for transactions');
-    //     return JSON.parse(cachedData);
-    //   }
-    // } catch (error) {
-    //   // Log but continue with database query
-    //   console.error('Redis cache error, falling back to database:', error);
-    // }
+    try {
+      const cachedData = await this.redis.get(cacheKey);
+      if (cachedData) {
+        console.log('Cache hit for transactions');
+        return JSON.parse(cachedData);
+      }
+    } catch (error) {
+      // Log but continue with database query
+      console.error('Redis cache error, falling back to database:', error);
+    }
 
     // Cache miss or error, fetch from database
     transactions = await this.prisma.transaction.findMany({
@@ -93,40 +94,37 @@ export class TransactionRepository implements ITransactionRepository {
     return transaction;
   }
 
-  async store(transactionData: Omit<Transaction, 'id' | 'validate' | 'isIncome' | 'isExpense'>): Promise<TransactionModel> {
-    // Extract only the fields Prisma needs and convert to the format it expects
-    const prismaData: any = {
+  async store(
+    transactionData: Omit<Transaction, 'id' | 'validate' | 'isIncome' | 'isExpense' | 'categoryName' | 'createdAt'>, 
+    prismaTransaction?: Prisma.TransactionClient
+  ): Promise<TransactionModel> {
+    // Format amount values to ensure no undefined values
+    const amountCAD = transactionData.amountCAD ?? 0;
+    const amountUSD = transactionData.amountUSD ?? null;
+    
+    // Determine which Prisma client to use (transaction or main)
+    const client = prismaTransaction || this.prisma;
+    
+    // Prepare create data
+    const createData: any = {
       name: transactionData.name,
-      amountCAD: transactionData.amountCAD,
-      amountUSD: transactionData.amountUSD || null,
+      amountCAD: amountCAD,
+      amountUSD: amountUSD,
       notes: transactionData.notes || null,
-      // Convert domain enum to string for Prisma
       type: transactionData.type === TransactionType.INCOME ? 'Income' : 'Expense',
       date: transactionData.date,
-      category: {
-        connect: {
-          id: transactionData.categoryId
-        }
-      },
-      month: {
-        connect: {
-          id: transactionData.monthId
-        }
-      },
+      categoryId: transactionData.categoryId,
+      monthId: transactionData.monthId
     };
 
-    // Only include user connection if userId is defined
+    // Add userId if provided
     if (transactionData.userId) {
-      prismaData.user = {
-        connect: {
-          id: transactionData.userId
-        }
-      };
+      createData.userId = this.ensureValidUuid(transactionData.userId);
     }
-
+    
     // Create transaction
-    const transaction = await this.prisma.transaction.create({
-      data: prismaData,
+    const transaction = await client.transaction.create({
+      data: createData,
       include: {
         category: {
           select: {
@@ -136,14 +134,40 @@ export class TransactionRepository implements ITransactionRepository {
       }
     });
 
-    try {
-      await this.redis.del(`transactions:${transactionData.monthId}`);
-      await this.redis.del(`transactions:all`);
-    } catch (error) {
-      console.error('Redis cache invalidation error:', error);
+    // Only invalidate caches if not using a transaction client
+    if (!prismaTransaction) {
+      try {
+        await this.redis.del(`transactions:${transactionData.monthId}`);
+        await this.redis.del(`transactions:all`);
+      } catch (error) {
+        console.error('Redis cache invalidation error:', error);
+      }
     }
 
     return transaction;
+  }
+
+  /**
+   * Ensures a string is a valid UUID format
+   */
+  private ensureValidUuid(userId: string): string {
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    // If already valid UUID
+    if (uuidPattern.test(userId)) {
+      return userId;
+    }
+    
+    // Try to extract a valid UUID if the string contains one
+    // This handles cases where userId might have a prefix
+    const extractedUuid = userId.replace(/^[^0-9a-f]*/i, '');
+    
+    if (uuidPattern.test(extractedUuid)) {
+      return extractedUuid;
+    }
+    
+    // If we can't extract a valid UUID format, return the original
+    return userId;
   }
 
   async update(id: number, data: Partial<Transaction>): Promise<TransactionModel> {
@@ -308,19 +332,25 @@ export class TransactionRepository implements ITransactionRepository {
       await this.prisma.$transaction(async (prisma) => {
         for (const transaction of transactions) {
           try {
-            const prismaData = {
+            // Prepare data using the same structure as store method
+            const createData: any = {
               name: transaction.name,
-              amountCAD: transaction.amountCAD,
+              amountCAD: transaction.amountCAD ?? 0,
+              amountUSD: transaction.amountUSD ?? null,
               notes: transaction.notes || null,
-              type: transaction.type,
+              type: transaction.type === TransactionType.INCOME ? 'Income' : 'Expense',
               date: transaction.date,
               categoryId: transaction.categoryId,
-              userId: transaction.userId,
               monthId: transaction.monthId
             };
 
+            // Add userId if provided
+            if (transaction.userId) {
+              createData.userId = this.ensureValidUuid(transaction.userId);
+            }
+
             const createdTransaction = await prisma.transaction.create({
-              data: prismaData,
+              data: createData,
               include: {
                 category: {
                   select: {

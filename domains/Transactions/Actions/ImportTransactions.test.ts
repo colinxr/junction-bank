@@ -1,16 +1,16 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { ImportTransactionsAction } from './ImportTransactionsAction';
+import { ImportTransactions } from './ImportTransactions';
 import { ITransactionRepository } from '../ITransactionRepository';
 import { TransactionImportService } from '../Services/TransactionImportService';
 import { ICategoryRepository } from '../../Categories/ICategoryRepository';
 import { TransactionImportDTO, TransactionImportResultDTO, ImportError } from '../TransactionImportDTO';
 import { TransactionType } from '../Transaction';
 
-describe('ImportTransactionsAction', () => {
+describe('ImportTransactions', () => {
   let transactionRepository: ITransactionRepository;
   let transactionImportService: TransactionImportService;
   let categoryRepository: ICategoryRepository;
-  let action: ImportTransactionsAction;
+  let action: ImportTransactions;
   
   beforeEach(() => {
     // Create mocks
@@ -26,7 +26,7 @@ describe('ImportTransactionsAction', () => {
       show: vi.fn(),
     } as unknown as ICategoryRepository;
     
-    action = new ImportTransactionsAction(
+    action = new ImportTransactions(
       transactionRepository,
       transactionImportService,
       categoryRepository
@@ -112,7 +112,7 @@ describe('ImportTransactionsAction', () => {
       {
         row: 2,
         message: 'Invalid date format: invalid-date',
-        originalData: { date: 'invalid-date', name: 'Grocery', amount: '125.50' }
+        originalData: { date: 'invalid-date', name: 'Grocery', amount_cad: '125.50' }
       }
     ];
     
@@ -163,7 +163,7 @@ describe('ImportTransactionsAction', () => {
       {
         row: 3,
         message: 'Invalid amount format: not-a-number',
-        originalData: { date: '2023-07-20', name: 'Salary', amount: 'not-a-number' }
+        originalData: { date: '2023-07-20', name: 'Salary', amount_cad: 'not-a-number' }
       }
     ];
     

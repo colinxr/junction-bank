@@ -1,6 +1,5 @@
-import { ITransactionRepository } from '../ITransactionRepository';
 import { TransactionImportService } from '../Services/TransactionImportService';
-import { TransactionImportResultDTO } from '../TransactionImportDTO';
+import { TransactionImportDTO, TransactionImportResultDTO, ImportError } from '../TransactionImportDTO';
 import { ICategoryRepository } from '@/domains/Categories/ICategoryRepository';
 
 interface ImportTransactionsRequest {
@@ -9,14 +8,18 @@ interface ImportTransactionsRequest {
   headerMapping?: { [key: string]: string };
 }
 
-export class ImportTransactionsAction {
+interface ImportTransactionsResult {
+  validTransactions: TransactionImportDTO[];
+  errors: ImportError[];
+}
+
+export class ImportTransactions {
   constructor(
-    private transactionRepository: ITransactionRepository,
     private transactionImportService: TransactionImportService,
     private categoryRepository: ICategoryRepository
   ) {}
 
-  async execute({ csvContent, userId, headerMapping }: ImportTransactionsRequest): Promise<TransactionImportResultDTO> {
+  async execute({ csvContent, userId, headerMapping }: ImportTransactionsRequest): Promise<ImportTransactionsResult> {
     // Parse and validate the CSV content
     const { validTransactions, errors } = await this.transactionImportService.parseCSV(
       csvContent,
@@ -27,24 +30,10 @@ export class ImportTransactionsAction {
       }
     );
 
-    // If no valid transactions, return early with errors
-    if (validTransactions.length === 0) {
-      return {
-        successCount: 0,
-        failedCount: errors.length,
-        totalCount: errors.length,
-        errors
-      };
-    }
-
-    // Import valid transactions using repository
-    const importResult = await this.transactionRepository.importTransactions(validTransactions);
-
-    // Combine validation errors with import errors
+    // Return valid transactions and errors
     return {
-      ...importResult,
-      errors: [...(importResult.errors || []), ...errors],
-      totalCount: validTransactions.length + errors.length
+      validTransactions,
+      errors
     };
   }
 
