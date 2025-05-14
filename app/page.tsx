@@ -1,18 +1,14 @@
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { auth } from '@clerk/nextjs/server';
 
 export default async function HomePage() {
-  // Check if user is authenticated
-  const cookieStore = await cookies();
-  const authToken = cookieStore.get("auth_token");
+  // Get authentication status from Clerk
+  const { userId } = await auth();
   
   // Redirect based on authentication status
-  if (authToken) {
+  if (userId) {
     redirect("/dashboard");
   } else {
     redirect("/auth/login");
   }
-
-  // This won't be rendered due to the redirects above
-  return null;
 }
