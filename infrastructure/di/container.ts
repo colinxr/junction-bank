@@ -26,6 +26,7 @@ import { StoreMonth } from '@/domains/Months/Actions/StoreMonth';
 import { UpdateMonth } from '@/domains/Months/Actions/UpdateMonth';
 import { DestroyMonth } from '@/domains/Months/Actions/DestroyMonth'; 
 import { GetMonthlySpendingByCategory } from '@/domains/Months/Actions/GetMonthlySpendingByCategory';
+import { ShowLatestMonth } from '@/domains/Months/Actions/ShowLatestMonth';
 
 // Recurring Transactions
 import { IRecurringTransactionRepository } from '@/domains/RecurringTransactions/IRecurringTransactionRepository';
@@ -80,6 +81,7 @@ export const makeMonthUseCases = () => {
     findByDate: new FindMonthByDate(monthRepository),
     update: new UpdateMonth(monthRepository),
     delete: new DestroyMonth(monthRepository),
+    showLatest: new ShowLatestMonth(monthRepository)
   };
 }; 
 

@@ -19,8 +19,12 @@ export class MonthAlreadyExistsException extends DomainException {
 }
 
 export class MonthNotFoundException extends DomainException {
-  constructor(id: number) {
-    super(`Month with ID ${id} not found`);
+  constructor(id: number | string) {
+    if (typeof id === 'string' && id === 'latest') {
+      super('No months found in the database');
+    } else {
+      super(`Month with ID ${id} not found`);
+    }
   }
 }
 
