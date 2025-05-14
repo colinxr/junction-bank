@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Month } from "@/app/types"
-import { formatCurrency, getMonthName } from "@/lib/utils"
+import { formatCurrency, getMonthName } from "@/infrastructure/utils"
 
 export const columns: ColumnDef<Month>[] = [
   {

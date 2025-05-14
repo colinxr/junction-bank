@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { makeTransactionUseCases } from '@/infrastructure/di/container';
+import { makeTransactionUseCases } from '@/infrastructure/container';
 import { DomainException } from '@/domains/Shared/DomainException';
 import { TransactionMapper } from '@/domains/Transactions/TransactionMapper';
 

@@ -3,7 +3,7 @@ import apiClient from '@/infrastructure/api-client';
 import { MonthDTO } from '@/domains/Months/MonthDTO';
 import { toast } from 'sonner';
 import { Month } from '@/app/types';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/infrastructure/utils';
 
 const API_URL = '/api/months';
 

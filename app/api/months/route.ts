@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { makeMonthUseCases } from '@/infrastructure/di/container';
+import { makeMonthUseCases } from '@/infrastructure/container';
 import { MonthMapper } from '@/domains/Months/MonthMapper';
 import { DomainException } from '@/domains/Shared/DomainException';
 

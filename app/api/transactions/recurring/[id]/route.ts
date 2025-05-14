@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { makeRecurringTransactionUseCases } from '@/infrastructure/di/container';
+import { makeRecurringTransactionUseCases } from '@/infrastructure/container';
 import { DomainException } from '@/domains/Shared/DomainException';
 import { RecurringTransactionNotFoundException } from '@/domains/RecurringTransactions/RecurringTransactionException';
 import { RecurringTransactionMapper } from '@/domains/RecurringTransactions/RecurringTransactionMapper';

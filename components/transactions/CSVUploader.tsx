@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { UploadCloud, AlertCircle, FileText, CheckCircle, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/infrastructure/utils";
 
 export interface CSVUploaderProps {
   onFileSelect: (file: File) => void;

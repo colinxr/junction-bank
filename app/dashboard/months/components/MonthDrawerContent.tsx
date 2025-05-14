@@ -1,7 +1,7 @@
 "use client"
 
 import { Month } from "@/app/types"
-import { getMonthName } from "@/lib/utils"
+import { getMonthName } from "@/infrastructure/utils"
 import { CalendarIcon } from "lucide-react"
 import { ResourceDrawerContentProps } from "@/components/layout/ResourceDrawer"
 import { 

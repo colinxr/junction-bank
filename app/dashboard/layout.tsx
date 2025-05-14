@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Receipt, Calendar, User, CalendarClock, LayoutGrid } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/infrastructure/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { Toaster } from "@/components/ui/sonner"
 

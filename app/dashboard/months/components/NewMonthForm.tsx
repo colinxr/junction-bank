@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
-import { getMonthName } from "@/lib/utils";
+import { getMonthName } from "@/infrastructure/utils";
 import { useMonths } from "@/app/hooks/useMonths";
 
 import {

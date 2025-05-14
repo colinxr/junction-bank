@@ -1,4 +1,4 @@
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/infrastructure/utils';
 import { ITransactionRepository } from '@/domains/Transactions/ITransactionRepository';
 import { CategorySpendingDTO } from '@/domains/Transactions/TransactionDTO';
 

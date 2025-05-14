@@ -1,4 +1,4 @@
-import { makeCurrencyActions } from "@/infrastructure/di/container";
+import { makeCurrencyActions } from "@/infrastructure/container";
 import { InvalidAmountException } from "../Exception/CurrencyException";
 import { GetUsdToCadRate } from "../Actions/GetUsdToCadRate";
 import { ConvertUsdToCad } from "../Actions/ConvertUsdToCad";
