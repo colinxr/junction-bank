@@ -3,6 +3,7 @@ import { ITransactionRepository } from "./ITransactionRepository";
 import { CategorySpendingDTO } from "./TransactionDTO";
 import { TransactionType } from "./Transaction";
 import { TransactionModel } from "./TransactionModel";
+import { TransactionImportDTO, TransactionImportResultDTO } from "./TransactionImportDTO";
 
 import { Transaction, USDSpending } from "@/app/types";
 import { RedisClient } from '@/infrastructure/redis';
@@ -291,6 +292,81 @@ export class TransactionRepository implements ITransactionRepository {
     }
 
     return result;
+  }
+
+  async importTransactions(transactions: TransactionImportDTO[]): Promise<TransactionImportResultDTO> {
+    const result: TransactionImportResultDTO = {
+      successCount: 0,
+      failedCount: 0,
+      totalCount: transactions.length,
+      errors: [],
+      importedTransactions: []
+    };
+
+    // Use a transaction to ensure atomicity
+    try {
+      await this.prisma.$transaction(async (prisma) => {
+        for (const transaction of transactions) {
+          try {
+            const prismaData = {
+              name: transaction.name,
+              amountCAD: transaction.amountCAD,
+              notes: transaction.notes || null,
+              type: transaction.type,
+              date: transaction.date,
+              categoryId: transaction.categoryId,
+              userId: transaction.userId,
+              monthId: transaction.monthId
+            };
+
+            const createdTransaction = await prisma.transaction.create({
+              data: prismaData,
+              include: {
+                category: {
+                  select: {
+                    name: true
+                  }
+                }
+              }
+            });
+
+            result.successCount++;
+            result.importedTransactions?.push(transaction);
+          } catch (error) {
+            result.failedCount++;
+            result.errors?.push({
+              row: result.successCount + result.failedCount,
+              message: error instanceof Error ? error.message : 'Unknown error',
+            });
+            // Don't throw here, continue with other transactions
+          }
+        }
+      });
+
+      // Invalidate caches for all affected months
+      const monthIds = new Set(transactions.map(t => t.monthId));
+      try {
+        for (const monthId of monthIds) {
+          await this.redis.del(`transactions:${monthId}`);
+        }
+        await this.redis.del('transactions:all');
+      } catch (error) {
+        console.error('Redis cache invalidation error:', error);
+      }
+
+      return result;
+    } catch (error) {
+      // Transaction failed entirely
+      return {
+        successCount: 0,
+        failedCount: transactions.length,
+        totalCount: transactions.length,
+        errors: [{
+          row: 0,
+          message: error instanceof Error ? error.message : 'Unknown error during transaction import',
+        }]
+      };
+    }
   }
 }
 

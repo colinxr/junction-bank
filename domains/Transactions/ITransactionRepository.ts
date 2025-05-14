@@ -1,6 +1,7 @@
 import { Transaction, USDSpending } from '@/app/types';
 import { CategorySpendingDTO } from './TransactionDTO';
 import { TransactionModel } from './TransactionModel';
+import { TransactionImportDTO, TransactionImportResultDTO } from './TransactionImportDTO';
 
 export interface ITransactionRepository {
   index(monthId?: number): Promise<TransactionModel[]>;
@@ -10,4 +11,5 @@ export interface ITransactionRepository {
   destroy(id: number): Promise<void>;
   getTotalSpendingByCategory(monthId: number): Promise<CategorySpendingDTO[]>;
   getUSDSpendingByCategory(monthId: number): Promise<USDSpending[]>;
+  importTransactions(transactions: TransactionImportDTO[]): Promise<TransactionImportResultDTO>;
 } 

@@ -46,6 +46,10 @@ import { ShowTransaction } from '@/domains/Transactions/Actions/ShowTransaction'
 import { UpdateTransaction } from '@/domains/Transactions/Actions/UpdateTransaction';
 import { DeleteTransaction } from '@/domains/Transactions/Actions/DeleteTransaction';
 
+// Transaction Import
+import { TransactionImportService } from '@/domains/Transactions/Services/TransactionImportService';
+import { ImportTransactionsAction } from '@/domains/Transactions/Actions/ImportTransactionsAction';
+
 // Singleton repositories
 const categoryRepository: ICategoryRepository = new CategoryRepository(prisma, redis);
 const monthRepository: IMonthRepository = new MonthRepository(prisma, redis);
@@ -103,7 +107,12 @@ export const makeTransactionUseCases = () => {
     store: new StoreTransaction(transactionRepository, monthRepository, currencyService),
     update: new UpdateTransaction(transactionRepository, currencyService),
     destroy: new DeleteTransaction(transactionRepository),
-    getSpendingByCategory: new GetMonthlySpendingByCategory(transactionRepository)
+    getSpendingByCategory: new GetMonthlySpendingByCategory(transactionRepository),
+    import: new ImportTransactionsAction(
+      transactionRepository,
+      new TransactionImportService(monthRepository),
+      categoryRepository
+    )
   };
 };
 
