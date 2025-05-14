@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { ImportButton } from '@/components/transactions/ImportButton';
 
 export default function DashboardPage() {
   const [month, setMonth] = useState<Month | null>(null);
@@ -27,7 +28,6 @@ export default function DashboardPage() {
         }
         
         const data = await response.json();
-        console.log(data);
         
         setMonth(data);
         setError(null);
@@ -51,6 +51,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Dashboard - {formattedDate}</h1>
+        <ImportButton variant="ghost" />
       </div>
       
       {loading && (

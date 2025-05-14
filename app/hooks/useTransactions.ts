@@ -129,8 +129,6 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
   const deleteTransaction = async (id: number) => {
     try {
       toast.success(`Deleting transaction ID: ${id}`);
-      console.log('got here');
-      
       
       // Optimistically update UI before the API call
       const optimisticData = {
