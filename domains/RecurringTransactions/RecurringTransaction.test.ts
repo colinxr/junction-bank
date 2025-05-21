@@ -4,7 +4,7 @@ import { RecurringTransaction, TransactionType } from './RecurringTransaction';
 describe('RecurringTransaction', () => {
   const validProps = {
     id: 1,
-    userId: 'user123',
+    clerkId: 'user123',
     name: 'Monthly Rent',
     amountCAD: 1500,
     categoryId: 2,
@@ -18,7 +18,7 @@ describe('RecurringTransaction', () => {
     const transaction = new RecurringTransaction(validProps);
     
     expect(transaction.id).toBe(1);
-    expect(transaction.userId).toBe('user123');
+    expect(transaction.clerkId).toBe('user123');
     expect(transaction.name).toBe('Monthly Rent');
     expect(transaction.amountCAD).toBe(1500);
     expect(transaction.categoryId).toBe(2);
@@ -87,7 +87,7 @@ describe('RecurringTransaction', () => {
 
   it('creates a transaction using the static create method', () => {
     const transaction = RecurringTransaction.create({
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Gym Membership',
       amountCAD: 50,
       categoryId: 4,
@@ -96,7 +96,7 @@ describe('RecurringTransaction', () => {
     
     expect(transaction).toBeInstanceOf(RecurringTransaction);
     expect(transaction.name).toBe('Gym Membership');
-    expect(transaction.userId).toBe('user123');
+    expect(transaction.clerkId).toBe('user123');
     expect(transaction.amountCAD).toBe(50);
   });
 }); 

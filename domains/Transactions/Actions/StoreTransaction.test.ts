@@ -49,7 +49,7 @@ describe('StoreTransaction', () => {
     
     // Input DTO
     const transactionData: TransactionCreateDTO = {
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Groceries',
       amountCAD: 50,
       categoryId: 1,
@@ -67,7 +67,7 @@ describe('StoreTransaction', () => {
     });
     
     const expectedTransactionData = {
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Groceries',
       amountCAD: 50,
       amountUSD: undefined,
@@ -98,7 +98,7 @@ describe('StoreTransaction', () => {
     
     // Input DTO
     const transactionData: TransactionCreateDTO = {
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Rent',
       amountCAD: 1200,
       categoryId: 2,
@@ -123,7 +123,7 @@ describe('StoreTransaction', () => {
     });
     
     const expectedTransactionData = {
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Rent',
       amountCAD: 1200,
       amountUSD: undefined,
@@ -154,7 +154,7 @@ describe('StoreTransaction', () => {
     
     // Input DTO with USD amount
     const transactionData: TransactionCreateDTO = {
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Online Purchase',
       amountUSD: 75,
       categoryId: 3,
@@ -172,7 +172,7 @@ describe('StoreTransaction', () => {
     });
     
     const expectedTransactionData = {
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Online Purchase',
       amountCAD: 100,
       amountUSD: 75,

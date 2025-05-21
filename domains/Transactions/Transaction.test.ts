@@ -7,7 +7,7 @@ describe('Transaction', () => {
   
   it('creates a valid transaction with required fields', () => {
     const transaction = Transaction.create({
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Groceries',
       amountCAD: 50,
       categoryId: 1,
@@ -15,7 +15,7 @@ describe('Transaction', () => {
       monthId: testMonth
     });
     
-    expect(transaction.userId).toBe('user123');
+    expect(transaction.clerkId).toBe('user123');
     expect(transaction.name).toBe('Groceries');
     expect(transaction.amountCAD).toBe(50);
     expect(transaction.categoryId).toBe(1);
@@ -28,7 +28,7 @@ describe('Transaction', () => {
   
   it('creates a valid income transaction', () => {
     const transaction = Transaction.create({
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Salary',
       amountCAD: 2000,
       categoryId: 5,
@@ -45,7 +45,7 @@ describe('Transaction', () => {
   
   it('creates a transaction with USD amount', () => {
     const transaction = Transaction.create({
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Online Purchase',
       amountCAD: 50,
       amountUSD: 38,
@@ -63,7 +63,7 @@ describe('Transaction', () => {
     
     const transaction = Transaction.create({
       id: 123,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Rent',
       amountCAD: 1200,
       categoryId: 3,

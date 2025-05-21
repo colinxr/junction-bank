@@ -27,7 +27,7 @@ describe('IndexRecurringTransactions', () => {
     const testTransactions = [
       new RecurringTransaction({
         id: 1,
-        userId: 'user123',
+        clerkId: 'user123',
         name: 'Monthly Rent',
         amountCAD: 1500,
         categoryId: 2,
@@ -35,7 +35,7 @@ describe('IndexRecurringTransactions', () => {
       }),
       new RecurringTransaction({
         id: 2,
-        userId: 'user123',
+        clerkId: 'user123',
         name: 'Salary',
         amountCAD: 4000,
         categoryId: 1,

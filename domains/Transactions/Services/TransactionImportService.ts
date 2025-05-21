@@ -35,6 +35,7 @@ export class TransactionImportService {
         'Amount USD': 'amount_usd',
         'CategoryId': 'category_id',
         'Category Id': 'category_id',
+        'Category ID': 'category_id',
         'notes': 'notes'
       };
 
@@ -46,7 +47,7 @@ export class TransactionImportService {
         const csvLines = [];
         
         // Add headers manually - use exact case from original CSV
-        csvLines.push('Date,Name,AMOUNT CAD,AMOUNT USD,CategoryId,notes');
+        csvLines.push('Date,Name,AMOUNT CAD,AMOUNT USD,Category Id,Notes');
         
         // Clean up CSV content to ensure consistent field count
         let cleanLines = [];
@@ -147,8 +148,6 @@ export class TransactionImportService {
 
       // Map CSV records to TransactionCSVRecord objects
       if (Array.isArray(parseResult.data)) {
-        console.log(parseResult.data);
-        
         parseResult.data.forEach((row, index) => {
           if (!row || typeof row !== 'object') {
             console.error('Invalid row at index', index, row);
@@ -237,6 +236,7 @@ export class TransactionImportService {
     error?: ImportError 
   }> {
     try {
+      console.log(record);
       // Parse date
       const date = this.parseDate(record.date);
       if (!date) {
@@ -306,6 +306,7 @@ export class TransactionImportService {
 
       // Determine categoryId
       let categoryId: number;
+      console.log(record);
       if (record.category_id) {
         categoryId = parseInt(record.category_id, 10);
         if (isNaN(categoryId)) {

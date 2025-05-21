@@ -27,7 +27,7 @@ describe('IndexTransactions', () => {
     const transactions = [
       {
         id: 1,
-        userId: 'user123',
+        clerkId: 'user123',
         name: 'Groceries',
         amountCAD: 50,
         categoryId: 1,
@@ -37,7 +37,7 @@ describe('IndexTransactions', () => {
       },
       {
         id: 2,
-        userId: 'user123',
+        clerkId: 'user123',
         name: 'Rent',
         amountCAD: 1200,
         categoryId: 2,
@@ -62,7 +62,7 @@ describe('IndexTransactions', () => {
     const transactions = [
       {
         id: 1,
-        userId: 'user123',
+        clerkId: 'user123',
         name: 'Groceries',
         amountCAD: 50,
         categoryId: 1,

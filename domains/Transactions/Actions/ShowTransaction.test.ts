@@ -27,7 +27,7 @@ describe('ShowTransaction', () => {
     const testDate = new Date('2023-01-01');
     const testTransaction = {
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Groceries',
       amountCAD: 50,
       categoryId: 1,

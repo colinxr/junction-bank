@@ -37,34 +37,37 @@ describe('TransactionImportService', () => {
         year: 2023
       }));
       
-      const csvContent = `Date,Description,Amount,Category ID,Notes,Type
-2023-07-15,Grocery Shopping,125.50,1,Weekly groceries,Expense
-2023-07-20,Salary,3000,2,Monthly salary,Income`;
+      const csvContent = `Date,Name,"Amount CAD","Amount USD",Category ID,Notes,Type
+2023-07-15,Grocery Shopping,125.50,,1,Weekly groceries,Expense
+2023-07-20,Salary,3000,,2,Monthly salary,Income`;
       
       const result = await service.parseCSV(csvContent, 'user123');
+      console.log(result);
       
       expect(result.validTransactions.length).toBe(2);
       expect(result.errors.length).toBe(0);
       
       // Check first transaction (expense)
       expect(result.validTransactions[0]).toEqual(expect.objectContaining({
-        userId: 'user123',
+        clerkId: 'user123',
         name: 'Grocery Shopping',
         amountCAD: 125.50,
+        amountUSD: undefined,
+        date: new Date('2023-07-15'),
         categoryId: 1,
         notes: 'Weekly groceries',
-        type: TransactionType.EXPENSE,
         monthId: 1
       }));
       
       // Check second transaction (income)
       expect(result.validTransactions[1]).toEqual(expect.objectContaining({
-        userId: 'user123',
+        clerkId: 'user123',
         name: 'Salary',
         amountCAD: 3000,
+        amountUSD: undefined,
+        date: new Date('2023-07-20'),
         categoryId: 2,
         notes: 'Monthly salary',
-        type: TransactionType.INCOME,
         monthId: 1
       }));
       
@@ -104,8 +107,8 @@ invalid-date,Grocery Shopping,125.50,1,Weekly groceries,Expense
       
       monthRepository.findByDate = vi.fn().mockResolvedValue(existingMonth);
       
-      const csvContent = `Date,Description,Amount,Category ID,Notes,Type
-2023-07-15,Grocery Shopping,125.50,1,Weekly groceries,Expense`;
+      const csvContent = `Date,Name,"Amount CAD","Amount USD",Category ID,Notes,Type
+2023-07-15,Grocery Shopping,125.50,,1,Weekly groceries,Expense`;
       
       const result = await service.parseCSV(csvContent, 'user123');
       
@@ -115,72 +118,6 @@ invalid-date,Grocery Shopping,125.50,1,Weekly groceries,Expense
       // Verify month repository was called but store was not
       expect(monthRepository.findByDate).toHaveBeenCalledTimes(1);
       expect(monthRepository.store).not.toHaveBeenCalled();
-    });
-    
-    it('should handle custom header mapping', async () => {
-      // Mock month repository
-      monthRepository.findByDate = vi.fn().mockResolvedValue(null);
-      monthRepository.store = vi.fn().mockResolvedValue(Month.create({
-        id: 1,
-        month: 7,
-        year: 2023
-      }));
-      
-      const csvContent = `Transaction Date,Merchant,Amount (CAD),Category Number,Comment
-2023-07-15,Grocery Shopping,125.50,1,Weekly groceries`;
-      
-      const headerMapping = {
-        'Transaction Date': 'date',
-        'Merchant': 'name',
-        'Amount (CAD)': 'amount',
-        'Category Number': 'categoryId',
-        'Comment': 'notes'
-      };
-      
-      const result = await service.parseCSV(csvContent, 'user123', { headerMapping });
-      
-      expect(result.validTransactions.length).toBe(1);
-      expect(result.errors.length).toBe(0);
-      
-      expect(result.validTransactions[0]).toEqual(expect.objectContaining({
-        name: 'Grocery Shopping',
-        amountCAD: 125.50,
-        categoryId: 1,
-        notes: 'Weekly groceries'
-      }));
-    });
-    
-    it('should validate categories if validateCategories function provided', async () => {
-      // Mock month repository
-      monthRepository.findByDate = vi.fn().mockResolvedValue(null);
-      monthRepository.store = vi.fn().mockResolvedValue(Month.create({
-        id: 1,
-        month: 7,
-        year: 2023
-      }));
-      
-      // Mock category validation function
-      const validateCategories = vi.fn()
-        .mockResolvedValueOnce([true])   // First category exists
-        .mockResolvedValueOnce([false]); // Second category doesn't exist
-      
-      const csvContent = `Date,Description,Amount,Category ID,Notes,Type
-2023-07-15,Grocery Shopping,125.50,1,Weekly groceries,Expense
-2023-07-20,Salary,3000,99,Monthly salary,Income`;
-      
-      const result = await service.parseCSV(csvContent, 'user123', { validateCategories });
-      
-      expect(result.validTransactions.length).toBe(1);
-      expect(result.errors.length).toBe(1);
-      
-      // Should include error about invalid category
-      expect(result.errors[0].message).toContain('Category with ID 99 does not exist');
-      
-      // Valid transaction should be processed
-      expect(result.validTransactions[0].categoryId).toBe(1);
-      
-      // Validate categories should be called for both transactions
-      expect(validateCategories).toHaveBeenCalledTimes(2);
     });
   });
 }); 

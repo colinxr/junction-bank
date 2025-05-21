@@ -10,7 +10,7 @@ describe('TransactionMapper', () => {
   // Mock database model with necessary properties
   const prismaTransactionData = {
     id: 1,
-    userId: 'user123',
+    clerkId: 'user123',
     name: 'Groceries',
     amountCAD: 50,
     amountUSD: 38,
@@ -30,7 +30,7 @@ describe('TransactionMapper', () => {
     
     expect(domain).toBeInstanceOf(Transaction);
     expect(domain.id).toBe(1);
-    expect(domain.userId).toBe('user123');
+    expect(domain.clerkId).toBe('user123');
     expect(domain.name).toBe('Groceries');
     expect(domain.amountCAD).toBe(50);
     expect(domain.amountUSD).toBe(38);
@@ -45,7 +45,7 @@ describe('TransactionMapper', () => {
   
   it('converts domain entity to persistence data', () => {
     const domain = new Transaction({
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Groceries',
       amountCAD: 50,
       amountUSD: 38,
@@ -59,7 +59,7 @@ describe('TransactionMapper', () => {
     const persistence = TransactionMapper.toPersistence(domain);
     
     expect(persistence).toEqual({
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Groceries',
       amountCAD: 50,
       amountUSD: 38,
@@ -84,20 +84,24 @@ describe('TransactionMapper', () => {
   it('converts domain entity to DTO', () => {
     const domain = new Transaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Groceries',
       amountCAD: 50,
       amountUSD: 38,
       categoryId: 1,
-      category: { name: 'Food' },
+      categoryName: 'Food',
       notes: 'Weekly shopping',
       type: TransactionType.EXPENSE,
       date: testDate,
       monthId: monthId,
       createdAt: testDate
     });
+
+    console.log(domain);
+    
     
     const dto = TransactionMapper.toDTO(domain);
+    console.log(dto);
     
     expect(dto).toEqual({
       name: 'Groceries',

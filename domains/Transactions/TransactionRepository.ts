@@ -129,10 +129,7 @@ export class TransactionRepository implements ITransactionRepository {
         }
       }
     });
-
-    console.log(transaction);
-    
-
+  
     // Only invalidate caches if not using a transaction client
     if (!prismaTransaction) {
       try {

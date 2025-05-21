@@ -5,7 +5,7 @@ export enum TransactionType {
 
 export class Transaction {
   readonly id?: number;
-  readonly userId: string;
+  readonly clerkId: string;
   readonly name: string;
   readonly amountCAD: number;
   readonly amountUSD?: number;
@@ -19,7 +19,7 @@ export class Transaction {
 
   constructor(props: {
     id?: number;
-    userId: string;
+    clerkId: string;
     name: string;
     amountCAD: number;
     amountUSD?: number;
@@ -33,7 +33,7 @@ export class Transaction {
     createdAt?: Date;
   }) {
     this.id = props.id;
-    this.userId = props.userId;
+    this.clerkId = props.clerkId;
     this.name = props.name;
     this.amountCAD = props.amountCAD;
     this.amountUSD = props.amountUSD;
@@ -48,7 +48,7 @@ export class Transaction {
 
   public static create(props: {
     id?: number;
-    userId: string;
+    clerkId: string;
     name: string;
     amountCAD: number;
     amountUSD?: number;
