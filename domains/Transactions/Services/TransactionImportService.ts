@@ -36,7 +36,10 @@ export class TransactionImportService {
         'CategoryId': 'category_id',
         'Category Id': 'category_id',
         'Category ID': 'category_id',
-        'notes': 'notes'
+        'notes': 'notes',
+        'Notes': 'notes',
+        'Type': 'type',
+        'type': 'type'
       };
 
       // Check if input is multipart form-data and extract actual CSV content
@@ -47,7 +50,7 @@ export class TransactionImportService {
         const csvLines = [];
         
         // Add headers manually - use exact case from original CSV
-        csvLines.push('Date,Name,AMOUNT CAD,AMOUNT USD,Category Id,Notes');
+        csvLines.push('Date,Name,AMOUNT CAD,AMOUNT USD,Category Id,Notes,Type');
         
         // Clean up CSV content to ensure consistent field count
         let cleanLines = [];
@@ -197,7 +200,7 @@ export class TransactionImportService {
       for (let i = 0; i < records.length; i++) {
         const record = records[i];
         const rowIndex = i + 1; // +1 for header row
-        
+      
         const validation = this.processRecord(record, clerkId, rowIndex, options)
           .then(result => {
             if (result.valid) {
@@ -209,6 +212,7 @@ export class TransactionImportService {
         
         pendingValidations.push(validation);
       }
+
 
       // Wait for all validations to complete
       await Promise.all(pendingValidations);
@@ -236,7 +240,6 @@ export class TransactionImportService {
     error?: ImportError 
   }> {
     try {
-      console.log(record);
       // Parse date
       const date = this.parseDate(record.date);
       if (!date) {
@@ -306,7 +309,6 @@ export class TransactionImportService {
 
       // Determine categoryId
       let categoryId: number;
-      console.log(record);
       if (record.category_id) {
         categoryId = parseInt(record.category_id, 10);
         if (isNaN(categoryId)) {
@@ -340,7 +342,6 @@ export class TransactionImportService {
       if (existingMonth) {
         monthId = existingMonth.id!;
       } else {
-        // Create new month using Month.create
         const month = Month.create({
           month: monthNumber,
           year,
@@ -361,7 +362,7 @@ export class TransactionImportService {
         amountUSD: normalizedAmountUSD,
         categoryId,
         notes: record.notes,
-        type,
+        type: record.type as TransactionType,
         date,
         monthId
       };
