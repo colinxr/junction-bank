@@ -37,6 +37,17 @@ export const columns: ColumnDef<Month>[] = [
     },
   },
   {
+    accessorKey: "totalSavings",
+    header: "Savings",
+    cell: ({ row }) => {
+      const totalIncome = row.original.totalIncome || 0;
+      const totalExpenses = row.original.totalExpenses || 0;
+      const totalSavings = totalIncome - totalExpenses;
+      return formatCurrency(totalSavings);
+    },
+  },
+
+  {
     accessorKey: "notes",
     header: "Notes",
   },
