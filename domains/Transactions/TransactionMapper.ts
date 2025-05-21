@@ -19,7 +19,7 @@ export class TransactionMapper {
 
     return TransactionEntity.create({
       id: model.id,
-      userId: model.userId,
+      clerkId: model.clerkId,
       name: model.name,
       amountCAD: getNumber(model.amountCAD),
       amountUSD: model.amountUSD ? getNumber(model.amountUSD) : undefined,
@@ -36,7 +36,7 @@ export class TransactionMapper {
   // Convert from domain entity to database model
   static toPersistence(entity: Partial<Transaction>): Omit<TransactionModel, 'id' | 'createdAt' | 'updatedAt'> {
     return {
-      userId: entity.userId!,
+      clerkId: entity.clerkId!,
       name: entity.name!,
       amountCAD: entity.amountCAD!,
       amountUSD: entity.amountUSD || null,

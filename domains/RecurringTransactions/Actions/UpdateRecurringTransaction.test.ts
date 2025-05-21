@@ -34,7 +34,7 @@ describe('UpdateRecurringTransaction', () => {
   it('updates a recurring transaction when it exists and no conflicts', async () => {
     const existingTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       categoryId: 2,
@@ -44,7 +44,7 @@ describe('UpdateRecurringTransaction', () => {
     
     const updatedTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       categoryId: 2,
@@ -76,7 +76,7 @@ describe('UpdateRecurringTransaction', () => {
   it('checks for conflicts when changing name and none exist', async () => {
     const existingTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       categoryId: 2,
@@ -85,7 +85,7 @@ describe('UpdateRecurringTransaction', () => {
     
     const updatedTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Housing Rent',
       amountCAD: 1500,
       categoryId: 2,
@@ -107,7 +107,7 @@ describe('UpdateRecurringTransaction', () => {
   it('throws RecurringTransactionAlreadyExistsException when changing name to an existing one', async () => {
     const existingTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       categoryId: 2,
@@ -128,7 +128,7 @@ describe('UpdateRecurringTransaction', () => {
   it('handles null values by converting to undefined', async () => {
     const existingTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       categoryId: 2,
@@ -139,7 +139,7 @@ describe('UpdateRecurringTransaction', () => {
     
     const updatedTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       categoryId: 2,
@@ -166,7 +166,7 @@ describe('UpdateRecurringTransaction', () => {
   it('processes currency amounts when updating', async () => {
     const existingTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       categoryId: 2,
@@ -175,7 +175,7 @@ describe('UpdateRecurringTransaction', () => {
     
     const updatedTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1300,
       amountUSD: 1000,
@@ -205,7 +205,7 @@ describe('UpdateRecurringTransaction', () => {
   it('handles removing USD amount', async () => {
     const existingTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       amountUSD: 1200,
@@ -215,7 +215,7 @@ describe('UpdateRecurringTransaction', () => {
     
     const updatedTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1600,
       amountUSD: undefined,

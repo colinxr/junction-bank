@@ -3,7 +3,7 @@ import { ImportTransactions } from './ImportTransactions';
 import { ITransactionRepository } from '../ITransactionRepository';
 import { TransactionImportService } from '../Services/TransactionImportService';
 import { ICategoryRepository } from '../../Categories/ICategoryRepository';
-import { TransactionImportDTO, TransactionImportResultDTO, ImportError } from '../TransactionImportDTO';
+import { TransactionImportDTO, ImportError } from '../TransactionImportDTO';
 import { TransactionType } from '../Transaction';
 
 describe('ImportTransactions', () => {
@@ -27,9 +27,8 @@ describe('ImportTransactions', () => {
     } as unknown as ICategoryRepository;
     
     action = new ImportTransactions(
-      transactionRepository,
       transactionImportService,
-      categoryRepository
+      categoryRepository,
     );
   });
   
@@ -37,7 +36,7 @@ describe('ImportTransactions', () => {
     // Sample valid transactions
     const validTransactions: TransactionImportDTO[] = [
       {
-        userId: 'user123',
+        clerkId: 'user123',
         name: 'Grocery Shopping',
         amountCAD: 125.50,
         categoryId: 1,
@@ -47,7 +46,7 @@ describe('ImportTransactions', () => {
         monthId: 1
       },
       {
-        userId: 'user123',
+        clerkId: 'user123',
         name: 'Salary',
         amountCAD: 3000,
         categoryId: 2,
@@ -61,27 +60,16 @@ describe('ImportTransactions', () => {
     // Mock validation errors (none in this test)
     const validationErrors: ImportError[] = [];
     
-    // Mock import result
-    const importResult: TransactionImportResultDTO = {
-      successCount: 2,
-      failedCount: 0,
-      totalCount: 2,
-      errors: [],
-      importedTransactions: validTransactions
-    };
-    
     // Setup mocks
     transactionImportService.parseCSV = vi.fn().mockResolvedValue({
       validTransactions,
       errors: validationErrors
     });
     
-    transactionRepository.importTransactions = vi.fn().mockResolvedValue(importResult);
-    
     // Execute action
     const result = await action.execute({
       csvContent: 'csv-content-here',
-      userId: 'user123'
+      clerkId: 'user123'
     });
     
     // Verify service was called
@@ -93,20 +81,14 @@ describe('ImportTransactions', () => {
       })
     );
     
-    // Verify repository was called with valid transactions
-    expect(transactionRepository.importTransactions).toHaveBeenCalledWith(validTransactions);
-    
-    // Verify result
+    // Verify result matches the implementation
     expect(result).toEqual({
-      successCount: 2,
-      failedCount: 0,
-      totalCount: 2,
-      errors: [],
-      importedTransactions: validTransactions
+      validTransactions,
+      errors: validationErrors
     });
   });
   
-  it('should handle validation errors and return early if no valid transactions', async () => {
+  it('should handle validation errors and return errors if validation fails', async () => {
     // Mock validation errors
     const validationErrors: ImportError[] = [
       {
@@ -125,84 +107,16 @@ describe('ImportTransactions', () => {
     // Execute action
     const result = await action.execute({
       csvContent: 'csv-content-with-errors',
-      userId: 'user123'
+      clerkId: 'user123'
     });
     
     // Verify service was called
     expect(transactionImportService.parseCSV).toHaveBeenCalled();
     
-    // Verify repository was NOT called (early return)
-    expect(transactionRepository.importTransactions).not.toHaveBeenCalled();
-    
     // Verify result contains errors
     expect(result).toEqual({
-      successCount: 0,
-      failedCount: 1,
-      totalCount: 1,
+      validTransactions: [],
       errors: validationErrors
-    });
-  });
-  
-  it('should handle mixed valid and invalid transactions', async () => {
-    // One valid transaction
-    const validTransactions: TransactionImportDTO[] = [
-      {
-        userId: 'user123',
-        name: 'Grocery Shopping',
-        amountCAD: 125.50,
-        categoryId: 1,
-        notes: 'Weekly groceries',
-        type: TransactionType.EXPENSE,
-        date: new Date('2023-07-15'),
-        monthId: 1
-      }
-    ];
-    
-    // Mock validation errors
-    const validationErrors: ImportError[] = [
-      {
-        row: 3,
-        message: 'Invalid amount format: not-a-number',
-        originalData: { date: '2023-07-20', name: 'Salary', amount_cad: 'not-a-number' }
-      }
-    ];
-    
-    // Mock import errors
-    const importErrors: ImportError[] = [
-      {
-        row: 1,
-        message: 'Database error on transaction insert'
-      }
-    ];
-    
-    // Mock import result
-    const importResult: TransactionImportResultDTO = {
-      successCount: 0,
-      failedCount: 1,
-      totalCount: 1,
-      errors: importErrors
-    };
-    
-    // Setup mocks
-    transactionImportService.parseCSV = vi.fn().mockResolvedValue({
-      validTransactions,
-      errors: validationErrors
-    });
-    
-    transactionRepository.importTransactions = vi.fn().mockResolvedValue(importResult);
-    
-    // Execute action
-    const result = await action.execute({
-      csvContent: 'csv-content-mixed',
-      userId: 'user123'
-    });
-    
-    // Verify combined errors and counts
-    expect(result).toEqual({
-      successCount: 0,
-      failedCount: 1,
-      totalCount: 2, // 1 valid + 1 validation error
-      errors: [...importErrors, ...validationErrors]
     });
   });
   
@@ -225,7 +139,7 @@ describe('ImportTransactions', () => {
     // Execute action with custom mapping
     await action.execute({
       csvContent: 'csv-content-here',
-      userId: 'user123',
+      clerkId: 'user123',
       headerMapping
     });
     

@@ -13,7 +13,6 @@ export interface Transaction {
   notes?: string,
   date: Date
   type: TransactionType
-  createdAt: string
 }
 
 // Define our recurring transaction type

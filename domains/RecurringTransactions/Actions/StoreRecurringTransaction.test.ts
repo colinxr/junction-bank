@@ -36,7 +36,7 @@ describe('StoreRecurringTransaction', () => {
     
     const expectedTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       amountUSD: 1100,
@@ -49,7 +49,7 @@ describe('StoreRecurringTransaction', () => {
     mockRepository.store.mockResolvedValue(expectedTransaction);
     
     const result = await storeRecurringTransaction.execute({
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       categoryId: 2,
@@ -69,7 +69,7 @@ describe('StoreRecurringTransaction', () => {
     
     const expectedTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1300,
       amountUSD: 1000,
@@ -80,7 +80,7 @@ describe('StoreRecurringTransaction', () => {
     mockRepository.store.mockResolvedValue(expectedTransaction);
     
     await storeRecurringTransaction.execute({
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountUSD: 1000,
       categoryId: 2,

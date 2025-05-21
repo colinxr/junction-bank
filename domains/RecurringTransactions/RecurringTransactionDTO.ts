@@ -15,7 +15,7 @@ export interface RecurringTransactionDTO {
 export interface CreateRecurringTransactionDTO {
   clerkId: string;
   name: string;
-  amountCAD: number;
+  amountCAD?: number;
   amountUSD?: number;
   categoryId: number;
   notes?: string;

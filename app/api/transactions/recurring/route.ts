@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
     // Execute use case
     const recurringTransaction = await recurringTransactionUseCases.store.execute({
-      userId: userId!,
+      clerkId: userId!,
       name: data.name,
       amountCAD: data.amountCAD,
       amountUSD: data.amountUSD,

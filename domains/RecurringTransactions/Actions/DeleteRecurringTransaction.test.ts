@@ -27,7 +27,7 @@ describe('DeleteRecurringTransaction', () => {
   it('successfully deletes a recurring transaction that exists', async () => {
     const testTransaction = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       categoryId: 2,

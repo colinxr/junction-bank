@@ -6,7 +6,7 @@ import { Prisma } from '@prisma/client';
 // Mock the Prisma.RecurringTransaction type for testing
 type MockPrismaRecurringTransaction = {
   id: number;
-  userId: string;
+  clerkId: string;
   name: string;
   amountCAD: Prisma.Decimal;
   amountUSD: Prisma.Decimal | null;
@@ -31,7 +31,7 @@ describe('RecurringTransactionMapper', () => {
   
   const prismaRecurringTransactionData: MockPrismaRecurringTransaction = {
     id: 1,
-    userId: 'user123',
+    clerkId: 'user123',
     name: 'Monthly Rent',
     amountCAD: createDecimal(1500),
     amountUSD: createDecimal(1200),
@@ -47,7 +47,7 @@ describe('RecurringTransactionMapper', () => {
     
     expect(domain).toBeInstanceOf(RecurringTransaction);
     expect(domain.id).toBe(1);
-    expect(domain.userId).toBe('user123');
+    expect(domain.clerkId).toBe('user123');
     expect(domain.name).toBe('Monthly Rent');
     expect(domain.amountCAD).toBe(1500);
     expect(domain.amountUSD).toBe(1200);
@@ -61,7 +61,7 @@ describe('RecurringTransactionMapper', () => {
   it('converts domain entity to persistence data', () => {
     const domain = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       amountUSD: 1200,
@@ -75,7 +75,7 @@ describe('RecurringTransactionMapper', () => {
     const persistence = RecurringTransactionMapper.toPersistence(domain);
     
     expect(persistence).toEqual({
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       amountUSD: 1200,
@@ -99,7 +99,7 @@ describe('RecurringTransactionMapper', () => {
   it('converts domain entity to DTO', () => {
     const domain = new RecurringTransaction({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       amountUSD: 1200,
@@ -114,7 +114,7 @@ describe('RecurringTransactionMapper', () => {
     
     expect(dto).toEqual({
       id: 1,
-      userId: 'user123',
+      clerkId: 'user123',
       name: 'Monthly Rent',
       amountCAD: 1500,
       amountUSD: 1200,
