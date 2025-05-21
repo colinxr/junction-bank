@@ -114,13 +114,9 @@ export class TransactionRepository implements ITransactionRepository {
       type: transactionData.type === TransactionType.INCOME ? 'Income' : 'Expense',
       date: transactionData.date,
       categoryId: transactionData.categoryId,
-      monthId: transactionData.monthId
+      monthId: transactionData.monthId,
+      clerkId: transactionData.clerkId || 'anonymous' // Ensure clerkId always has a value
     };
-
-    // Add userId if provided
-    if (transactionData.userId) {
-      createData.userId = this.ensureValidUuid(transactionData.userId);
-    }
     
     // Create transaction
     const transaction = await client.transaction.create({
@@ -133,6 +129,9 @@ export class TransactionRepository implements ITransactionRepository {
         }
       }
     });
+
+    console.log(transaction);
+    
 
     // Only invalidate caches if not using a transaction client
     if (!prismaTransaction) {
@@ -344,9 +343,9 @@ export class TransactionRepository implements ITransactionRepository {
               monthId: transaction.monthId
             };
 
-            // Add userId if provided
-            if (transaction.userId) {
-              createData.userId = this.ensureValidUuid(transaction.userId);
+            // Add clerkId if provided
+            if (transaction.clerkId) {
+              createData.clerkId = transaction.clerkId;
             }
 
             const createdTransaction = await prisma.transaction.create({

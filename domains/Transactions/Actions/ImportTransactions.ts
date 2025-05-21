@@ -4,7 +4,7 @@ import { ICategoryRepository } from '@/domains/Categories/ICategoryRepository';
 
 interface ImportTransactionsRequest {
   csvContent: string;
-  userId: string;
+  clerkId: string;
   headerMapping?: { [key: string]: string };
 }
 
@@ -19,11 +19,11 @@ export class ImportTransactions {
     private categoryRepository: ICategoryRepository
   ) {}
 
-  async execute({ csvContent, userId, headerMapping }: ImportTransactionsRequest): Promise<ImportTransactionsResult> {
+  async execute({ csvContent, clerkId, headerMapping }: ImportTransactionsRequest): Promise<ImportTransactionsResult> {
     // Parse and validate the CSV content
     const { validTransactions, errors } = await this.transactionImportService.parseCSV(
       csvContent,
-      userId,
+      clerkId,
       {
         headerMapping,
         validateCategories: this.validateCategories.bind(this)

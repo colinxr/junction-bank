@@ -5,7 +5,7 @@ export enum TransactionType {
 
 export class RecurringTransaction {
   readonly id?: number;
-  readonly userId?: string;
+  readonly clerkId?: string;
   readonly name: string;
   readonly amountCAD: number;
   readonly amountUSD?: number;
@@ -17,7 +17,8 @@ export class RecurringTransaction {
 
   constructor(props: {
     id?: number;
-    userId?: string;
+    clerkId?: string;
+    userId?: string; // For backward compatibility
     name: string;
     amountCAD: number;
     amountUSD?: number;
@@ -28,7 +29,7 @@ export class RecurringTransaction {
     createdAt?: Date;
   }) {
     this.id = props.id;
-    this.userId = props.userId;
+    this.clerkId = props.clerkId || props.userId; // Support both fields during migration
     this.name = props.name;
     this.amountCAD = props.amountCAD;
     this.amountUSD = props.amountUSD;
@@ -53,7 +54,8 @@ export class RecurringTransaction {
 
   public static create(props: {
     id?: number;
-    userId: string;
+    clerkId: string;
+    userId?: string; // For backward compatibility
     name: string;
     amountCAD: number;
     amountUSD?: number;

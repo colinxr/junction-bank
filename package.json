@@ -11,7 +11,8 @@
     "seed:transactions": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/seedTransactions.ts",
     "recalculate-recurring": "ts-node --project scripts/tsconfig.json scripts/recalculateRecurringExpenses.ts",
     "test": "dotenv -e .env.test -- vitest",
-    "test:coverage": "dotenv -e .env.test -- vitest run --coverage"
+    "test:coverage": "dotenv -e .env.test -- vitest run --coverage",
+    "seed-transactions": "ts-node prisma/seed-transactions.ts"
   },
   "prisma": {
     "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"

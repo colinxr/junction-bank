@@ -6,11 +6,11 @@ import { ImportError } from '@/domains/Transactions/TransactionImportDTO';
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const clerkId = request.headers.get('x-user-id');
 
-    console.log(userId);
+    console.log(clerkId);
     
-    if (!userId) {
+    if (!clerkId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
@@ -43,17 +43,12 @@ export async function POST(request: NextRequest) {
     // Step 1: Parse and validate CSV to get valid transactions
     const {validTransactions, errors} = await transactionUseCases.import.execute({
       csvContent,
-      userId,
+      clerkId,
       headerMapping
     });
 
-    console.log(validTransactions);
-    
-    
-    // Collect all errors
     const allErrors: ImportError[] = [...errors];
     
-    // If no valid transactions, return early with errors
     if (validTransactions.length === 0) {
       return NextResponse.json({
         success: false,
@@ -65,12 +60,10 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     
-    // Step 2: Store validated transactions in batch
     const storeResult = await transactionUseCases.batchStore.execute(
       validTransactions
     );
     
-    // Combine validation errors with storage errors
     storeResult.errors.forEach(error => {
       allErrors.push({
         message: error.error,
@@ -84,10 +77,11 @@ export async function POST(request: NextRequest) {
         }
       });
     });
+
+    console.log(storeResult);
     
     const totalCount = validTransactions.length + errors.length;
     
-    // Return appropriate response
     if (storeResult.successCount === 0) {
       return NextResponse.json({
         success: false,

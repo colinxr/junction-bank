@@ -12,7 +12,7 @@ export class TransactionImportService {
    */
   async parseCSV(
     csvContent: string, 
-    userId: string,
+    clerkId: string,
     options: {
       headerMapping?: { [key: string]: string },
       validateCategories?: (categoryIds: number[]) => Promise<boolean[]>
@@ -199,7 +199,7 @@ export class TransactionImportService {
         const record = records[i];
         const rowIndex = i + 1; // +1 for header row
         
-        const validation = this.processRecord(record, userId, rowIndex, options)
+        const validation = this.processRecord(record, clerkId, rowIndex, options)
           .then(result => {
             if (result.valid) {
               validTransactions.push(result.transaction!);
@@ -226,7 +226,7 @@ export class TransactionImportService {
    */
   private async processRecord(
     record: TransactionCSVRecord, 
-    userId: string, 
+    clerkId: string, 
     rowIndex: number,
     options: {
       validateCategories?: (categoryIds: number[]) => Promise<boolean[]>
@@ -354,7 +354,7 @@ export class TransactionImportService {
 
       // Create valid transaction with proper typing
       const transaction: TransactionImportDTO = {
-        userId,
+        clerkId,
         name: record.name,
         amountCAD: normalizedAmountCAD,
         amountUSD: normalizedAmountUSD,

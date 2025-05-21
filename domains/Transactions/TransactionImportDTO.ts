@@ -17,7 +17,7 @@ export interface TransactionCSVRecord {
  * Represents a validated transaction ready for import
  */
 export interface TransactionImportDTO {
-  userId: string;
+  clerkId: string;
   name: string;
   amountCAD?: number;
   amountUSD?: number;

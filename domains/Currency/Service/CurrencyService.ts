@@ -21,7 +21,7 @@ export class CurrencyService {
   /**
    * Processes currency amounts - converts USD to CAD if needed, but doesn't convert CAD to USD
    */
-  async processCurrencyAmounts(amountCAD: number, amountUSD: number): Promise<CurrencyAmount> {
+  async processCurrencyAmounts(amountCAD: number | undefined, amountUSD: number | undefined): Promise<CurrencyAmount> {
     // If both amounts are provided, return them as is
     if (amountCAD !== undefined && amountUSD !== undefined) {
       return { amountCAD, amountUSD };

@@ -6,7 +6,7 @@ export class RecurringTransactionMapper {
   static toDomain(raw: PrismaRecurringTransaction): RecurringTransaction {
     return new RecurringTransaction({
       id: raw.id,
-      userId: raw.userId,
+      clerkId: raw.clerkId,
       name: raw.name,
       amountCAD: Number(raw.amountCAD),
       amountUSD: raw.amountUSD ? Number(raw.amountUSD) : undefined,
@@ -19,7 +19,7 @@ export class RecurringTransactionMapper {
   }
 
   static toPersistence(recurringTransaction: Omit<RecurringTransaction, 'id' | 'createdAt'>): {
-    userId: string;
+    clerkId: string;
     name: string;
     amountCAD: number;
     amountUSD?: number | null;
@@ -29,7 +29,7 @@ export class RecurringTransactionMapper {
     type: string;
   } {
     return {
-      userId: recurringTransaction.userId!,
+      clerkId: recurringTransaction.clerkId!,
       name: recurringTransaction.name,
       amountCAD: recurringTransaction.amountCAD,
       amountUSD: recurringTransaction.amountUSD || null,
@@ -43,7 +43,7 @@ export class RecurringTransactionMapper {
   static toDTO(domain: RecurringTransaction, categoryName?: string): RecurringTransactionDTO {
     return {
       id: domain.id!,
-      userId: domain.userId!,
+      clerkId: domain.clerkId!,
       name: domain.name,
       amountCAD: domain.amountCAD,
       amountUSD: domain.amountUSD,

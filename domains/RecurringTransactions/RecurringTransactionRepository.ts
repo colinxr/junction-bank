@@ -107,7 +107,7 @@ export class RecurringTransactionRepository implements IRecurringTransactionRepo
       // from when they were created or updated
       await this.prisma.transaction.create({
         data: {
-          userId: rt.userId,
+          clerkId: rt.clerkId,
           monthId: monthId,
           name: rt.name,
           amountCAD: rt.amountCAD,

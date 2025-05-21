@@ -96,17 +96,14 @@ export class BatchStoreTransactions {
       for (const transaction of batch) {
         try {
           const money = await this.getCurrencyAmount(transaction);
-          console.log(transaction.userId);
-          
-
           
           transaction.amountCAD = money.amountCAD ?? 0;
           transaction.amountUSD = money.amountUSD;
 
-          // Store the transaction using repository
+          // Store the transaction using repository with prismaTransaction
           const storedTransaction = await this.transactionRepository.store(
             {
-              userId: transaction.userId,
+              clerkId: transaction.clerkId,
               name: transaction.name,
               amountCAD: money.amountCAD,
               amountUSD: money.amountUSD,
@@ -118,6 +115,9 @@ export class BatchStoreTransactions {
             },
             prisma
           );
+
+          console.log(storedTransaction);
+          
 
           batchResult.successCount++;
           batchResult.transactions.push(storedTransaction);
@@ -131,6 +131,8 @@ export class BatchStoreTransactions {
       }
     });
 
+    console.log(batchResult);
+    
     return batchResult;
   }
 
