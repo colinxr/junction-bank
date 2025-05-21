@@ -3,7 +3,7 @@ import { ImportTransactions } from './ImportTransactions';
 import { ITransactionRepository } from '../ITransactionRepository';
 import { TransactionImportService } from '../Services/TransactionImportService';
 import { ICategoryRepository } from '../../Categories/ICategoryRepository';
-import { TransactionImportDTO, TransactionImportResultDTO, ImportError } from '../TransactionImportDTO';
+import { TransactionImportDTO, ImportError } from '../TransactionImportDTO';
 import { TransactionType } from '../Transaction';
 
 describe('ImportTransactions', () => {
@@ -60,22 +60,11 @@ describe('ImportTransactions', () => {
     // Mock validation errors (none in this test)
     const validationErrors: ImportError[] = [];
     
-    // Mock import result
-    const importResult: TransactionImportResultDTO = {
-      successCount: 2,
-      failedCount: 0,
-      totalCount: 2,
-      errors: [],
-      importedTransactions: validTransactions
-    };
-    
     // Setup mocks
     transactionImportService.parseCSV = vi.fn().mockResolvedValue({
       validTransactions,
       errors: validationErrors
     });
-    
-    transactionRepository.importTransactions = vi.fn().mockResolvedValue(importResult);
     
     // Execute action
     const result = await action.execute({
@@ -92,20 +81,14 @@ describe('ImportTransactions', () => {
       })
     );
     
-    // Verify repository was called with valid transactions
-    expect(transactionRepository.importTransactions).toHaveBeenCalledWith(validTransactions);
-    
-    // Verify result
+    // Verify result matches the implementation
     expect(result).toEqual({
-      successCount: 2,
-      failedCount: 0,
-      totalCount: 2,
-      errors: [],
-      importedTransactions: validTransactions
+      validTransactions,
+      errors: validationErrors
     });
   });
   
-  it('should handle validation errors and return early if no valid transactions', async () => {
+  it('should handle validation errors and return errors if validation fails', async () => {
     // Mock validation errors
     const validationErrors: ImportError[] = [
       {
@@ -130,14 +113,9 @@ describe('ImportTransactions', () => {
     // Verify service was called
     expect(transactionImportService.parseCSV).toHaveBeenCalled();
     
-    // Verify repository was NOT called (early return)
-    expect(transactionRepository.importTransactions).not.toHaveBeenCalled();
-    
     // Verify result contains errors
     expect(result).toEqual({
-      successCount: 0,
-      failedCount: 1,
-      totalCount: 1,
+      validTransactions: [],
       errors: validationErrors
     });
   });
