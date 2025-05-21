@@ -2,7 +2,7 @@
 
 import { Transaction } from "@/app/types"
 import { ResourceDrawerContentProps } from "@/components/layout/ResourceDrawer"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import { formatCurrency, formatDate } from "@/infrastructure/utils"
 
 import { 
   Card, 

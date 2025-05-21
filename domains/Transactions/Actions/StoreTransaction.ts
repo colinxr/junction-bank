@@ -22,7 +22,7 @@ export class StoreTransaction {
 
     // Pass plain object to repository instead of Transaction instance
     return await this.transactionRepository.store({
-      userId: data.userId,
+      clerkId: data.clerkId,
       name: data.name,
       categoryId: data.categoryId,
       notes: data.notes,

@@ -3,9 +3,11 @@ import { ITransactionRepository } from "./ITransactionRepository";
 import { CategorySpendingDTO } from "./TransactionDTO";
 import { TransactionType } from "./Transaction";
 import { TransactionModel } from "./TransactionModel";
+import { TransactionImportDTO, TransactionImportResultDTO } from "./TransactionImportDTO";
 
 import { Transaction, USDSpending } from "@/app/types";
 import { RedisClient } from '@/infrastructure/redis';
+import { Prisma } from "@prisma/client";
 
 export class TransactionRepository implements ITransactionRepository {
   constructor(private prisma: PrismaClient, private redis: RedisClient) {}
@@ -15,16 +17,16 @@ export class TransactionRepository implements ITransactionRepository {
     
     // Try to get from cache first
     let transactions;
-    // try {
-    //   const cachedData = await this.redis.get(cacheKey);
-    //   if (cachedData) {
-    //     console.log('Cache hit for transactions');
-    //     return JSON.parse(cachedData);
-    //   }
-    // } catch (error) {
-    //   // Log but continue with database query
-    //   console.error('Redis cache error, falling back to database:', error);
-    // }
+    try {
+      const cachedData = await this.redis.get(cacheKey);
+      if (cachedData) {
+        console.log('Cache hit for transactions');
+        return JSON.parse(cachedData);
+      }
+    } catch (error) {
+      // Log but continue with database query
+      console.error('Redis cache error, falling back to database:', error);
+    }
 
     // Cache miss or error, fetch from database
     transactions = await this.prisma.transaction.findMany({
@@ -92,40 +94,33 @@ export class TransactionRepository implements ITransactionRepository {
     return transaction;
   }
 
-  async store(transactionData: Omit<Transaction, 'id' | 'validate' | 'isIncome' | 'isExpense'>): Promise<TransactionModel> {
-    // Extract only the fields Prisma needs and convert to the format it expects
-    const prismaData: any = {
+  async store(
+    transactionData: Omit<Transaction, 'id' | 'validate' | 'isIncome' | 'isExpense' | 'categoryName' | 'createdAt'>, 
+    prismaTransaction?: Prisma.TransactionClient
+  ): Promise<TransactionModel> {
+    // Format amount values to ensure no undefined values
+    const amountCAD = transactionData.amountCAD ?? 0;
+    const amountUSD = transactionData.amountUSD ?? null;
+    
+    // Determine which Prisma client to use (transaction or main)
+    const client = prismaTransaction || this.prisma;
+    
+    // Prepare create data
+    const createData: any = {
       name: transactionData.name,
-      amountCAD: transactionData.amountCAD,
-      amountUSD: transactionData.amountUSD || null,
+      amountCAD: amountCAD,
+      amountUSD: amountUSD,
       notes: transactionData.notes || null,
-      // Convert domain enum to string for Prisma
       type: transactionData.type === TransactionType.INCOME ? 'Income' : 'Expense',
       date: transactionData.date,
-      category: {
-        connect: {
-          id: transactionData.categoryId
-        }
-      },
-      month: {
-        connect: {
-          id: transactionData.monthId
-        }
-      },
+      categoryId: transactionData.categoryId,
+      monthId: transactionData.monthId,
+      clerkId: transactionData.clerkId || 'anonymous' // Ensure clerkId always has a value
     };
-
-    // Only include user connection if userId is defined
-    if (transactionData.userId) {
-      prismaData.user = {
-        connect: {
-          id: transactionData.userId
-        }
-      };
-    }
-
+    
     // Create transaction
-    const transaction = await this.prisma.transaction.create({
-      data: prismaData,
+    const transaction = await client.transaction.create({
+      data: createData,
       include: {
         category: {
           select: {
@@ -135,14 +130,43 @@ export class TransactionRepository implements ITransactionRepository {
       }
     });
 
-    try {
-      await this.redis.del(`transactions:${transactionData.monthId}`);
-      await this.redis.del(`transactions:all`);
-    } catch (error) {
-      console.error('Redis cache invalidation error:', error);
+    console.log(transaction);
+    
+
+    // Only invalidate caches if not using a transaction client
+    if (!prismaTransaction) {
+      try {
+        await this.redis.del(`transactions:${transactionData.monthId}`);
+        await this.redis.del(`transactions:all`);
+      } catch (error) {
+        console.error('Redis cache invalidation error:', error);
+      }
     }
 
     return transaction;
+  }
+
+  /**
+   * Ensures a string is a valid UUID format
+   */
+  private ensureValidUuid(userId: string): string {
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    // If already valid UUID
+    if (uuidPattern.test(userId)) {
+      return userId;
+    }
+    
+    // Try to extract a valid UUID if the string contains one
+    // This handles cases where userId might have a prefix
+    const extractedUuid = userId.replace(/^[^0-9a-f]*/i, '');
+    
+    if (uuidPattern.test(extractedUuid)) {
+      return extractedUuid;
+    }
+    
+    // If we can't extract a valid UUID format, return the original
+    return userId;
   }
 
   async update(id: number, data: Partial<Transaction>): Promise<TransactionModel> {
@@ -291,6 +315,87 @@ export class TransactionRepository implements ITransactionRepository {
     }
 
     return result;
+  }
+
+  async importTransactions(transactions: TransactionImportDTO[]): Promise<TransactionImportResultDTO> {
+    const result: TransactionImportResultDTO = {
+      successCount: 0,
+      failedCount: 0,
+      totalCount: transactions.length,
+      errors: [],
+      importedTransactions: []
+    };
+
+    // Use a transaction to ensure atomicity
+    try {
+      await this.prisma.$transaction(async (prisma) => {
+        for (const transaction of transactions) {
+          try {
+            // Prepare data using the same structure as store method
+            const createData: any = {
+              name: transaction.name,
+              amountCAD: transaction.amountCAD ?? 0,
+              amountUSD: transaction.amountUSD ?? null,
+              notes: transaction.notes || null,
+              type: transaction.type === TransactionType.INCOME ? 'Income' : 'Expense',
+              date: transaction.date,
+              categoryId: transaction.categoryId,
+              monthId: transaction.monthId
+            };
+
+            // Add clerkId if provided
+            if (transaction.clerkId) {
+              createData.clerkId = transaction.clerkId;
+            }
+
+            const createdTransaction = await prisma.transaction.create({
+              data: createData,
+              include: {
+                category: {
+                  select: {
+                    name: true
+                  }
+                }
+              }
+            });
+
+            result.successCount++;
+            result.importedTransactions?.push(transaction);
+          } catch (error) {
+            result.failedCount++;
+            result.errors?.push({
+              row: result.successCount + result.failedCount,
+              message: error instanceof Error ? error.message : 'Unknown error',
+            });
+            // Don't throw here, continue with other transactions
+          }
+        }
+      });
+
+      // Invalidate caches for all affected months
+      const monthIds = new Set(transactions.map(t => t.monthId));
+      try {
+        for (const monthId of monthIds) {
+          await this.redis.del(`transactions:${monthId}`);
+        }
+        await this.redis.del('transactions:all');
+      } catch (error) {
+        console.error('Redis cache invalidation error:', error);
+      }
+
+      return result;
+    } catch (error) {
+      // Transaction failed entirely
+      return {
+        successCount: 0,
+        failedCount: transactions.length,
+        totalCount: transactions.length,
+        errors: [{
+          row: 0,
+          message: error instanceof Error ? error.message : 'Unknown error during transaction import',
+        }]
+      };
+    }
   }
 }
 

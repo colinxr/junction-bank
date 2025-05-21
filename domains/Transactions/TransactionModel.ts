@@ -1,7 +1,7 @@
 // Represents the database model (what Prisma returns)
 export interface TransactionModel {
   id: number;
-  userId: string;
+  clerkId: string;
   name: string;
   amountCAD: number | { toString(): string };
   amountUSD: number | { toString(): string } | null;

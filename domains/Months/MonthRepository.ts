@@ -148,6 +148,7 @@ export class MonthRepository implements IMonthRepository {
     try {
       await this.redis.del('months:all');
       await this.redis.del(`month:date:${created.month}:${created.year}`);
+      await this.redis.del('month:latest');
     } catch (error) {
       console.error('Redis cache invalidation error:', error);
     }
@@ -173,6 +174,7 @@ export class MonthRepository implements IMonthRepository {
       await this.redis.del(`month:${id}`);
       await this.redis.del('months:all');
       await this.redis.del(`month:date:${updated.month}:${updated.year}`);
+      await this.redis.del('month:latest');
       
       // If month/year was changed, also invalidate old month/year cache
       if (data.month !== undefined || data.year !== undefined) {
@@ -203,6 +205,7 @@ export class MonthRepository implements IMonthRepository {
     try {
       await this.redis.del(`month:${id}`);
       await this.redis.del('months:all');
+      await this.redis.del('month:latest');
       if (month) {
         await this.redis.del(`month:date:${month.month}:${month.year}`);
       }
@@ -242,6 +245,43 @@ export class MonthRepository implements IMonthRepository {
     }
     
     return exists;
+  }
+
+  async findLatest(): Promise<Month | null> {
+    const cacheKey = 'month:latest';
+    
+    // Try to get from cache first
+    try {
+      const cachedData = await this.redis.get(cacheKey);
+      if (cachedData) {
+        console.log('Cache hit for latest month');
+        if (cachedData === 'null') return null; // Handle null case
+        return MonthMapper.toDomain(JSON.parse(cachedData));
+      }
+    } catch (error) {
+      console.error('Redis cache error, falling back to database:', error);
+    }
+    
+    const latestMonth = await this.prisma.month.findFirst({
+      orderBy: [
+        { year: 'desc' },
+        { month: 'desc' }
+      ]
+    });
+    
+    // Store in cache (even if null)
+    try {
+      await this.redis.set(
+        cacheKey, 
+        latestMonth ? JSON.stringify(latestMonth) : 'null',
+        { EX: 1800 } // Cache for 30 minutes
+      );
+    } catch (error) {
+      console.warn('Redis cache set error, but data was retrieved successfully:', error);
+    }
+    
+    if (!latestMonth) return null;
+    return MonthMapper.toDomain(latestMonth);
   }
 
   async hasTransactions(id: number): Promise<{hasTransactions: boolean, count: number}> {
@@ -399,6 +439,7 @@ export class MonthRepository implements IMonthRepository {
       await this.redis.del(`month:${monthId}:details`);
       await this.redis.del('months:all');
       await this.redis.del(`month:date:${month.month}:${month.year}`);
+      await this.redis.del('month:latest');
     } catch (error) {
       console.error('Redis cache invalidation error:', error);
     }
@@ -485,6 +526,9 @@ export class MonthRepository implements IMonthRepository {
         await this.redis.del(`month:date:${month.month}:${month.year}`);
         await this.redis.del(`month:exists:${month.month}:${month.year}`);
       }
+      
+      // Also invalidate the latest month cache
+      await this.redis.del('month:latest');
     } catch (error) {
       console.error('Error invalidating month caches:', error);
     }

@@ -10,7 +10,7 @@ export interface TransactionDTO {
 }
 
 export interface TransactionCreateDTO {
-  userId: string;
+  clerkId: string;
   name: string;
   amountCAD?: number;
   amountUSD?: number;

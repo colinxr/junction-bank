@@ -26,6 +26,7 @@ import { StoreMonth } from '@/domains/Months/Actions/StoreMonth';
 import { UpdateMonth } from '@/domains/Months/Actions/UpdateMonth';
 import { DestroyMonth } from '@/domains/Months/Actions/DestroyMonth'; 
 import { GetMonthlySpendingByCategory } from '@/domains/Months/Actions/GetMonthlySpendingByCategory';
+import { ShowLatestMonth } from '@/domains/Months/Actions/ShowLatestMonth';
 
 // Recurring Transactions
 import { IRecurringTransactionRepository } from '@/domains/RecurringTransactions/IRecurringTransactionRepository';
@@ -44,6 +45,11 @@ import { StoreTransaction } from '@/domains/Transactions/Actions/StoreTransactio
 import { ShowTransaction } from '@/domains/Transactions/Actions/ShowTransaction';
 import { UpdateTransaction } from '@/domains/Transactions/Actions/UpdateTransaction';
 import { DeleteTransaction } from '@/domains/Transactions/Actions/DeleteTransaction';
+
+// Transaction Import
+import { TransactionImportService } from '@/domains/Transactions/Services/TransactionImportService';
+import { ImportTransactions } from '@/domains/Transactions/Actions/ImportTransactions';
+import { BatchStoreTransactions } from '@/domains/Transactions/Actions/BatchStoreTransactions';
 
 // Singleton repositories
 const categoryRepository: ICategoryRepository = new CategoryRepository(prisma, redis);
@@ -80,6 +86,7 @@ export const makeMonthUseCases = () => {
     findByDate: new FindMonthByDate(monthRepository),
     update: new UpdateMonth(monthRepository),
     delete: new DestroyMonth(monthRepository),
+    showLatest: new ShowLatestMonth(monthRepository)
   };
 }; 
 
@@ -101,7 +108,15 @@ export const makeTransactionUseCases = () => {
     store: new StoreTransaction(transactionRepository, monthRepository, currencyService),
     update: new UpdateTransaction(transactionRepository, currencyService),
     destroy: new DeleteTransaction(transactionRepository),
-    getSpendingByCategory: new GetMonthlySpendingByCategory(transactionRepository)
+    getSpendingByCategory: new GetMonthlySpendingByCategory(transactionRepository),
+    import: new ImportTransactions(
+      new TransactionImportService(monthRepository),
+      categoryRepository
+    ),
+    batchStore: new BatchStoreTransactions(
+      transactionRepository, 
+      currencyService
+    )
   };
 };
 

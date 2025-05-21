@@ -2,7 +2,7 @@ import { TransactionType } from '@/domains/Transactions/Transaction';
 
 export interface Transaction {
   id: number
-  userId: string
+  clerkId: string
   monthId: number
   name: string
   amountCAD: number

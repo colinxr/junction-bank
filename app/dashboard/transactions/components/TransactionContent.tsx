@@ -4,6 +4,7 @@ import { NewTransactionModal } from "./NewTransactionModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTransactions } from "@/app/hooks/useTransactions";
 import { Month } from "@/app/types";
+import { ImportButton } from "@/components/transactions/ImportButton";
 
 export function TransactionsContent({ month }: { month?: Month }) {
   // Use our custom hook instead of direct SWR usage
@@ -21,7 +22,10 @@ export function TransactionsContent({ month }: { month?: Month }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Transactions</h1>
-        <NewTransactionModal />
+        <div className="flex gap-2">
+          <ImportButton />
+          <NewTransactionModal />
+        </div>
       </div>
 
       {isLoading ? (

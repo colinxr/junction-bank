@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { makeRecurringTransactionUseCases } from '@/infrastructure/di/container';
+import { makeRecurringTransactionUseCases } from '@/infrastructure/container';
 import { RecurringTransactionMapper } from '@/domains/RecurringTransactions/RecurringTransactionMapper';
 import { DomainException } from '@/domains/Shared/DomainException';
 

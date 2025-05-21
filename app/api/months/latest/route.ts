@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { makeMonthUseCases, makeTransactionUseCases } from '@/infrastructure/di/container';
+import { makeMonthUseCases, makeTransactionUseCases } from '@/infrastructure/container';
 import { MonthMapper } from '@/domains/Months/MonthMapper';
 import { DomainException } from '@/domains/Shared/DomainException';
 import { MonthNotFoundException } from '@/domains/Months/MonthException';
@@ -21,14 +21,11 @@ export interface CategorySpendingDTO {
 
 export async function GET() {
   try {
-    // Get current month based on current date
-    const currentDate = new Date();
-    const month = await monthUseCases.findByDate.execute(currentDate);
-    console.log(month);
-    
+    // Get the latest month from the database
+    const month = await monthUseCases.showLatest.execute();
 
     if (!month || month.id === undefined) {
-      return NextResponse.json({ error: 'Current month not found' }, { status: 404 });
+      return NextResponse.json({ error: 'No months found in the database' }, { status: 404 });
     }
 
     // Get spending by category for the month
@@ -36,8 +33,6 @@ export async function GET() {
     
     // Convert to DTO
     const monthDTO = MonthMapper.toDTO(month);
-
-    console.log(monthDTO);
     
     // Combine into the response format
     const response: MonthDetailDTO = {

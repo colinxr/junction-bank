@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { makeCategoryActions } from '@/infrastructure/di/container';
+import { makeCategoryActions } from '@/infrastructure/container';
 import { CategoryMapper } from '@/domains/Categories/CategoryMapper';
 import { DomainException } from '@/domains/Shared/DomainException';
 

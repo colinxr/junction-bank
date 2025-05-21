@@ -8,17 +8,6 @@ datasource db {
   directUrl = env("NEXT_PUBLIC_DIRECT_URL")
 }
 
-model User {
-  id                    String                 @id @db.Uuid
-  email                 String                 @unique
-  passwordHash          String?                @map("password_hash")
-  createdAt             DateTime               @default(now()) @map("created_at")
-  recurringTransactions RecurringTransaction[]
-  transactions          Transaction[]
-
-  @@map("users")
-}
-
 model Category {
   id                    Int                    @id @default(autoincrement())
   name                  String                 @unique
@@ -52,7 +41,7 @@ model Month {
 
 model Transaction {
   id         Int             @id @default(autoincrement())
-  userId     String          @map("user_id") @db.Uuid
+  clerkId    String          @map("clerk_id")
   monthId    Int             @map("month_id")
   name       String
   amountCAD  Decimal         @map("amount_cad") @db.Decimal(10, 2)
@@ -64,9 +53,8 @@ model Transaction {
   type       TransactionType @default(Expense)
   category   Category        @relation(fields: [categoryId], references: [id])
   month      Month           @relation(fields: [monthId], references: [id])
-  user       User            @relation(fields: [userId], references: [id])
 
-  @@index([userId])
+  @@index([clerkId])
   @@index([monthId])
   @@index([categoryId])
   @@map("transactions")
@@ -74,7 +62,7 @@ model Transaction {
 
 model RecurringTransaction {
   id         Int             @id @default(autoincrement())
-  userId     String          @map("user_id") @db.Uuid
+  clerkId    String          @map("clerk_id")
   name       String
   amountCAD  Decimal         @map("amount_cad") @db.Decimal(10, 2)
   amountUSD  Decimal?        @map("amount_usd") @db.Decimal(10, 2)
@@ -84,9 +72,8 @@ model RecurringTransaction {
   createdAt  DateTime        @default(now()) @map("created_at")
   type       TransactionType @default(Expense)
   category   Category        @relation(fields: [categoryId], references: [id])
-  user       User            @relation(fields: [userId], references: [id])
 
-  @@index([userId])
+  @@index([clerkId])
   @@index([categoryId])
   @@map("recurring_transactions")
 }

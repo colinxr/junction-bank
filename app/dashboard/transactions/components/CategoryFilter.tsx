@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
+import { cn } from "@/infrastructure/utils"
 
 const categories = [
   { value: "Housing", label: "Housing" },
