@@ -72,7 +72,7 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
       mutate(optimisticData, false);
       
       // Use the repository to create the transaction
-      const response = await apiClient.post("/transactions", {
+      const response = await apiClient.post("/api/transactions", {
         ...transactionData
       });
       
@@ -110,7 +110,7 @@ export function useTransactions(initialParams: TransactionQueryParams = {}) {
       mutate(optimisticData, false);
       
       // Use the repository to update the transaction
-    await apiClient.put(`/transactions/${transaction.id}`, transaction);
+      await apiClient.put(`/api/transactions/${transaction.id}`, transaction);
       
       // Revalidate to get the server data
       mutate();

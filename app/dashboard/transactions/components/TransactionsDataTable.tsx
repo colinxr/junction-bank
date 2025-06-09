@@ -24,9 +24,6 @@ export function TransactionsDataTable({
   const { editTransaction, deleteTransaction } = useTransactions()
   const { categories } = useCategories()
 
-  console.log(selectedTransaction);
-  
-
   const handleRowClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction)
     setIsDrawerOpen(true)
@@ -70,7 +67,7 @@ export function TransactionsDataTable({
           renderContent={(transaction) => <TransactionDrawerContent resource={transaction} />}
           title="Transaction Details"
           EditModal={EditTransactionModal}
-        />
+        />  
       )}
     </>
   )

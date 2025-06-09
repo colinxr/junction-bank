@@ -47,8 +47,6 @@ export function MonthSummaryCard({ month, className }: MonthSummaryProps) {
       setCategories(month.spendingByCategory);
     }
   }, [month.id, month.spendingByCategory]);
-
-  console.log(month);
   
   return (
     <>

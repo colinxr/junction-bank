@@ -3,8 +3,8 @@ import { toast } from "sonner";
 
 const baseURL =
   typeof window === "undefined" // Server-side
-    ? process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api"
-    : "/api"; // Client-side requests
+    ? process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/"
+    : "/"; // Client-side requests
 
 const apiClient = axios.create({
   baseURL: baseURL,

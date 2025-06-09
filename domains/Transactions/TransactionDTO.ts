@@ -1,4 +1,5 @@
 export interface TransactionDTO {
+  id: number;
   name: string;
   amountCAD: number;
   amountUSD?: number;
