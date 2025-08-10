@@ -50,6 +50,12 @@ export async function PUT(
     { params }: { params: Promise<{ id: number }> }
 ) {
     try {
+        const userId = request.headers.get('x-user-id');
+
+        if (!userId) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+        }
+
         const id = (await params).id;
         const body = await request.json();
         const recurringTransaction = await recurringTransactionUseCases.update.execute(id, body);
@@ -62,7 +68,7 @@ export async function PUT(
             }
         });
     } catch (error) {
-        console.error('Error fetching recurring transaction:', error);
+        console.error('Error updating recurring transaction:', error);
 
         if (error instanceof RecurringTransactionNotFoundException) {
             return NextResponse.json(
@@ -79,7 +85,7 @@ export async function PUT(
         }
 
         return NextResponse.json(
-            { error: 'Failed to fetch recurring transaction' },
+            { error: 'Failed to update recurring transaction' },
             { status: 500 }
         );
     }
@@ -90,6 +96,12 @@ export async function DELETE(
     { params }: { params: Promise<{ id: number }> }
 ) {
     try {
+        const userId = request.headers.get('x-user-id');
+
+        if (!userId) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+        }
+
         const id = (await params).id;
         await recurringTransactionUseCases.delete.execute(id);
 

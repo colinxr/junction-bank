@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { makeMonthUseCases, makeTransactionUseCases } from '@/infrastructure/container';
 import { MonthMapper } from '@/domains/Months/MonthMapper';
 import { DomainException } from '@/domains/Shared/DomainException';
@@ -19,8 +19,14 @@ export interface CategorySpendingDTO {
   total: number;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const userId = request.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+
     // Get the latest month from the database
     const month = await monthUseCases.showLatest.execute();
 

@@ -8,6 +8,12 @@ const monthUseCases = makeMonthUseCases();
 // POST /api/months/recalculate
 export async function POST(req: NextRequest) {
   try {
+    const userId = req.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+
     // Get monthId from request, if any
     const body = await req.json().catch(() => ({}));
     const { monthId } = body;

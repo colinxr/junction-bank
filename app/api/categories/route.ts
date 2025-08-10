@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { makeCategoryActions } from '@/infrastructure/container';
 import { CategoryMapper } from '@/domains/Categories/CategoryMapper';
 import { DomainException } from '@/domains/Shared/DomainException';
@@ -33,8 +33,14 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const userId = request.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+
     const data = await request.json();
     
     // Execute use case

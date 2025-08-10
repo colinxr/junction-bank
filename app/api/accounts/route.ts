@@ -1,7 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    const userId = request.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+
     console.log(request);
     
     // Example: Get all accounts (would need auth in real app)
