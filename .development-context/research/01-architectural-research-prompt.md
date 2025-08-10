@@ -1,0 +1,1 @@
+ "Create a document 02-architectural-research.md detailing tools, frameworks, and design patterns. Highlight deviations from best practices, call out conflicting architectures, and provide recommendations with external references"
