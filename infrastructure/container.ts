@@ -27,6 +27,7 @@ import { UpdateMonth } from '@/domains/Months/Actions/UpdateMonth';
 import { DestroyMonth } from '@/domains/Months/Actions/DestroyMonth'; 
 import { GetMonthlySpendingByCategory } from '@/domains/Months/Actions/GetMonthlySpendingByCategory';
 import { ShowLatestMonth } from '@/domains/Months/Actions/ShowLatestMonth';
+import { RecalculateRecurringExpenses } from '@/domains/Months/Actions/RecalculateRecurringExpenses';
 
 // Recurring Transactions
 import { IRecurringTransactionRepository } from '@/domains/RecurringTransactions/IRecurringTransactionRepository';
@@ -50,6 +51,8 @@ import { DeleteTransaction } from '@/domains/Transactions/Actions/DeleteTransact
 import { TransactionImportService } from '@/domains/Transactions/Services/TransactionImportService';
 import { ImportTransactions } from '@/domains/Transactions/Actions/ImportTransactions';
 import { BatchStoreTransactions } from '@/domains/Transactions/Actions/BatchStoreTransactions';
+import { PreviewTransactions } from '@/domains/Transactions/Actions/PreviewTransactions';
+import { ProcessTransactionImport } from '@/domains/Transactions/Actions/ProcessTransactionImport';
 
 // Singleton repositories
 const categoryRepository: ICategoryRepository = new CategoryRepository(prisma, redis);
@@ -86,7 +89,8 @@ export const makeMonthUseCases = () => {
     findByDate: new FindMonthByDate(monthRepository),
     update: new UpdateMonth(monthRepository),
     delete: new DestroyMonth(monthRepository),
-    showLatest: new ShowLatestMonth(monthRepository)
+    showLatest: new ShowLatestMonth(monthRepository),
+    recalculateRecurringExpenses: new RecalculateRecurringExpenses(monthRepository)
   };
 }; 
 
@@ -102,6 +106,10 @@ export const makeRecurringTransactionUseCases = () => {
 };
 
 export const makeTransactionUseCases = () => {
+  const transactionImportService = new TransactionImportService(monthRepository);
+  const importTransactions = new ImportTransactions(transactionImportService, categoryRepository);
+  const batchStoreTransactions = new BatchStoreTransactions(transactionRepository, currencyService);
+  
   return {
     index: new IndexTransactions(transactionRepository),
     show: new ShowTransaction(transactionRepository),
@@ -109,14 +117,10 @@ export const makeTransactionUseCases = () => {
     update: new UpdateTransaction(transactionRepository, currencyService),
     destroy: new DeleteTransaction(transactionRepository),
     getSpendingByCategory: new GetMonthlySpendingByCategory(transactionRepository),
-    import: new ImportTransactions(
-      new TransactionImportService(monthRepository),
-      categoryRepository
-    ),
-    batchStore: new BatchStoreTransactions(
-      transactionRepository, 
-      currencyService
-    )
+    import: importTransactions,
+    batchStore: batchStoreTransactions,
+    preview: new PreviewTransactions(transactionImportService),
+    processImport: new ProcessTransactionImport(importTransactions, batchStoreTransactions)
   };
 };
 

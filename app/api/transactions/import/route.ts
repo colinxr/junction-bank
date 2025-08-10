@@ -2,13 +2,10 @@ import { NextResponse, NextRequest } from 'next/server';
 import { DomainException } from '@/domains/Shared/DomainException';
 import { parseFormData, readFileAsText } from '@/infrastructure/middleware/uploadMiddleware';
 import { makeTransactionUseCases } from '@/infrastructure/container';
-import { ImportError } from '@/domains/Transactions/TransactionImportDTO';
 
 export async function POST(request: NextRequest) {
   try {
     const clerkId = request.headers.get('x-user-id');
-
-    console.log(clerkId);
     
     if (!clerkId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -40,67 +37,16 @@ export async function POST(request: NextRequest) {
     // Get transaction use cases
     const transactionUseCases = makeTransactionUseCases();
     
-    // Step 1: Parse and validate CSV to get valid transactions
-    const {validTransactions, errors} = await transactionUseCases.import.execute({
+    // Use the ProcessTransactionImport action to handle the entire import flow
+    const result = await transactionUseCases.processImport.execute({
       csvContent,
       clerkId,
       headerMapping
     });
-
-    const allErrors: ImportError[] = [...errors];
     
-    if (validTransactions.length === 0) {
-      return NextResponse.json({
-        success: false,
-        message: 'Import failed. No transactions were imported.',
-        errors: allErrors,
-        successCount: 0,
-        failedCount: allErrors.length,
-        totalCount: allErrors.length
-      }, { status: 400 });
-    }
-    
-    const storeResult = await transactionUseCases.batchStore.execute(
-      validTransactions
-    );
-    
-    storeResult.errors.forEach(error => {
-      allErrors.push({
-        message: error.error,
-        originalData: {
-          date: error.transaction.date.toISOString(),
-          name: error.transaction.name,
-          amount_cad: error.transaction.amountCAD?.toString() || '',
-          amount_usd: error.transaction.amountUSD?.toString() || '',
-          category_id: error.transaction.categoryId.toString(),
-          notes: error.transaction.notes || ''
-        }
-      });
-    });
-
-    console.log(storeResult);
-    
-    const totalCount = validTransactions.length + errors.length;
-    
-    if (storeResult.successCount === 0) {
-      return NextResponse.json({
-        success: false,
-        message: 'Import failed. No transactions were imported.',
-        errors: allErrors,
-        successCount: 0,
-        failedCount: errors.length,
-        totalCount
-      }, { status: 400 });
-    }
-    
-    return NextResponse.json({
-      success: true,
-      message: `Successfully imported ${storeResult.successCount} transactions.`,
-      successCount: storeResult.successCount,
-      failedCount: storeResult.failedCount + errors.length,
-      totalCount,
-      errors: allErrors.length > 0 ? allErrors : undefined
-    }, { status: 200 });
+    // Return appropriate response based on success
+    const status = result.success ? 200 : 400;
+    return NextResponse.json(result, { status });
     
   } catch (error) {
     console.error('Error importing transactions:', error);

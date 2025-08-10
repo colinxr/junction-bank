@@ -2,7 +2,6 @@ import { NextResponse, NextRequest } from 'next/server';
 import { DomainException } from '@/domains/Shared/DomainException';
 import { parseFormData, readFileAsText } from '@/infrastructure/middleware/uploadMiddleware';
 import { makeTransactionUseCases } from '@/infrastructure/container';
-import { TransactionImportService } from '@/domains/Transactions/Services/TransactionImportService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,27 +34,18 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Get transaction use cases and import service
+    // Get transaction use cases
     const transactionUseCases = makeTransactionUseCases();
-    const importService = transactionUseCases.import as any;
     
-    // Extract the import service's parseCSV method for preview only
-    const { validTransactions, errors } = await importService.transactionImportService.parseCSV(
+    // Use the preview action to process the CSV content
+    const result = await transactionUseCases.preview.execute({
       csvContent,
       userId,
-      {
-        headerMapping,
-        // Don't validate categories for preview to speed up process
-        validateCategories: async () => true
-      }
-    );
+      headerMapping
+    });
     
     // Return preview data
-    return NextResponse.json({
-      transactions: validTransactions,
-      errors,
-      totalCount: validTransactions.length + errors.length
-    }, { status: 200 });
+    return NextResponse.json(result, { status: 200 });
     
   } catch (error) {
     console.error('Error previewing transactions:', error);
