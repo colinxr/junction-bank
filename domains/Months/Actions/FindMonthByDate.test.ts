@@ -51,7 +51,7 @@ describe('FindMonthByDate', () => {
   });
   
   it('handles month conversion correctly (JavaScript months are 0-based)', async () => {
-    const testDate = new Date('2022-12-31T23:59:59'); // Will be January 1, 2023 with timezone conversion
+    const testDate = new Date('2023-01-01T00:00:00Z');
     
     mockRepository.findByDate.mockResolvedValue(null);
     

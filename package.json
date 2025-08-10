@@ -2,6 +2,7 @@
   "name": "junction-bank",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,7 +11,7 @@
     "prisma:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
     "seed:transactions": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/seedTransactions.ts",
     "recalculate-recurring": "ts-node --project scripts/tsconfig.json scripts/recalculateRecurringExpenses.ts",
-    "test": "dotenv -e .env.test -- vitest",
+    "test": "dotenv -e .env.test -- vitest run",
     "test:coverage": "dotenv -e .env.test -- vitest run --coverage",
     "seed-transactions": "ts-node prisma/seed-transactions.ts",
     "prepareCSV": "node scripts/convert-credit-card-csv.js",
