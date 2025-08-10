@@ -44,12 +44,14 @@ jobs:
         run: npx prisma migrate deploy
         env:
           NEXT_PUBLIC_DATABASE_URL: "postgresql://user:password@localhost:5432/testdb"
+          NEXT_PUBLIC_DIRECT_URL: "postgresql://user:password@localhost:5432/testdb"
 
       - name: Run Vitest tests
         run: npm test
         id: vitest
         env:
           NEXT_PUBLIC_DATABASE_URL: "postgresql://user:password@localhost:5432/testdb"
+          NEXT_PUBLIC_DIRECT_URL: "postgresql://user:password@localhost:5432/testdb"
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
