@@ -104,6 +104,7 @@ describe('TransactionMapper', () => {
     console.log(dto);
     
     expect(dto).toEqual({
+      id: 1,
       name: 'Groceries',
       amountCAD: 50,
       amountUSD: 38,
