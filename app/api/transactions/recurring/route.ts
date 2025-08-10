@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { makeRecurringTransactionUseCases } from '@/infrastructure/container';
 import { RecurringTransactionMapper } from '@/domains/RecurringTransactions/RecurringTransactionMapper';
 import { DomainException } from '@/domains/Shared/DomainException';
@@ -33,15 +33,19 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const userId = request.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+
     const data = await request.json();
-    const headers = request.headers;
-    const userId = headers.get('x-user-id');
 
     // Execute use case
     const recurringTransaction = await recurringTransactionUseCases.store.execute({
-      clerkId: userId!,
+      clerkId: userId,
       name: data.name,
       amountCAD: data.amountCAD,
       amountUSD: data.amountUSD,
@@ -50,7 +54,6 @@ export async function POST(request: Request) {
       dayOfMonth: data.dayOfMonth,
       type: data.type
     });
-
 
     const recurringTransactionDTO = RecurringTransactionMapper.toDTO(recurringTransaction);
 
