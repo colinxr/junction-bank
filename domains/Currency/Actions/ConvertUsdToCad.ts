@@ -1,6 +1,7 @@
 import { ExchangeRateVO } from "../Entity/ExchangeRate";
 import { InvalidAmountException } from "../Exception/CurrencyException";
 import { ExchangeRate } from "../Entity/ExchangeRate";
+import { Decimal } from "decimal.js";
 
 export class ConvertUsdToCad {
   /**
@@ -25,8 +26,7 @@ export class ConvertUsdToCad {
         return rate.convert(amountUSD);
       }
       
-      // If we got a plain ExchangeRate interface, do the conversion manually
-      return Number((amountUSD * rate.rate).toFixed(2));
+      return new Decimal(amountUSD).times(rate.rate).toDecimalPlaces(2).toNumber();
     } catch (error) {
       // Re-throw domain exceptions
       if (error instanceof InvalidAmountException) {
