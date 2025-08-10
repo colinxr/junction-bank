@@ -10,4 +10,5 @@ export interface IMonthRepository {
   destroy(id: number): Promise<void>;
   findByMonthAndYear(month: number, year: number): Promise<boolean>;
   hasTransactions(id: number): Promise<{hasTransactions: boolean, count: number}>;
+  recalculateRecurringExpenses(monthId?: number): Promise<void>;
 } 

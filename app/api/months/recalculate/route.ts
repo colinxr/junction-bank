@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { MonthRepository } from '@/domains/Months/MonthRepository';
-import { redis } from '@/infrastructure/redis';
+import { makeMonthUseCases } from '@/infrastructure/container';
 import { DomainException } from '@/domains/Shared/DomainException';
+
+// Create use cases through the dependency injection container
+const monthUseCases = makeMonthUseCases();
 
 // POST /api/months/recalculate
 export async function POST(req: NextRequest) {
   try {
-    // Initialize dependencies
-    const prisma = new PrismaClient();
-    const monthRepository = new MonthRepository(prisma, redis);
-
     // Get monthId from request, if any
     const body = await req.json().catch(() => ({}));
     const { monthId } = body;
 
-    // Recalculate recurring expenses
-    await monthRepository.recalculateRecurringExpenses(monthId || undefined);
+    // Execute the recalculate action
+    await monthUseCases.recalculateRecurringExpenses.execute({ monthId });
 
     // Return success response
     return NextResponse.json({
@@ -37,8 +34,5 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to recalculate recurring expenses' },
       { status: 500 }
     );
-  } finally {
-    // Close the Prisma client to prevent connection leaks
-    await (new PrismaClient()).$disconnect();
   }
 } 
