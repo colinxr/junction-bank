@@ -19,10 +19,10 @@ import {
   TableCell 
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ImportError, TransactionImportDTO } from "@/domains/Transactions/TransactionImportDTO";
+import { ImportError, TransactionImportDTO } from "@/domains/Transactions/DTOs/TransactionImportDTO";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ExternalLink, AlertCircle } from "lucide-react";
-import { TransactionType } from "@/domains/Transactions/Transaction";
+import { TransactionType } from "@/domains/Transactions/Entities/Transaction";
 
 interface ImportPreviewModalProps {
   isOpen: boolean;

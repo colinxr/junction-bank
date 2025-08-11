@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle, AlertCircle, ArrowRight } from "lucide-react";
-import { TransactionImportResultDTO } from "@/domains/Transactions/TransactionImportDTO";
+import { TransactionImportResultDTO } from "@/domains/Transactions/DTOs/TransactionImportDTO";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";

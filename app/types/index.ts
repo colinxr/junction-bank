@@ -1,4 +1,4 @@
-import { TransactionType } from '@/domains/Transactions/Transaction';
+import { TransactionType } from '@/domains/Transactions/Entities/Transaction';
 
 export interface Transaction {
   id: number
