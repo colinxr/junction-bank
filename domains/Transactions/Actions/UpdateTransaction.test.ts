@@ -132,9 +132,7 @@ describe('UpdateTransaction', () => {
     // Assert
     expect(mockRepository.update).toHaveBeenCalledWith(1, {
       name: 'Updated Name',
-      categoryId: undefined,
-      notes: undefined,
-      type: undefined
+      notes: null
     });
   });
 
@@ -154,12 +152,8 @@ describe('UpdateTransaction', () => {
     // Assert
     expect(mockCurrencyService.processCurrencyAmounts).not.toHaveBeenCalled();
     expect(mockRepository.update).toHaveBeenCalledWith(1, {
-      name: undefined,
-      categoryId: undefined,
-      notes: undefined,
-      type: undefined,
       amountCAD: 150,
-      amountUSD: undefined
+      amountUSD: null
     });
   });
 
@@ -182,12 +176,8 @@ describe('UpdateTransaction', () => {
     // Assert
     expect(mockCurrencyService.processCurrencyAmounts).toHaveBeenCalledWith(200, undefined);
     expect(mockRepository.update).toHaveBeenCalledWith(1, {
-      name: undefined,
-      categoryId: undefined,
-      notes: undefined,
-      type: undefined,
       amountCAD: 200,
-      amountUSD: undefined
+      amountUSD: null
     });
   });
 

@@ -70,9 +70,9 @@ describe('StoreTransaction', () => {
       clerkId: 'user123',
       name: 'Groceries',
       amountCAD: 50,
-      amountUSD: undefined,
+      amountUSD: null,
       categoryId: 1,
-      notes: undefined,
+      notes: null,
       monthId: monthId,
       type: TransactionType.EXPENSE,
       date: testDate
@@ -126,9 +126,9 @@ describe('StoreTransaction', () => {
       clerkId: 'user123',
       name: 'Rent',
       amountCAD: 1200,
-      amountUSD: undefined,
+      amountUSD: null,
       categoryId: 2,
-      notes: undefined,
+      notes: null,
       monthId: monthId,
       type: TransactionType.EXPENSE,
       date: testDate
@@ -177,7 +177,7 @@ describe('StoreTransaction', () => {
       amountCAD: 100,
       amountUSD: 75,
       categoryId: 3,
-      notes: undefined,
+      notes: null,
       monthId: monthId,
       type: TransactionType.EXPENSE,
       date: testDate

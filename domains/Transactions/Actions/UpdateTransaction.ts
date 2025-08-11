@@ -2,8 +2,9 @@ import { ITransactionRepository } from '../ITransactionRepository';
 import { TransactionNotFoundException } from '../TransactionException';
 import { UpdateTransactionDTO} from '../TransactionDTO';
 import { TransactionModel } from '../TransactionModel';
-import { Transaction } from '@/app/types';
+import { CoreTransaction } from '../types';
 import { CurrencyService } from '@/domains/Currency/Service/CurrencyService';
+import { toPartialCoreTransaction } from '../Adapters/TransactionAdapters';
 
 export class UpdateTransaction {
   constructor(
@@ -18,31 +19,26 @@ export class UpdateTransaction {
       throw new TransactionNotFoundException(id);
     }
 
-    // Get proper currency amounts
-    let updateData: Partial<Transaction> = {
-      name: data.name,
-      categoryId: data.categoryId,
-      notes: data.notes === null ? undefined : data.notes,
-      type: data.type as any
-    };
+    // Use adapter to convert and validate DTO to partial CoreTransaction
+    let updateData = toPartialCoreTransaction(data);
 
-    // Handle currency conversion if needed
+    // Handle currency conversion if amounts are being updated
     if (data.amountCAD !== undefined || data.amountUSD !== undefined) {
       const isRemovingUsd = data.amountUSD === null;
       
       if (isRemovingUsd) {
         // If explicitly removing USD amount
         updateData.amountCAD = data.amountCAD;
-        updateData.amountUSD = undefined;
+        updateData.amountUSD = null;
       } else {
         // Use currency service to handle amount conversion
         const result = await this.currencyService.processCurrencyAmounts(
-          data.amountCAD as number, 
-          data.amountUSD as number
+          data.amountCAD, 
+          data.amountUSD ?? undefined
         );
         
         updateData.amountCAD = result.amountCAD;
-        updateData.amountUSD = result.amountUSD;
+        updateData.amountUSD = result.amountUSD ?? null;
       }
     }
 

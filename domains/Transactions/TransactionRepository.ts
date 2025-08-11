@@ -5,7 +5,8 @@ import { TransactionType } from "./Transaction";
 import { TransactionModel } from "./TransactionModel";
 import { TransactionImportDTO, TransactionImportResultDTO } from "./TransactionImportDTO";
 
-import { Transaction, USDSpending } from "@/app/types";
+import { USDSpending } from "@/app/types";
+import { CoreTransaction } from "./types";
 import { RedisClient } from '@/infrastructure/redis';
 import { Prisma } from "@prisma/client";
 
@@ -95,7 +96,7 @@ export class TransactionRepository implements ITransactionRepository {
   }
 
   async store(
-    transactionData: Omit<Transaction, 'id' | 'validate' | 'isIncome' | 'isExpense' | 'categoryName' | 'createdAt'>, 
+    transactionData: Omit<CoreTransaction, 'id'>, 
     prismaTransaction?: Prisma.TransactionClient
   ): Promise<TransactionModel> {
     // Format amount values to ensure no undefined values
@@ -110,7 +111,7 @@ export class TransactionRepository implements ITransactionRepository {
       name: transactionData.name,
       amountCAD: amountCAD,
       amountUSD: amountUSD,
-      notes: transactionData.notes || null,
+      notes: transactionData.notes ?? null,
       type: transactionData.type === TransactionType.INCOME ? 'Income' : 'Expense',
       date: transactionData.date,
       categoryId: transactionData.categoryId,
@@ -166,7 +167,7 @@ export class TransactionRepository implements ITransactionRepository {
     return userId;
   }
 
-  async update(id: number, data: Partial<Transaction>): Promise<TransactionModel> {
+  async update(id: number, data: Partial<CoreTransaction>): Promise<TransactionModel> {
     const updateData: any = {};
 
     if (data.name !== undefined) updateData.name = data.name;

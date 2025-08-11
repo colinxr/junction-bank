@@ -2,6 +2,7 @@ import { ITransactionRepository } from '../ITransactionRepository';
 import { Transaction, TransactionType } from '@/domains/Transactions/Transaction';
 import { TransactionCreateDTO } from '../TransactionDTO';
 import { TransactionModel } from '../TransactionModel';
+import { toCoreTransaction } from '../Adapters/TransactionAdapters';
 
 import { IMonthRepository } from '@/domains/Months/IMonthRepository';
 import { Month } from '@/domains/Months/Month';
@@ -16,21 +17,23 @@ export class StoreTransaction {
   ) {}
 
   async execute(data: TransactionCreateDTO): Promise<TransactionModel> {
-    const date = new Date(data.date);
-    const monthId = await this.getMonthId(date);
-    const money = await this.getCurrencyAmount(data);
+    // Use adapter to convert and validate DTO to CoreTransaction
+    const coreTransaction = toCoreTransaction(data);
+    
+    const monthId = await this.getMonthId(coreTransaction.date);
+    const money = await this.getCurrencyAmount(coreTransaction);
 
-    // Pass plain object to repository instead of Transaction instance
+    // Pass validated data to repository
     return await this.transactionRepository.store({
-      clerkId: data.clerkId,
-      name: data.name,
-      categoryId: data.categoryId,
-      notes: data.notes,
+      clerkId: coreTransaction.clerkId,
+      name: coreTransaction.name,
+      categoryId: coreTransaction.categoryId,
+      notes: coreTransaction.notes,
       monthId,
-      type: data.type as TransactionType,
+      type: coreTransaction.type,
       amountCAD: money.amountCAD,
-      amountUSD: money.amountUSD,
-      date: new Date(data.date)
+      amountUSD: money.amountUSD ?? null,
+      date: coreTransaction.date
     });
   }
 
@@ -60,11 +63,11 @@ export class StoreTransaction {
     return monthEntity.id!;
   }
 
-  private async getCurrencyAmount(data: TransactionCreateDTO): Promise<{amountCAD: number, amountUSD: number | undefined}> {
+  private async getCurrencyAmount(data: { amountCAD?: number, amountUSD?: number | null }): Promise<{amountCAD: number, amountUSD: number | undefined}> {
     // Use the centralized currency service to handle conversion (USD to CAD only)
     const result = await this.currencyService.processCurrencyAmounts(
-      data.amountCAD as number, 
-      data.amountUSD as number
+      data.amountCAD, 
+      data.amountUSD ?? undefined
     );
     
     return {
