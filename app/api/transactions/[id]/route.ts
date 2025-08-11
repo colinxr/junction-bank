@@ -1,8 +1,23 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { makeTransactionUseCases } from '@/infrastructure/container';
+import { makeTransactionActions } from '@/infrastructure/container';
 import { TransactionMapper } from '@/domains/Transactions/Adapters/TransactionMapper';
 
-const transactionUseCases = makeTransactionUseCases();
+const transactionActions = makeTransactionActions();
+
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const id = parseInt(params.id);
+    const result = await transactionActions.show.execute(id);
+    const transactionDTO = TransactionMapper.toDTOFromRaw(result);
+    return NextResponse.json(transactionDTO, { status: 200 });
+  } catch (error) {
+    console.error('Error fetching transaction:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to fetch transaction' },
+      { status: 500 }
+    );
+  }
+}
 
 export async function DELETE(
   request: NextRequest,
@@ -16,7 +31,7 @@ export async function DELETE(
     }
 
     const id = (await params).id;
-    await transactionUseCases.destroy.execute(Number(id));
+    await transactionActions.destroy.execute(Number(id));
     
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
@@ -42,7 +57,7 @@ export async function PUT(
     const id = (await params).id;
     const { name, amountCAD, amountUSD, category: categoryId, notes } = await request.json();
 
-    const result = await transactionUseCases.update.execute(Number(id), { name, amountCAD, amountUSD, categoryId, notes });
+    const result = await transactionActions.update.execute(Number(id), { name, amountCAD, amountUSD, categoryId, notes });
     const transactionDTO = TransactionMapper.toDTOFromRaw(result);
     return NextResponse.json(transactionDTO, { status: 200 });
   } catch (error) {

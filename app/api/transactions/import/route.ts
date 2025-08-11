@@ -1,62 +1,62 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { DomainException } from '@/domains/Shared/DomainException';
 import { parseFormData, readFileAsText } from '@/infrastructure/middleware/uploadMiddleware';
-import { makeTransactionUseCases } from '@/infrastructure/container';
+import { makeTransactionActions } from '@/infrastructure/container';
+
+const transactionActions = makeTransactionActions();
 
 export async function POST(request: NextRequest) {
   try {
-    const clerkId = request.headers.get('x-user-id');
-    
-    if (!clerkId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    const { fields, files } = await parseFormData(request);
+    const file = files.file?.[0];
+    const clerkId = fields.clerkId?.[0];
+
+    if (!file || !clerkId) {
+      return NextResponse.json(
+        { error: 'File and clerkId are required' },
+        { status: 400 }
+      );
     }
 
-    // Parse form data (handles multipart/form-data with file upload)
-    const { fields, files } = await parseFormData(request);
-    
-    // Get CSV file
-    const csvFile = files.file?.[0];
-    
-    if (!csvFile) {
-      return NextResponse.json({ error: 'CSV file is required' }, { status: 400 });
+    if (!file.originalFilename?.endsWith('.csv')) {
+      return NextResponse.json(
+        { error: 'File must be a CSV' },
+        { status: 400 }
+      );
     }
-    
-    // Read CSV content
-    const csvContent = await readFileAsText(csvFile);
-    
-    // Extract header mapping from fields if present
-    let headerMapping: { [key: string]: string } | undefined;
-    if (fields.headerMapping) {
-      try {
-        headerMapping = JSON.parse(fields.headerMapping[0]);
-      } catch (error) {
-        console.error('Error parsing header mapping:', error);
-      }
+
+    const csvContent = await readFileAsText(file);
+
+    if (!csvContent) {
+      return NextResponse.json(
+        { error: 'Failed to read CSV file' },
+        { status: 400 }
+      );
     }
-    
-    // Get transaction use cases
-    const transactionUseCases = makeTransactionUseCases();
-    
+
     // Use the ProcessTransactionImport action to handle the entire import flow
-    const result = await transactionUseCases.processImport.execute({
+    const result = await transactionActions.processImport.execute({
       csvContent,
       clerkId,
-      headerMapping
     });
-    
-    // Return appropriate response based on success
-    const status = result.success ? 200 : 400;
-    return NextResponse.json(result, { status });
-    
+
+    return NextResponse.json({
+      message: 'Import completed successfully',
+      data: result
+    }, { status: 200 });
+
   } catch (error) {
-    console.error('Error importing transactions:', error);
-    
+    console.error('Error processing transaction import:', error);
+
     if (error instanceof DomainException) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
     }
-    
+
     return NextResponse.json(
-      { error: 'Failed to import transactions', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to process transaction import' },
       { status: 500 }
     );
   }

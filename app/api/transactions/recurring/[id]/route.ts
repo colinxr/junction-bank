@@ -1,10 +1,10 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { makeRecurringTransactionUseCases } from '@/infrastructure/container';
+import { makeRecurringTransactionActions } from '@/infrastructure/container';
 import { DomainException } from '@/domains/Shared/DomainException';
 import { RecurringTransactionNotFoundException } from '@/domains/RecurringTransactions/RecurringTransactionException';
 import { RecurringTransactionMapper } from '@/domains/RecurringTransactions/RecurringTransactionMapper';
 
-const recurringTransactionUseCases = makeRecurringTransactionUseCases();
+const recurringTransactionActions = makeRecurringTransactionActions();
 
 export async function GET(
     request: NextRequest,
@@ -12,7 +12,7 @@ export async function GET(
 ) {
     try {
         const id = (await params).id;
-        const recurringTransaction = await recurringTransactionUseCases.show.execute(id);
+        const recurringTransaction = await recurringTransactionActions.show.execute(id);
 
         const recurringTransactionDTO = RecurringTransactionMapper.toDTO(recurringTransaction);
 
@@ -58,7 +58,7 @@ export async function PUT(
 
         const id = (await params).id;
         const body = await request.json();
-        const recurringTransaction = await recurringTransactionUseCases.update.execute(id, body);
+        const recurringTransaction = await recurringTransactionActions.update.execute(id, body);
 
         const recurringTransactionDTO = RecurringTransactionMapper.toDTO(recurringTransaction);
 
@@ -103,7 +103,7 @@ export async function DELETE(
         }
 
         const id = (await params).id;
-        await recurringTransactionUseCases.delete.execute(id);
+        await recurringTransactionActions.delete.execute(id);
 
         return NextResponse.json({},
             { status: 200 }

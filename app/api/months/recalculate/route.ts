@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { makeMonthUseCases } from '@/infrastructure/container';
+import { makeMonthActions } from '@/infrastructure/container';
 import { DomainException } from '@/domains/Shared/DomainException';
 
 // Create use cases through the dependency injection container
-const monthUseCases = makeMonthUseCases();
+const monthActions = makeMonthActions();
 
 // POST /api/months/recalculate
 export async function POST(req: NextRequest) {
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const { monthId } = body;
 
     // Execute the recalculate action
-    await monthUseCases.recalculateRecurringExpenses.execute({ monthId });
+    await monthActions.recalculateRecurringExpenses.execute({ monthId });
 
     // Return success response
     return NextResponse.json({

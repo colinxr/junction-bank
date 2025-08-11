@@ -63,7 +63,7 @@ const recurringTransactionRepository: IRecurringTransactionRepository = new Recu
 // Singleton services
 const exchangeRateService: IExchangeRateApiService = new ExchangeRateApiService();
 
-// Factory functions for use cases
+// Factory functions for actions
 export const makeCategoryActions = () => {
   return {
     index: new IndexCategories(categoryRepository),
@@ -80,8 +80,8 @@ export const makeCurrencyActions = () => {
   };
 };
 
-// Factory functions for month use cases
-export const makeMonthUseCases = () => {
+// Factory functions for month actions
+export const makeMonthActions = () => {
   return {
     index: new IndexMonths(monthRepository),
     show: new ShowMonth(monthRepository),
@@ -95,7 +95,7 @@ export const makeMonthUseCases = () => {
 }; 
 
 const currencyService: CurrencyService = new CurrencyService();
-export const makeRecurringTransactionUseCases = () => {
+export const makeRecurringTransactionActions = () => {
   return {
     index: new IndexRecurringTransactions(recurringTransactionRepository),
     show: new ShowRecurringTransaction(recurringTransactionRepository),
@@ -105,7 +105,7 @@ export const makeRecurringTransactionUseCases = () => {
   };
 };
 
-export const makeTransactionUseCases = () => {
+export const makeTransactionActions = () => {
   const transactionImportService = new TransactionImportService(monthRepository);
   const importTransactions = new ImportTransactions(transactionImportService, categoryRepository);
   const batchStoreTransactions = new BatchStoreTransactions(transactionRepository);

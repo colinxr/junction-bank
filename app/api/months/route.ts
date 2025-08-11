@@ -1,14 +1,14 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { makeMonthUseCases } from '@/infrastructure/container';
+import { makeMonthActions } from '@/infrastructure/container';
 import { MonthMapper } from '@/domains/Months/MonthMapper';
 import { DomainException } from '@/domains/Shared/DomainException';
 
 // Create use cases through the dependency injection container
-const monthUseCases = makeMonthUseCases();
+const monthActions = makeMonthActions();
 
 export async function GET() {
   try {
-    const result = await monthUseCases.index.execute();
+    const result = await monthActions.index.execute();
 
     const months = result.data.map((month) => MonthMapper.toDTO(month));
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     
     // Execute use case
-    const month = await monthUseCases.store.execute({
+    const month = await monthActions.store.execute({
       month: data.month,
       year: data.year,
       notes: data.notes
