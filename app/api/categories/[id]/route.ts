@@ -50,6 +50,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: number }> }
 ) {
   try {
+    const userId = request.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+
     const { id } = (await params);
     await categoryActions.delete.execute(Number(id));
     
