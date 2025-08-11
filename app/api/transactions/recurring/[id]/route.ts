@@ -1,8 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { makeRecurringTransactionActions } from '@/infrastructure/container';
-import { DomainException } from '@/domains/Shared/DomainException';
-import { RecurringTransactionNotFoundException } from '@/domains/RecurringTransactions/RecurringTransactionException';
 import { RecurringTransactionMapper } from '@/domains/RecurringTransactions/RecurringTransactionMapper';
+import { ApiErrorHandler } from '@/infrastructure/api-error-handler';
 
 const recurringTransactionActions = makeRecurringTransactionActions();
 
@@ -22,26 +21,7 @@ export async function GET(
             }
         });
     } catch (error) {
-        console.error('Error fetching recurring transaction:', error);
-
-        if (error instanceof RecurringTransactionNotFoundException) {
-            return NextResponse.json(
-                { error: error.message },
-                { status: 404 }
-            );
-        }
-
-        if (error instanceof DomainException) {
-            return NextResponse.json(
-                { error: error.message },
-                { status: 400 }
-            );
-        }
-
-        return NextResponse.json(
-            { error: 'Failed to fetch recurring transaction' },
-            { status: 500 }
-        );
+        return ApiErrorHandler.handle(error, 'Failed to fetch recurring transaction');
     }
 }
 
@@ -53,7 +33,7 @@ export async function PUT(
         const userId = request.headers.get('x-user-id');
 
         if (!userId) {
-            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+            return ApiErrorHandler.validationError('User ID is required');
         }
 
         const id = (await params).id;
@@ -68,26 +48,7 @@ export async function PUT(
             }
         });
     } catch (error) {
-        console.error('Error updating recurring transaction:', error);
-
-        if (error instanceof RecurringTransactionNotFoundException) {
-            return NextResponse.json(
-                { error: error.message },
-                { status: 404 }
-            );
-        }
-
-        if (error instanceof DomainException) {
-            return NextResponse.json(
-                { error: error.message },
-                { status: 400 }
-            );
-        }
-
-        return NextResponse.json(
-            { error: 'Failed to update recurring transaction' },
-            { status: 500 }
-        );
+        return ApiErrorHandler.handle(error, 'Failed to update recurring transaction');
     }
 }
 
@@ -99,7 +60,7 @@ export async function DELETE(
         const userId = request.headers.get('x-user-id');
 
         if (!userId) {
-            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+            return ApiErrorHandler.validationError('User ID is required');
         }
 
         const id = (await params).id;
@@ -109,11 +70,6 @@ export async function DELETE(
             { status: 200 }
         );
     } catch (error) {
-        console.error('Error deleting recurring transaction:', error);
-
-        return NextResponse.json(
-            { error: 'Failed to delete recurring transaction' },
-            { status: 500 }
-        );
+        return ApiErrorHandler.handle(error, 'Failed to delete recurring transaction');
     }
 }
