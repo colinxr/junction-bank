@@ -90,4 +90,40 @@ describe('StoreRecurringTransaction', () => {
     expect(mockCurrencyService.processCurrencyAmounts).toHaveBeenCalledWith(undefined, 1000);
     expect(mockRepository.store).toHaveBeenCalled();
   });
+
+  it('throws error for invalid transaction type', async () => {
+    await expect(storeRecurringTransaction.execute({
+      clerkId: 'user123',
+      name: 'Monthly Rent',
+      amountCAD: 1500,
+      categoryId: 2,
+      type: 'invalid_type'
+    })).rejects.toThrow('Invalid transaction type: invalid_type. Must be \'Income\' or \'Expense\'');
+  });
+
+  it('handles valid string transaction type', async () => {
+    const currencyResult = { amountCAD: 1500, amountUSD: undefined };
+    mockCurrencyService.processCurrencyAmounts.mockResolvedValue(currencyResult);
+    
+    const expectedTransaction = new RecurringTransaction({
+      id: 1,
+      clerkId: 'user123',
+      name: 'Monthly Rent',
+      amountCAD: 1500,
+      categoryId: 2,
+      type: TransactionType.INCOME
+    });
+    
+    mockRepository.store.mockResolvedValue(expectedTransaction);
+    
+    const result = await storeRecurringTransaction.execute({
+      clerkId: 'user123',
+      name: 'Monthly Rent',
+      amountCAD: 1500,
+      categoryId: 2,
+      type: 'Income'
+    });
+    
+    expect(result).toBe(expectedTransaction);
+  });
 }); 
