@@ -82,7 +82,7 @@ describe('RecurringTransactionMapper', () => {
       categoryId: 2,
       notes: 'Test notes',
       dayOfMonth: 1,
-      type: 'expense'
+      type: 'Expense'
     });
   });
   
@@ -119,9 +119,10 @@ describe('RecurringTransactionMapper', () => {
       amountCAD: 1500,
       amountUSD: 1200,
       categoryId: 2,
+      categoryName: undefined,
       notes: 'Test notes',
       dayOfMonth: 1,
-      type: 'expense',
+      type: 'Expense',
       createdAt: testDate.toISOString()
     });
   });
