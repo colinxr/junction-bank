@@ -120,17 +120,45 @@ describe('TransactionMapper', () => {
     const spendingData = {
       categoryId: 1,
       categoryName: 'Food',
-      _sum: { amountCAD: 500 },
-      _count: { amountUSD: 10 }
+      _sum: { amountCAD: 100 },
+      _count: { amountUSD: 5 }
     };
+
+    const result = TransactionMapper.toCategorySpendingDTO(spendingData);
     
-    const dto = TransactionMapper.toCategorySpendingDTO(spendingData);
-    
-    expect(dto).toEqual({
+    expect(result).toEqual({
       categoryId: 1,
       categoryName: 'Food',
-      totalSpent: 500,
-      transactionCount: 10
+      totalSpent: 100,
+      transactionCount: 5
+    });
+  });
+
+  it('can convert raw database result directly to DTO', () => {
+    const rawDbResult = {
+      id: 1,
+      name: 'Test Transaction',
+      amount_cad: 100,
+      amount_usd: 75,
+      category_id: 2,
+      category: { name: 'Test Category' },
+      notes: 'Test notes',
+      type: 'Expense',
+      date: new Date('2023-01-01')
+    };
+
+    const result = TransactionMapper.toDTOFromRaw(rawDbResult);
+    
+    expect(result).toEqual({
+      id: 1,
+      name: 'Test Transaction',
+      amountCAD: 100,
+      amountUSD: 75,
+      categoryId: 2,
+      categoryName: 'Test Category',
+      notes: 'Test notes',
+      type: 'Expense',
+      date: '2023-01-01T00:00:00.000Z'
     });
   });
 }); 

@@ -43,7 +43,7 @@ export async function PUT(
     const { name, amountCAD, amountUSD, category: categoryId, notes } = await request.json();
 
     const result = await transactionUseCases.update.execute(Number(id), { name, amountCAD, amountUSD, categoryId, notes });
-    const transactionDTO = TransactionMapper.toDTO(result);
+    const transactionDTO = TransactionMapper.toDTOFromRaw(result);
     return NextResponse.json(transactionDTO, { status: 200 });
   } catch (error) {
     console.error('Error updating transaction:', error);

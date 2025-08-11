@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     const results = await transactionUseCases.index.execute(monthId);
 
-    const transactions = results.map((result) => TransactionMapper.toDTO(result));
+    const transactions = results.map(TransactionMapper.toDTOFromRaw);
     
     return NextResponse.json(transactions, {
       headers: {
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       ...data
     });
 
-    const transactionDTO = TransactionMapper.toDTO(transaction);
+    const transactionDTO = TransactionMapper.toDTOFromRaw(transaction);
     
     return NextResponse.json({ data: transactionDTO }, { status: 201 });
   } catch (error) {

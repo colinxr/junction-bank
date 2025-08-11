@@ -74,6 +74,24 @@ export class TransactionMapper {
       transactionCount: spendingData._count?.amountUSD || 0
     };
   }
+
+  /**
+   * Converts raw database result directly to DTO
+   * Eliminates redundant domain conversion for read-only operations
+   */
+  static toDTOFromRaw(raw: any): TransactionDTO {
+    return {
+      id: raw.id,
+      name: raw.name,
+      amountCAD: Number(raw.amount_cad),
+      amountUSD: raw.amount_usd ? Number(raw.amount_usd) : undefined,
+      categoryId: raw.category_id,
+      categoryName: raw.category?.name,
+      notes: raw.notes || undefined,
+      type: raw.type.toString(),
+      date: raw.date instanceof Date ? raw.date.toISOString() : raw.date
+    };
+  }
 }
 
 /**
