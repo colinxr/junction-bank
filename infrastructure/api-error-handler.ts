@@ -21,20 +21,7 @@ export class ApiErrorHandler {
   ): NextResponse<ApiErrorResponse> {
     console.error('API Error:', error);
 
-    // Handle specific domain exceptions
-    if (error instanceof DomainException) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'DOMAIN_ERROR',
-            message: error.message
-          }
-        },
-        { status: 400 }
-      );
-    }
-
-    // Handle "not found" exceptions (check by name since they extend DomainException)
+    // Handle "not found" exceptions first (check by name since they extend DomainException)
     if (error instanceof Error && error.name.includes('NotFoundException')) {
       return NextResponse.json(
         {
@@ -70,6 +57,19 @@ export class ApiErrorHandler {
           }
         },
         { status: 401 }
+      );
+    }
+
+    // Handle specific domain exceptions
+    if (error instanceof DomainException) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'DOMAIN_ERROR',
+            message: error.message
+          }
+        },
+        { status: 400 }
       );
     }
 

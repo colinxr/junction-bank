@@ -26,12 +26,13 @@ class TestUnauthorizedException extends DomainException {
 
 describe('ApiErrorHandler', () => {
   describe('handle', () => {
-    it('handles DomainException with 400 status', () => {
+    it('handles DomainException with 400 status', async () => {
       const error = new DomainException('Test domain error');
       const response = ApiErrorHandler.handle(error);
       
       expect(response.status).toBe(400);
-      expect(response.json()).resolves.toEqual({
+      const responseData = await response.json();
+      expect(responseData).toEqual({
         error: {
           code: 'DOMAIN_ERROR',
           message: 'Test domain error'
@@ -39,12 +40,13 @@ describe('ApiErrorHandler', () => {
       });
     });
 
-    it('handles NotFoundException with 404 status', () => {
+    it('handles NotFoundException with 404 status', async () => {
       const error = new TestNotFoundException();
       const response = ApiErrorHandler.handle(error);
       
       expect(response.status).toBe(404);
-      expect(response.json()).resolves.toEqual({
+      const responseData = await response.json();
+      expect(responseData).toEqual({
         error: {
           code: 'NOT_FOUND',
           message: 'Test not found'
@@ -52,12 +54,13 @@ describe('ApiErrorHandler', () => {
       });
     });
 
-    it('handles ValidationException with 422 status', () => {
+    it('handles ValidationException with 422 status', async () => {
       const error = new TestValidationException();
       const response = ApiErrorHandler.handle(error);
       
       expect(response.status).toBe(422);
-      expect(response.json()).resolves.toEqual({
+      const responseData = await response.json();
+      expect(responseData).toEqual({
         error: {
           code: 'VALIDATION_ERROR',
           message: 'Test validation error'
@@ -65,12 +68,13 @@ describe('ApiErrorHandler', () => {
       });
     });
 
-    it('handles UnauthorizedException with 401 status', () => {
+    it('handles UnauthorizedException with 401 status', async () => {
       const error = new TestUnauthorizedException();
       const response = ApiErrorHandler.handle(error);
       
       expect(response.status).toBe(401);
-      expect(response.json()).resolves.toEqual({
+      const responseData = await response.json();
+      expect(responseData).toEqual({
         error: {
           code: 'UNAUTHORIZED',
           message: 'Test unauthorized'
@@ -78,12 +82,13 @@ describe('ApiErrorHandler', () => {
       });
     });
 
-    it('handles unknown errors with 500 status and default message', () => {
+    it('handles unknown errors with 500 status and default message', async () => {
       const error = new Error('Unknown error');
       const response = ApiErrorHandler.handle(error);
       
       expect(response.status).toBe(500);
-      expect(response.json()).resolves.toEqual({
+      const responseData = await response.json();
+      expect(responseData).toEqual({
         error: {
           code: 'INTERNAL_ERROR',
           message: 'An unexpected error occurred'
@@ -91,12 +96,13 @@ describe('ApiErrorHandler', () => {
       });
     });
 
-    it('handles unknown errors with custom default message', () => {
+    it('handles unknown errors with custom default message', async () => {
       const error = new Error('Unknown error');
       const response = ApiErrorHandler.handle(error, 'Custom error message');
       
       expect(response.status).toBe(500);
-      expect(response.json()).resolves.toEqual({
+      const responseData = await response.json();
+      expect(responseData).toEqual({
         error: {
           code: 'INTERNAL_ERROR',
           message: 'Custom error message'
@@ -106,11 +112,12 @@ describe('ApiErrorHandler', () => {
   });
 
   describe('validationError', () => {
-    it('creates validation error response with 400 status', () => {
+    it('creates validation error response with 400 status', async () => {
       const response = ApiErrorHandler.validationError('Validation failed');
       
       expect(response.status).toBe(400);
-      expect(response.json()).resolves.toEqual({
+      const responseData = await response.json();
+      expect(responseData).toEqual({
         error: {
           code: 'VALIDATION_ERROR',
           message: 'Validation failed'
@@ -120,11 +127,12 @@ describe('ApiErrorHandler', () => {
   });
 
   describe('notFound', () => {
-    it('creates not found error response with 404 status', () => {
+    it('creates not found error response with 404 status', async () => {
       const response = ApiErrorHandler.notFound('Resource not found');
       
       expect(response.status).toBe(404);
-      expect(response.json()).resolves.toEqual({
+      const responseData = await response.json();
+      expect(responseData).toEqual({
         error: {
           code: 'NOT_FOUND',
           message: 'Resource not found'
@@ -134,11 +142,12 @@ describe('ApiErrorHandler', () => {
   });
 
   describe('unauthorized', () => {
-    it('creates unauthorized error response with 401 status and default message', () => {
+    it('creates unauthorized error response with 401 status and default message', async () => {
       const response = ApiErrorHandler.unauthorized();
       
       expect(response.status).toBe(401);
-      expect(response.json()).resolves.toEqual({
+      const responseData = await response.json();
+      expect(responseData).toEqual({
         error: {
           code: 'UNAUTHORIZED',
           message: 'Unauthorized'
@@ -146,11 +155,12 @@ describe('ApiErrorHandler', () => {
       });
     });
 
-    it('creates unauthorized error response with custom message', () => {
+    it('creates unauthorized error response with custom message', async () => {
       const response = ApiErrorHandler.unauthorized('Custom unauthorized message');
       
       expect(response.status).toBe(401);
-      expect(response.json()).resolves.toEqual({
+      const responseData = await response.json();
+      expect(responseData).toEqual({
         error: {
           code: 'UNAUTHORIZED',
           message: 'Custom unauthorized message'
