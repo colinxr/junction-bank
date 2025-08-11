@@ -1,62 +1,40 @@
 import { describe, it, expect } from 'vitest';
 import { validateCoreTransaction, CoreTransaction } from './types';
+import { mockCoreTransaction } from '@/test/factories/transactions';
 
 describe('CoreTransaction', () => {
   it('rejects transactions without amountCAD or amountUSD', () => {
-    const invalidTx = { 
-      clerkId: "user_123", 
-      name: "Test Transaction",
-      categoryId: 1,
-      type: "Expense" as const,
-      date: new Date(),
-      monthId: 1
-    } as Partial<CoreTransaction>;
+    const invalidTx = mockCoreTransaction({
+      amountCAD: undefined,
+      amountUSD: undefined
+    }) as Partial<CoreTransaction>;
 
     expect(() => validateCoreTransaction(invalidTx)).toThrow("Either amountCAD or amountUSD must be provided");
   });
 
   it('accepts transactions with only amountCAD', () => {
-    const validTx = {
-      clerkId: "user_123",
-      name: "Test Transaction", 
-      amountCAD: 100,
-      categoryId: 1,
-      notes: null,
-      type: "Expense" as const,
-      date: new Date(),
-      monthId: 1
-    } as Partial<CoreTransaction>;
+    const validTx = mockCoreTransaction({
+      amountCAD: 100
+    });
+    delete (validTx as any).amountUSD; // Remove amountUSD to test CAD-only case
 
     expect(() => validateCoreTransaction(validTx)).not.toThrow();
   });
 
   it('accepts transactions with only amountUSD', () => {
-    const validTx = {
-      clerkId: "user_123",
-      name: "Test Transaction",
-      amountUSD: 75,
-      categoryId: 1,
-      notes: null,
-      type: "Expense" as const,
-      date: new Date(),
-      monthId: 1
-    } as Partial<CoreTransaction>;
+    const validTx = mockCoreTransaction({
+      amountUSD: 75
+    });
+    delete (validTx as any).amountCAD; // Remove amountCAD to test USD-only case
 
     expect(() => validateCoreTransaction(validTx)).not.toThrow();
   });
 
   it('accepts transactions with both amounts', () => {
-    const validTx = {
-      clerkId: "user_123",
-      name: "Test Transaction",
+    const validTx = mockCoreTransaction({
       amountCAD: 100,
-      amountUSD: 75,
-      categoryId: 1,
-      notes: null,
-      type: "Expense" as const,
-      date: new Date(),
-      monthId: 1
-    } as Partial<CoreTransaction>;
+      amountUSD: 75
+    });
 
     expect(() => validateCoreTransaction(validTx)).not.toThrow();
   });
