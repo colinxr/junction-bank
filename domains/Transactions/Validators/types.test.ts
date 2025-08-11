@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { validateCoreTransaction, CoreTransaction } from './types';
-import { mockCoreTransaction } from './Factories/TransactionFactories';
+import { mockCoreTransaction } from '../Factories/TransactionFactories';
 
 describe('CoreTransaction', () => {
   it('rejects transactions without amountCAD or amountUSD', () => {

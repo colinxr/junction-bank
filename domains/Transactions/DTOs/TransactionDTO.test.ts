@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { toTransactionDTO, TransactionDTO } from './TransactionDTO';
-import { Transaction } from './Transaction';
-import { mockTransaction } from './Factories/TransactionFactories';
+import { Transaction } from '../Entities/Transaction';
+import { mockTransaction } from '../Factories/TransactionFactories';
 
 describe('TransactionDTO', () => {
   it('returns undefined for notes if null in DB', () => {

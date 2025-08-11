@@ -1,5 +1,5 @@
-import { CoreTransaction } from './types';
-import { Transaction } from './Transaction';
+import { CoreTransaction } from '../Validators/types';
+import { Transaction } from '../Entities/Transaction';
 
 export interface TransactionDTO extends Omit<CoreTransaction, 'clerkId' | 'monthId' | 'notes' | 'date'> {
   id: number;                // Required in output
@@ -44,4 +44,4 @@ export interface CategorySpendingDTO {
 }
 
 // Mapper functions moved to TransactionMapper.ts
-export { toTransactionDTO, toTransactionDTOs } from './TransactionMapper'; 
+export { toTransactionDTO, toTransactionDTOs } from '../Adapters/TransactionMapper'; 

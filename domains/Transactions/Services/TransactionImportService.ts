@@ -1,8 +1,8 @@
 import Papa from 'papaparse';
 import { IMonthRepository } from '../../Months/IMonthRepository';
 import { Month } from '../../Months/Month';
-import { TransactionCSVRecord, TransactionImportDTO, ImportError } from '../TransactionImportDTO';
-import { TransactionType } from '../Transaction';
+import { TransactionCSVRecord, TransactionImportDTO, ImportError } from '../DTOs/TransactionImportDTO';
+import { TransactionType } from '../Entities/Transaction';
 
 export class TransactionImportService {
   constructor(private monthRepository: IMonthRepository) {}

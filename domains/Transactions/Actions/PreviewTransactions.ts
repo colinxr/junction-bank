@@ -1,5 +1,5 @@
 import { TransactionImportService } from '../Services/TransactionImportService';
-import { TransactionImportDTO, ImportError } from '../TransactionImportDTO';
+import { TransactionImportDTO, ImportError } from '../DTOs/TransactionImportDTO';
 
 interface PreviewTransactionsRequest {
   csvContent: string;

@@ -1,10 +1,10 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { ImportTransactions } from './ImportTransactions';
-import { ITransactionRepository } from '../ITransactionRepository';
+import { ITransactionRepository } from '../Repositories/ITransactionRepository';
 import { TransactionImportService } from '../Services/TransactionImportService';
 import { ICategoryRepository } from '../../Categories/ICategoryRepository';
-import { TransactionImportDTO, ImportError } from '../TransactionImportDTO';
-import { TransactionType } from '../Transaction';
+import { TransactionImportDTO, ImportError } from '../DTOs/TransactionImportDTO';
+import { TransactionType } from '../Entities/Transaction';
 
 describe('ImportTransactions', () => {
   let transactionRepository: ITransactionRepository;

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { TransactionMapper } from './TransactionMapper';
-import { Transaction, TransactionType } from './Transaction';
-import { TransactionModel } from './TransactionModel';
+import { Transaction, TransactionType } from '../Entities/Transaction';
+import { TransactionModel } from '../Entities/TransactionModel';
 
 describe('TransactionMapper', () => {
   const testDate = new Date('2023-01-01');

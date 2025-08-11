@@ -1,8 +1,8 @@
 import { USDSpending } from '@/app/types';
-import { CategorySpendingDTO } from './TransactionDTO';
-import { TransactionModel } from './TransactionModel';
-import { TransactionImportDTO, TransactionImportResultDTO } from './TransactionImportDTO';
-import { CoreTransaction } from './types';
+import { CategorySpendingDTO } from '../DTOs/TransactionDTO';
+import { TransactionModel } from '../Entities/TransactionModel';
+import { TransactionImportDTO, TransactionImportResultDTO } from '../DTOs/TransactionImportDTO';
+import { CoreTransaction } from '../Validators/types';
 import { Prisma } from '@prisma/client';
 
 export interface ITransactionRepository {

@@ -1,5 +1,5 @@
-import { ITransactionRepository } from '../ITransactionRepository';
-import { TransactionModel } from '../TransactionModel';
+import { ITransactionRepository } from '../Repositories/ITransactionRepository';
+import { TransactionModel } from '../Entities/TransactionModel';
 
 export class IndexTransactions {
   constructor(private transactionRepository: ITransactionRepository) {}

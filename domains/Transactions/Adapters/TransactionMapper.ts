@@ -1,5 +1,5 @@
-import { Transaction } from './Transaction';
-import { TransactionDTO } from './TransactionDTO';
+import { Transaction } from '../Entities/Transaction';
+import { TransactionDTO } from '../DTOs/TransactionDTO';
 
 /**
  * Converts a database Transaction to a TransactionDTO for API responses

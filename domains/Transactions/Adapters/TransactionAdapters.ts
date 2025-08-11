@@ -1,6 +1,6 @@
-import { TransactionCreateDTO, UpdateTransactionDTO } from '../TransactionDTO';
-import { CoreTransaction } from '../types';
-import { TransactionType } from '../Transaction';
+import { TransactionCreateDTO, UpdateTransactionDTO } from '../DTOs/TransactionDTO';
+import { CoreTransaction } from '../Validators/types';
+import { TransactionType } from '../Entities/Transaction';
 
 /**
  * Converts API input DTO to CoreTransaction

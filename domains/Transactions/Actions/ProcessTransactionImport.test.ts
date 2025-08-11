@@ -2,9 +2,9 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { ProcessTransactionImport } from './ProcessTransactionImport';
 import { ImportTransactions } from './ImportTransactions';
 import { BatchStoreTransactions, BatchStoreResult } from './BatchStoreTransactions';
-import { TransactionImportDTO, ImportError } from '../TransactionImportDTO';
-import { TransactionType } from '../Transaction';
-import { TransactionModel } from '../TransactionModel';
+import { TransactionImportDTO, ImportError } from '../DTOs/TransactionImportDTO';
+import { TransactionType } from '../Entities/Transaction';
+import { TransactionModel } from '../Entities/TransactionModel';
 
 describe('ProcessTransactionImport', () => {
   let importTransactions: ImportTransactions;

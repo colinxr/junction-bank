@@ -1,5 +1,5 @@
-import { ITransactionRepository } from '../ITransactionRepository';
-import { TransactionNotFoundException } from '../TransactionException';
+import { ITransactionRepository } from '../Repositories/ITransactionRepository';
+import { TransactionNotFoundException } from '../Exceptions/TransactionException';
 
 export class DeleteTransaction {
   constructor(private transactionRepository: ITransactionRepository) {}

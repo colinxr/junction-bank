@@ -1,6 +1,6 @@
-import { TransactionNotFoundException } from '../TransactionException';
-import { ITransactionRepository } from '../ITransactionRepository';
-import { TransactionModel } from '../TransactionModel';
+import { TransactionNotFoundException } from '../Exceptions/TransactionException';
+import { ITransactionRepository } from '../Repositories/ITransactionRepository';
+import { TransactionModel } from '../Entities/TransactionModel';
 
 export class ShowTransaction {
   constructor(private transactionRepository: ITransactionRepository) {}

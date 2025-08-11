@@ -1,7 +1,7 @@
-import { ITransactionRepository } from '../ITransactionRepository';
-import { Transaction, TransactionType } from '@/domains/Transactions/Transaction';
-import { TransactionCreateDTO } from '../TransactionDTO';
-import { TransactionModel } from '../TransactionModel';
+import { ITransactionRepository } from '../Repositories/ITransactionRepository';
+import { Transaction, TransactionType } from '@/domains/Transactions/Entities/Transaction';
+import { TransactionCreateDTO } from '../DTOs/TransactionDTO';
+import { TransactionModel } from '../Entities/TransactionModel';
 import { toCoreTransaction } from '../Adapters/TransactionAdapters';
 
 import { IMonthRepository } from '@/domains/Months/IMonthRepository';

@@ -1,4 +1,4 @@
-import { TransactionType } from './Transaction';
+import { TransactionType } from '../Entities/Transaction';
 
 /**
  * Represents a raw CSV record before validation and mapping

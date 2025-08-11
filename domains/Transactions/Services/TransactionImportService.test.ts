@@ -2,7 +2,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { TransactionImportService } from './TransactionImportService';
 import { IMonthRepository } from '../../Months/IMonthRepository';
 import { Month } from '../../Months/Month';
-import { TransactionType } from '../Transaction';
+import { TransactionType } from '../Entities/Transaction';
 
 describe('TransactionImportService', () => {
   let monthRepository: IMonthRepository;

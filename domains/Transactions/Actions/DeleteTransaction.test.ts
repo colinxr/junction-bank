@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DeleteTransaction } from './DeleteTransaction';
-import { TransactionNotFoundException } from '../TransactionException';
-import type { ITransactionRepository } from '../ITransactionRepository';
-import { TransactionModel } from '../TransactionModel';
+import { TransactionNotFoundException } from '../Exceptions/TransactionException';
+import type { ITransactionRepository } from '../Repositories/ITransactionRepository';
+import { TransactionModel } from '../Entities/TransactionModel';
 
 describe('DeleteTransaction', () => {
   // Create mock repository

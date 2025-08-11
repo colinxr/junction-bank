@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { StoreTransaction } from './StoreTransaction';
-import { TransactionModel } from '../TransactionModel';
-import { TransactionCreateDTO } from '../TransactionDTO';
-import { ITransactionRepository } from '../ITransactionRepository';
+import { TransactionModel } from '../Entities/TransactionModel';
+import { TransactionCreateDTO } from '../DTOs/TransactionDTO';
+import { ITransactionRepository } from '../Repositories/ITransactionRepository';
 import { IMonthRepository } from '@/domains/Months/IMonthRepository';
 import { CurrencyService } from '@/domains/Currency/Service/CurrencyService';
 import { Month } from '@/domains/Months/Month';
-import { TransactionType } from '../Transaction';
+import { TransactionType } from '../Entities/Transaction';
 
 describe('StoreTransaction', () => {
   // Mock repositories and services
@@ -72,7 +72,7 @@ describe('StoreTransaction', () => {
       amountCAD: 50,
       amountUSD: null,
       categoryId: 1,
-      notes: null,
+      notes: undefined,
       monthId: monthId,
       type: TransactionType.EXPENSE,
       date: testDate
@@ -128,7 +128,7 @@ describe('StoreTransaction', () => {
       amountCAD: 1200,
       amountUSD: null,
       categoryId: 2,
-      notes: null,
+      notes: undefined,
       monthId: monthId,
       type: TransactionType.EXPENSE,
       date: testDate
@@ -177,7 +177,7 @@ describe('StoreTransaction', () => {
       amountCAD: 100,
       amountUSD: 75,
       categoryId: 3,
-      notes: null,
+      notes: undefined,
       monthId: monthId,
       type: TransactionType.EXPENSE,
       date: testDate

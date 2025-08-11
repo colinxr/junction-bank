@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UpdateTransaction } from './UpdateTransaction';
-import { TransactionNotFoundException } from '../TransactionException';
-import { UpdateTransactionDTO } from '../TransactionDTO';
-import { TransactionModel } from '../TransactionModel';
-import { TransactionType } from '../Transaction';
-import type { ITransactionRepository } from '../ITransactionRepository';
+import { TransactionNotFoundException } from '../Exceptions/TransactionException';
+import { UpdateTransactionDTO } from '../DTOs/TransactionDTO';
+import { TransactionModel } from '../Entities/TransactionModel';
+import { TransactionType } from '../Entities/Transaction';
+import type { ITransactionRepository } from '../Repositories/ITransactionRepository';
 import type { CurrencyService } from '@/domains/Currency/Service/CurrencyService';
 
 describe('UpdateTransaction', () => {

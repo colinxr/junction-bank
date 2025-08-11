@@ -39,8 +39,8 @@ import { UpdateRecurringTransaction } from '@/domains/RecurringTransactions/Acti
 import { DeleteRecurringTransaction } from '@/domains/RecurringTransactions/Actions/DeleteRecurringTransaction';
 
 // Transactions
-import { ITransactionRepository } from '@/domains/Transactions/ITransactionRepository';
-import { TransactionRepository } from '@/domains/Transactions/TransactionRepository';
+import { ITransactionRepository } from '@/domains/Transactions/Repositories/ITransactionRepository';
+import { TransactionRepository } from '@/domains/Transactions/Repositories/TransactionRepository';
 import { IndexTransactions } from '@/domains/Transactions/Actions/IndexTransactions';
 import { StoreTransaction } from '@/domains/Transactions/Actions/StoreTransaction';
 import { ShowTransaction } from '@/domains/Transactions/Actions/ShowTransaction';

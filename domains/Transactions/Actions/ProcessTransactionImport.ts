@@ -1,6 +1,6 @@
 import { ImportTransactions } from './ImportTransactions';
 import { BatchStoreTransactions, BatchStoreResult } from './BatchStoreTransactions';
-import { ImportError } from '../TransactionImportDTO';
+import { ImportError } from '../DTOs/TransactionImportDTO';
 
 interface ProcessTransactionImportRequest {
   csvContent: string;

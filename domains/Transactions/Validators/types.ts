@@ -1,4 +1,4 @@
-import { TransactionType } from './Transaction';
+import { TransactionType } from '../Entities/Transaction';
 
 /**
  * Core Transaction interface - Database-aligned base type

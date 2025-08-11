@@ -1,8 +1,8 @@
-import { ITransactionRepository } from '../ITransactionRepository';
-import { TransactionNotFoundException } from '../TransactionException';
-import { UpdateTransactionDTO} from '../TransactionDTO';
-import { TransactionModel } from '../TransactionModel';
-import { CoreTransaction } from '../types';
+import { ITransactionRepository } from '../Repositories/ITransactionRepository';
+import { TransactionNotFoundException } from '../Exceptions/TransactionException';
+import { UpdateTransactionDTO} from '../DTOs/TransactionDTO';
+import { TransactionModel } from '../Entities/TransactionModel';
+import { CoreTransaction } from '../Validators/types';
 import { CurrencyService } from '@/domains/Currency/Service/CurrencyService';
 import { toPartialCoreTransaction } from '../Adapters/TransactionAdapters';
 

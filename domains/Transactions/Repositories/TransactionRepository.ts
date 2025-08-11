@@ -1,12 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { ITransactionRepository } from "./ITransactionRepository";
-import { CategorySpendingDTO } from "./TransactionDTO";
-import { TransactionType } from "./Transaction";
-import { TransactionModel } from "./TransactionModel";
-import { TransactionImportDTO, TransactionImportResultDTO } from "./TransactionImportDTO";
+import { CategorySpendingDTO } from "../DTOs/TransactionDTO";
+import { TransactionType } from "../Entities/Transaction";
+import { TransactionModel } from "../Entities/TransactionModel";
+import { TransactionImportDTO, TransactionImportResultDTO } from "../DTOs/TransactionImportDTO";
 
 import { USDSpending } from "@/app/types";
-import { CoreTransaction } from "./types";
+import { CoreTransaction } from "../Validators/types";
 import { RedisClient } from '@/infrastructure/redis';
 import { Prisma } from "@prisma/client";
 

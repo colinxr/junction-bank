@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { IndexTransactions } from './IndexTransactions';
-import type { ITransactionRepository } from '../ITransactionRepository';
-import { TransactionModel } from '../TransactionModel';
+import type { ITransactionRepository } from '../Repositories/ITransactionRepository';
+import { TransactionModel } from '../Entities/TransactionModel';
 
 describe('IndexTransactions', () => {
   // Create mock repository
