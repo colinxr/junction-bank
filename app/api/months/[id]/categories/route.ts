@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makeMonthActions, makeTransactionActions } from '@/infrastructure/container';
-import { DomainException } from '@/domains/Shared/DomainException';
-import { MonthNotFoundException } from '@/domains/Months/MonthException';
+import { ApiErrorHandler } from '@/infrastructure/api-error-handler';
 
 // Create use cases through the dependency injection container
 const monthActions = makeMonthActions();
@@ -15,7 +14,7 @@ export async function GET(
     const userId = request.headers.get('x-user-id');
 
     if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+      return ApiErrorHandler.validationError('User ID is required');
     }
 
     const { id } = await params;
@@ -25,7 +24,7 @@ export async function GET(
     const month = await monthActions.show.execute(monthId);
     
     if (!month || month.id === undefined) {
-      return NextResponse.json({ error: 'Month not found' }, { status: 404 });
+      return ApiErrorHandler.notFound('Month not found');
     }
     
     // Fetch only the spending by category data
@@ -37,25 +36,6 @@ export async function GET(
       }
     });
   } catch (error) {
-    console.error('Error fetching month categories:', error);
-
-    if (error instanceof MonthNotFoundException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 404 }
-      );
-    }
-
-    if (error instanceof DomainException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to fetch month categories' },
-      { status: 500 }
-    );
+    return ApiErrorHandler.handle(error, 'Failed to fetch month categories');
   }
 } 

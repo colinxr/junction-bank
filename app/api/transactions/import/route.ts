@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { DomainException } from '@/domains/Shared/DomainException';
 import { parseFormData, readFileAsText } from '@/infrastructure/middleware/uploadMiddleware';
 import { makeTransactionActions } from '@/infrastructure/container';
+import { ApiErrorHandler } from '@/infrastructure/api-error-handler';
 
 const transactionActions = makeTransactionActions();
 
@@ -12,26 +12,17 @@ export async function POST(request: NextRequest) {
     const clerkId = fields.clerkId?.[0];
 
     if (!file || !clerkId) {
-      return NextResponse.json(
-        { error: 'File and clerkId are required' },
-        { status: 400 }
-      );
+      return ApiErrorHandler.validationError('File and clerkId are required');
     }
 
     if (!file.originalFilename?.endsWith('.csv')) {
-      return NextResponse.json(
-        { error: 'File must be a CSV' },
-        { status: 400 }
-      );
+      return ApiErrorHandler.validationError('File must be a CSV');
     }
 
     const csvContent = await readFileAsText(file);
 
     if (!csvContent) {
-      return NextResponse.json(
-        { error: 'Failed to read CSV file' },
-        { status: 400 }
-      );
+      return ApiErrorHandler.validationError('Failed to read CSV file');
     }
 
     // Use the ProcessTransactionImport action to handle the entire import flow
@@ -46,18 +37,6 @@ export async function POST(request: NextRequest) {
     }, { status: 200 });
 
   } catch (error) {
-    console.error('Error processing transaction import:', error);
-
-    if (error instanceof DomainException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to process transaction import' },
-      { status: 500 }
-    );
+    return ApiErrorHandler.handle(error, 'Failed to process transaction import');
   }
 } 

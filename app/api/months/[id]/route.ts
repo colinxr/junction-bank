@@ -1,22 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makeMonthActions, makeTransactionActions } from '@/infrastructure/container';
 import { MonthMapper } from '@/domains/Months/MonthMapper';
-import { DomainException } from '@/domains/Shared/DomainException';
-import { MonthNotFoundException } from '@/domains/Months/MonthException';
 import { MonthDTO } from '@/domains/Months/MonthDTO';
+import { ApiErrorHandler } from '@/infrastructure/api-error-handler';
 
 // Create use cases through the dependency injection container
 const monthActions = makeMonthActions();
 const transactionActions = makeTransactionActions();
 
 export interface MonthDetailDTO extends MonthDTO {
-  spendingByCategory: CategorySpendingDTO[];
-}
-
-export interface CategorySpendingDTO {
-  categoryId: number;
-  categoryName: string;
-  total: number;
+  spendingByCategory: any[];
 }
 
 export async function GET(
@@ -28,7 +21,7 @@ export async function GET(
     const month = await monthActions.show.execute(Number(id));
 
     if (!month || month.id == undefined) {
-      return NextResponse.json({ error: 'Invalid month data' }, { status: 400 });
+      return ApiErrorHandler.validationError('Invalid month data');
     }
 
     const spendingByCategory = await transactionActions.getSpendingByCategory.execute(month.id);
@@ -45,27 +38,7 @@ export async function GET(
       }
     });
   } catch (error) {
-    console.error('Error fetching month:', error);
-
-
-    if (error instanceof MonthNotFoundException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 404 }
-      );
-    }
-
-    if (error instanceof DomainException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to fetch month' },
-      { status: 500 }
-    );
+    return ApiErrorHandler.handle(error, 'Failed to fetch month');
   }
 }
 
@@ -77,7 +50,7 @@ export async function PUT(
     const userId = request.headers.get('x-user-id');
 
     if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+      return ApiErrorHandler.validationError('User ID is required');
     }
 
     const { id } = await params;
@@ -94,26 +67,7 @@ export async function PUT(
 
     return NextResponse.json({ data: monthDTO });
   } catch (error) {
-    console.error('Error updating month:', error);
-
-    if (error instanceof MonthNotFoundException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 404 }
-      );
-    }
-
-    if (error instanceof DomainException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to update month' },
-      { status: 500 }
-    );
+    return ApiErrorHandler.handle(error, 'Failed to update month');
   }
 }
 
@@ -125,7 +79,7 @@ export async function DELETE(
     const userId = request.headers.get('x-user-id');
 
     if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+      return ApiErrorHandler.validationError('User ID is required');
     }
 
     const { id } = await params;
@@ -136,25 +90,6 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error deleting month:', error);
-
-    if (error instanceof MonthNotFoundException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 404 }
-      );
-    }
-
-    if (error instanceof DomainException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to delete month' },
-      { status: 500 }
-    );
+    return ApiErrorHandler.handle(error, 'Failed to delete month');
   }
 } 

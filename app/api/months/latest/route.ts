@@ -1,22 +1,15 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { makeMonthActions, makeTransactionActions } from '@/infrastructure/container';
 import { MonthMapper } from '@/domains/Months/MonthMapper';
-import { DomainException } from '@/domains/Shared/DomainException';
-import { MonthNotFoundException } from '@/domains/Months/MonthException';
 import { MonthDTO } from '@/domains/Months/MonthDTO';
+import { ApiErrorHandler } from '@/infrastructure/api-error-handler';
 
 // Create use cases through the dependency injection container
 const monthActions = makeMonthActions();
 const transactionActions = makeTransactionActions();
 
 export interface MonthDetailDTO extends MonthDTO {
-  spendingByCategory: CategorySpendingDTO[];
-}
-
-export interface CategorySpendingDTO {
-  categoryId: number;
-  categoryName: string;
-  total: number;
+  spendingByCategory: any[];
 }
 
 export async function GET(request: NextRequest) {
@@ -24,14 +17,14 @@ export async function GET(request: NextRequest) {
     const userId = request.headers.get('x-user-id');
 
     if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+      return ApiErrorHandler.validationError('User ID is required');
     }
 
     // Get the latest month from the database
     const month = await monthActions.showLatest.execute();
 
     if (!month || month.id === undefined) {
-      return NextResponse.json({ error: 'No months found in the database' }, { status: 404 });
+      return ApiErrorHandler.notFound('No months found in the database');
     }
 
     // Get spending by category for the month
@@ -53,25 +46,6 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Error fetching latest month:', error);
-
-    if (error instanceof MonthNotFoundException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 404 }
-      );
-    }
-
-    if (error instanceof DomainException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to fetch latest month' },
-      { status: 500 }
-    );
+    return ApiErrorHandler.handle(error, 'Failed to fetch latest month');
   }
 }

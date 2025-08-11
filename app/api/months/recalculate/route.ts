@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makeMonthActions } from '@/infrastructure/container';
-import { DomainException } from '@/domains/Shared/DomainException';
+import { ApiErrorHandler } from '@/infrastructure/api-error-handler';
 
 // Create use cases through the dependency injection container
 const monthActions = makeMonthActions();
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const userId = req.headers.get('x-user-id');
 
     if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+      return ApiErrorHandler.validationError('User ID is required');
     }
 
     // Get monthId from request, if any
@@ -27,18 +27,6 @@ export async function POST(req: NextRequest) {
       message: `Successfully recalculated recurring expenses for ${monthId ? `month ${monthId}` : 'all months'}`
     });
   } catch (error) {
-    console.error('Error in recalculate recurring expenses endpoint:', error);
-    
-    if (error instanceof DomainException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to recalculate recurring expenses' },
-      { status: 500 }
-    );
+    return ApiErrorHandler.handle(error, 'Failed to recalculate recurring expenses');
   }
 } 

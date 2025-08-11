@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { makeRecurringTransactionActions } from '@/infrastructure/container';
 import { RecurringTransactionMapper } from '@/domains/RecurringTransactions/RecurringTransactionMapper';
-import { DomainException } from '@/domains/Shared/DomainException';
+import { ApiErrorHandler } from '@/infrastructure/api-error-handler';
 
 // Create use cases through the dependency injection container
 const recurringTransactionActions = makeRecurringTransactionActions();
@@ -17,19 +17,7 @@ export async function GET() {
       }
     });
   } catch (error) {
-    console.error('Error fetching recurring transactions:', error);
-
-    if (error instanceof DomainException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to fetch recurring transactions' },
-      { status: 500 }
-    );
+    return ApiErrorHandler.handle(error, 'Failed to fetch recurring transactions');
   }
 }
 
@@ -38,7 +26,7 @@ export async function POST(request: NextRequest) {
     const userId = request.headers.get('x-user-id');
 
     if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+      return ApiErrorHandler.validationError('User ID is required');
     }
 
     const data = await request.json();
@@ -59,18 +47,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: recurringTransactionDTO }, { status: 201 });
   } catch (error) {
-    console.error('Error creating recurring transaction:', error);
-
-    if (error instanceof DomainException) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to create recurring transaction' },
-      { status: 500 }
-    );
+    return ApiErrorHandler.handle(error, 'Failed to create recurring transaction');
   }
 } 

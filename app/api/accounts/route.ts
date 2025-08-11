@@ -1,11 +1,12 @@
 import { NextResponse, NextRequest } from 'next/server';
+import { ApiErrorHandler } from '@/infrastructure/api-error-handler';
 
 export async function GET(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id');
 
     if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+      return ApiErrorHandler.validationError('User ID is required');
     }
 
     console.log(request);
@@ -15,8 +16,6 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({ message: 'Accounts endpoint' });
   } catch (error) {
-    console.log(error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
-    
+    return ApiErrorHandler.handle(error, 'Server error');
   }
 } 

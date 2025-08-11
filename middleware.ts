@@ -1,5 +1,6 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextResponse, type NextRequest } from 'next/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse, type NextRequest } from 'next/server';
+import { ApiErrorHandler } from '@/infrastructure/api-error-handler';
 
 // Define route configurations
 const ROUTES = {
@@ -72,7 +73,7 @@ export default clerkMiddleware(async (auth, req) => {
   } catch {
     // Check if this is an API route
     if (pathname.startsWith(ROUTES.api)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ApiErrorHandler.unauthorized();
     }
     
     // Frontend route - redirect to login

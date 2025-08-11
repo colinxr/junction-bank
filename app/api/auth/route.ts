@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { ApiErrorHandler } from '@/infrastructure/api-error-handler';
 
 export async function POST(request: Request) {
   try {
@@ -9,8 +10,6 @@ export async function POST(request: Request) {
     
     return NextResponse.json({ message: 'Authentication endpoint' });
   } catch (error) {
-    console.log(error);
-    
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return ApiErrorHandler.handle(error, 'Invalid request');
   }
 } 
