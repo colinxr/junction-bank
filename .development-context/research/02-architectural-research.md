@@ -26,20 +26,7 @@ The application follows several established design patterns, though not always c
 -   **Dependency Injection**: A simple form of dependency injection is used via the `infrastructure/container.ts` file, which composes and injects dependencies (like repositories) into the domain actions.
 -   **API Design**: The API follows a standard RESTful approach using Next.js API Routes. It correctly uses DTOs (Data Transfer Objects) via Mappers to decouple the API response structure from the internal domain models.
 
-## 3. Architectural Conflicts & Deviations
-
-Several architectural conflicts and deviations from best practices were identified.
-
-### 3.1. Inconsistent API Authorization
-
-While `middleware.ts` uses Clerk for authorization, some older API routes may rely on custom JWT validation (as hinted at by `infrastructure/auth.ts`). This lack of a single, authoritative enforcement point is a potential security gap.
-
-## 4. Recommendations
-1.  **Enforce Consistent DDD Pattern**:
-    -   **Action**: Audit all API routes to ensure they delegate business logic to domain actions and do not contain raw Prisma calls or business logic. The `categories` route is a good example to follow.
-    -   **Rationale**: Strict adherence to the DDD pattern will maintain a clean separation of concerns, making the application easier to test, maintain, and reason about.
-    -   **Reference**: [Martin Fowler: Domain-Driven Design](https://martinfowler.com/tags/domain%20driven%20design.html)
-
-2.  **Refactor Client-Side Data Fetching**:
+## 3. Recommendations
+1.  **Refactor Client-Side Data Fetching**:
     -   **Action**: Create a centralized API client or typed hooks for `swr` that align with the backend DTOs. This will provide type safety for API responses and reduce boilerplate in components.
     -   **Rationale**: A typed API layer on the frontend prevents common errors and improves the developer experience.
