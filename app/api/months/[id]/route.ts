@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { makeMonthUseCases, makeTransactionUseCases } from '@/infrastructure/container';
+import { makeMonthActions, makeTransactionActions } from '@/infrastructure/container';
 import { MonthMapper } from '@/domains/Months/MonthMapper';
 import { DomainException } from '@/domains/Shared/DomainException';
 import { MonthNotFoundException } from '@/domains/Months/MonthException';
 import { MonthDTO } from '@/domains/Months/MonthDTO';
 
 // Create use cases through the dependency injection container
-const monthUseCases = makeMonthUseCases();
-const transactionUseCases = makeTransactionUseCases();
+const monthActions = makeMonthActions();
+const transactionActions = makeTransactionActions();
 
 export interface MonthDetailDTO extends MonthDTO {
   spendingByCategory: CategorySpendingDTO[];
@@ -25,13 +25,13 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const month = await monthUseCases.show.execute(Number(id));
+    const month = await monthActions.show.execute(Number(id));
 
     if (!month || month.id == undefined) {
       return NextResponse.json({ error: 'Invalid month data' }, { status: 400 });
     }
 
-    const spendingByCategory = await transactionUseCases.getSpendingByCategory.execute(month.id);
+    const spendingByCategory = await transactionActions.getSpendingByCategory.execute(month.id);
     const monthDTO = MonthMapper.toDTO(month);
     
     const response: MonthDetailDTO = {
@@ -83,7 +83,7 @@ export async function PUT(
     const { id } = await params;
     const data = await request.json();
 
-    const month = await monthUseCases.update.execute(Number(id), {
+    const month = await monthActions.update.execute(Number(id), {
       month: data.month,
       year: data.year,
       notes: data.notes
@@ -129,7 +129,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    await monthUseCases.delete.execute(Number(id));
+    await monthActions.delete.execute(Number(id));
 
     return NextResponse.json(
       { success: true, message: 'Month deleted successfully' },

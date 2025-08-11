@@ -1,14 +1,14 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { makeRecurringTransactionUseCases } from '@/infrastructure/container';
+import { makeRecurringTransactionActions } from '@/infrastructure/container';
 import { RecurringTransactionMapper } from '@/domains/RecurringTransactions/RecurringTransactionMapper';
 import { DomainException } from '@/domains/Shared/DomainException';
 
 // Create use cases through the dependency injection container
-const recurringTransactionUseCases = makeRecurringTransactionUseCases();
+const recurringTransactionActions = makeRecurringTransactionActions();
 
 export async function GET() {
   try {
-    const result = await recurringTransactionUseCases.index.execute();
+    const result = await recurringTransactionActions.index.execute();
 
     const recurringTransactions = result.data.map((recurringTransaction) => RecurringTransactionMapper.toDTO(recurringTransaction));
     return NextResponse.json(recurringTransactions, {
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
 
     // Execute use case
-    const recurringTransaction = await recurringTransactionUseCases.store.execute({
+    const recurringTransaction = await recurringTransactionActions.store.execute({
       clerkId: userId,
       name: data.name,
       amountCAD: data.amountCAD,

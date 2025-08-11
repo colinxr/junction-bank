@@ -1,13 +1,13 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { makeMonthUseCases, makeTransactionUseCases } from '@/infrastructure/container';
+import { makeMonthActions, makeTransactionActions } from '@/infrastructure/container';
 import { MonthMapper } from '@/domains/Months/MonthMapper';
 import { DomainException } from '@/domains/Shared/DomainException';
 import { MonthNotFoundException } from '@/domains/Months/MonthException';
 import { MonthDTO } from '@/domains/Months/MonthDTO';
 
 // Create use cases through the dependency injection container
-const monthUseCases = makeMonthUseCases();
-const transactionUseCases = makeTransactionUseCases();
+const monthActions = makeMonthActions();
+const transactionActions = makeTransactionActions();
 
 export interface MonthDetailDTO extends MonthDTO {
   spendingByCategory: CategorySpendingDTO[];
@@ -28,14 +28,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Get the latest month from the database
-    const month = await monthUseCases.showLatest.execute();
+    const month = await monthActions.showLatest.execute();
 
     if (!month || month.id === undefined) {
       return NextResponse.json({ error: 'No months found in the database' }, { status: 404 });
     }
 
     // Get spending by category for the month
-    const spendingByCategory = await transactionUseCases.getSpendingByCategory.execute(month.id);
+    const spendingByCategory = await transactionActions.getSpendingByCategory.execute(month.id);
     
     // Convert to DTO
     const monthDTO = MonthMapper.toDTO(month);

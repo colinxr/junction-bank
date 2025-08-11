@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { makeMonthUseCases, makeTransactionUseCases } from '@/infrastructure/container';
+import { makeMonthActions, makeTransactionActions } from '@/infrastructure/container';
 import { DomainException } from '@/domains/Shared/DomainException';
 import { MonthNotFoundException } from '@/domains/Months/MonthException';
 
 // Create use cases through the dependency injection container
-const monthUseCases = makeMonthUseCases();
-const transactionUseCases = makeTransactionUseCases();
+const monthActions = makeMonthActions();
+const transactionActions = makeTransactionActions();
 
 export async function GET(
   request: NextRequest,
@@ -22,14 +22,14 @@ export async function GET(
     const monthId = Number(id);
     
     // Validate that the month exists first
-    const month = await monthUseCases.show.execute(monthId);
+    const month = await monthActions.show.execute(monthId);
     
     if (!month || month.id === undefined) {
       return NextResponse.json({ error: 'Month not found' }, { status: 404 });
     }
     
     // Fetch only the spending by category data
-    const spendingByCategory = await transactionUseCases.getSpendingByCategory.execute(monthId);
+    const spendingByCategory = await transactionActions.getSpendingByCategory.execute(monthId);
     
     return NextResponse.json({ spendingByCategory }, {
       headers: {
