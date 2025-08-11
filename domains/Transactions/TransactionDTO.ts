@@ -1,13 +1,11 @@
-export interface TransactionDTO {
-  id: number;
-  name: string;
-  amountCAD: number;
-  amountUSD?: number;
-  categoryId: number;
-  categoryName?: string;
-  notes?: string;
-  type: string;
-  date: string;
+import { CoreTransaction } from './types';
+import { Transaction } from './Transaction';
+
+export interface TransactionDTO extends Omit<CoreTransaction, 'clerkId' | 'monthId' | 'notes' | 'date'> {
+  id: number;                // Required in output
+  notes?: string;            // Convert DB null → undefined for API cleanliness
+  date: string;             // ISO string for API responses
+  categoryName?: string;    // Enriched field
 }
 
 export interface TransactionCreateDTO {
@@ -43,4 +41,7 @@ export interface CategorySpendingDTO {
   categoryName: string;
   totalSpent: number;
   transactionCount: number;
-} 
+}
+
+// Mapper functions moved to TransactionMapper.ts
+export { toTransactionDTO, toTransactionDTOs } from './TransactionMapper'; 
