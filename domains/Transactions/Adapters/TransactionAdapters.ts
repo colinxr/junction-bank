@@ -1,6 +1,6 @@
-import { TransactionCreateDTO, UpdateTransactionDTO } from '@/domains/Transactions/TransactionDTO';
-import { CoreTransaction } from '@/domains/Transactions/types';
-import { TransactionType } from '@/domains/Transactions/Transaction';
+import { TransactionCreateDTO, UpdateTransactionDTO } from '../TransactionDTO';
+import { CoreTransaction } from '../types';
+import { TransactionType } from '../Transaction';
 
 /**
  * Converts API input DTO to CoreTransaction

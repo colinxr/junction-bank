@@ -1,8 +1,8 @@
-import { Transaction, TransactionType } from '@/domains/Transactions/Transaction';
-import { TransactionModel } from '@/domains/Transactions/TransactionModel';
-import { TransactionDTO, TransactionCreateDTO } from '@/domains/Transactions/TransactionDTO';
-import { TransactionImportDTO } from '@/domains/Transactions/TransactionImportDTO';
-import { CoreTransaction } from '@/domains/Transactions/types';
+import { Transaction, TransactionType } from '../Transaction';
+import { TransactionModel } from '../TransactionModel';
+import { TransactionDTO, TransactionCreateDTO } from '../TransactionDTO';
+import { TransactionImportDTO } from '../TransactionImportDTO';
+import { CoreTransaction } from '../types';
 
 /**
  * Factory for creating Transaction entities (database model)

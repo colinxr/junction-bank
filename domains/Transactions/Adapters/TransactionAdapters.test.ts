@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { toCoreTransaction } from './transactions';
-import { TransactionCreateDTO } from '@/domains/Transactions/TransactionDTO';
+import { toCoreTransaction } from './TransactionAdapters';
+import { TransactionCreateDTO } from '../TransactionDTO';
 
 describe('Transaction API Adapters', () => {
   describe('toCoreTransaction', () => {
