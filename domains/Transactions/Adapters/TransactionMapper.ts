@@ -1,6 +1,5 @@
 import { Transaction, TransactionType } from '../Entities/Transaction';
-import { TransactionDTO, CategorySpendingDTO } from '../DTOs/TransactionDTO';
-import { TransactionModel } from '../Entities/TransactionModel';
+import { TransactionDTO } from '../DTOs/TransactionDTO';
 
 /**
  * Mapper class for converting between different Transaction representations
@@ -9,22 +8,22 @@ import { TransactionModel } from '../Entities/TransactionModel';
 export class TransactionMapper {
   
   /**
-   * Converts Prisma/DB model to domain entity
+   * Maps a Prisma transaction result to a domain Transaction entity
    */
-  static toDomain(prismaTransaction: TransactionModel): Transaction {
-    return new Transaction({
+  static toDomain(prismaTransaction: any): Transaction {
+    return Transaction.create({
       id: prismaTransaction.id,
       clerkId: prismaTransaction.clerkId,
       name: prismaTransaction.name,
       amountCAD: Number(prismaTransaction.amountCAD),
-      amountUSD: prismaTransaction.amountUSD ? Number(prismaTransaction.amountUSD) : undefined,
+      amountUSD: prismaTransaction.amountUSD ? Number(prismaTransaction.amountUSD) : null,
       categoryId: prismaTransaction.categoryId,
       categoryName: prismaTransaction.category?.name,
-      notes: prismaTransaction.notes || undefined, // Convert null to undefined
-      type: prismaTransaction.type as TransactionType,
+      notes: prismaTransaction.notes,
+      type: prismaTransaction.type === 'Income' ? TransactionType.INCOME : TransactionType.EXPENSE,
       date: prismaTransaction.date,
       monthId: prismaTransaction.monthId,
-      createdAt: prismaTransaction.createdAt
+      createdAt: prismaTransaction.createdAt,
     });
   }
 
@@ -46,50 +45,55 @@ export class TransactionMapper {
   }
 
   /**
-   * Converts domain entity to API DTO
+   * Maps a domain Transaction entity to a TransactionDTO
    */
   static toDTO(transaction: Transaction): TransactionDTO {
     return {
       id: transaction.id!,
       name: transaction.name,
-      amountCAD: Number(transaction.amountCAD),
-      amountUSD: transaction.amountUSD ? Number(transaction.amountUSD) : undefined,
+      amountCAD: transaction.amountCAD,
+      amountUSD: transaction.amountUSD,
       categoryId: transaction.categoryId,
-      categoryName: transaction.categoryName || (transaction as any).category?.name,
-      notes: transaction.notes || undefined,
-      type: transaction.type.toString(),
-      date: transaction.date.toISOString()
+      categoryName: transaction.categoryName,
+      notes: transaction.notes,
+      type: transaction.type,
+      date: transaction.date?.toISOString(),
     };
   }
 
   /**
-   * Converts category spending data to DTO
-   * Handles Prisma aggregation results with _sum and _count
-   */
-  static toCategorySpendingDTO(spendingData: any): CategorySpendingDTO {
-    return {
-      categoryId: spendingData.categoryId,
-      categoryName: spendingData.categoryName,
-      totalSpent: Number(spendingData._sum?.amountCAD || 0),
-      transactionCount: spendingData._count?.amountUSD || 0
-    };
-  }
-
-  /**
-   * Converts raw database result directly to DTO
-   * Eliminates redundant domain conversion for read-only operations
+   * Maps a Prisma transaction result directly to a TransactionDTO (for API responses)
    */
   static toDTOFromRaw(raw: any): TransactionDTO {
     return {
       id: raw.id,
       name: raw.name,
-      amountCAD: Number(raw.amount_cad),
-      amountUSD: raw.amount_usd ? Number(raw.amount_usd) : undefined,
-      categoryId: raw.category_id,
+      amountCAD: Number(raw.amountCAD),
+      amountUSD: raw.amountUSD ? Number(raw.amountUSD) : null,
+      categoryId: raw.categoryId,
       categoryName: raw.category?.name,
-      notes: raw.notes || undefined,
-      type: raw.type.toString(),
-      date: raw.date instanceof Date ? raw.date.toISOString() : raw.date
+      notes: raw.notes,
+      type: raw.type,
+      date: raw.date?.toISOString(),
+    };
+  }
+
+  /**
+   * Maps an array of Prisma transaction results to TransactionDTOs
+   */
+  static toDTOs(transactions: any[]): TransactionDTO[] {
+    return transactions.map(TransactionMapper.toDTOFromRaw);
+  }
+
+  /**
+   * Maps a domain Transaction entity to a CategorySpendingDTO
+   */
+  static toCategorySpendingDTO(transaction: Transaction, totalSpent: number, transactionCount: number): any {
+    return {
+      categoryId: transaction.categoryId,
+      categoryName: transaction.categoryName,
+      totalSpent,
+      transactionCount,
     };
   }
 }

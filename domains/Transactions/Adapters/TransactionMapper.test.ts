@@ -1,164 +1,139 @@
 import { describe, it, expect } from 'vitest';
 import { TransactionMapper } from './TransactionMapper';
 import { Transaction, TransactionType } from '../Entities/Transaction';
-import { TransactionModel } from '../Entities/TransactionModel';
 
 describe('TransactionMapper', () => {
-  const testDate = new Date('2023-01-01');
-  const monthId = 202301;
-  
-  // Mock database model with necessary properties
-  const prismaTransactionData = {
-    id: 1,
-    clerkId: 'user123',
-    name: 'Groceries',
-    amountCAD: 50,
-    amountUSD: 38,
-    categoryId: 1,
-    notes: 'Weekly shopping',
-    type: TransactionType.EXPENSE,
-    date: testDate,
-    monthId: monthId,
-    createdAt: testDate,
-    category: {
-      name: 'Food'
-    }
-  } as unknown as TransactionModel;
-  
-  it('converts Prisma entity to domain entity', () => {
-    const domain = TransactionMapper.toDomain(prismaTransactionData);
-    
-    expect(domain).toBeInstanceOf(Transaction);
-    expect(domain.id).toBe(1);
-    expect(domain.clerkId).toBe('user123');
-    expect(domain.name).toBe('Groceries');
-    expect(domain.amountCAD).toBe(50);
-    expect(domain.amountUSD).toBe(38);
-    expect(domain.categoryId).toBe(1);
-    expect(domain.categoryName).toBe('Food');
-    expect(domain.notes).toBe('Weekly shopping');
-    expect(domain.type).toBe(TransactionType.EXPENSE);
-    expect(domain.date).toEqual(testDate);
-    expect(domain.monthId).toBe(monthId);
-    expect(domain.createdAt).toEqual(testDate);
-  });
-  
-  it('converts domain entity to persistence data', () => {
-    const domain = new Transaction({
-      clerkId: 'user123',
-      name: 'Groceries',
-      amountCAD: 50,
-      amountUSD: 38,
-      categoryId: 1,
-      notes: 'Weekly shopping',
-      type: TransactionType.EXPENSE,
-      date: testDate,
-      monthId: monthId
-    });
-    
-    const persistence = TransactionMapper.toPersistence(domain);
-    
-    expect(persistence).toEqual({
-      clerkId: 'user123',
-      name: 'Groceries',
-      amountCAD: 50,
-      amountUSD: 38,
-      categoryId: 1,
-      notes: 'Weekly shopping',
-      type: TransactionType.EXPENSE.toString(),
-      date: testDate,
-      monthId: monthId
-    });
-  });
-  
-  it('handles null notes in prisma entity', () => {
-    const prismaWithNullNotes = {
-      ...prismaTransactionData,
-      notes: null
-    } as unknown as TransactionModel;
-    
-    const domain = TransactionMapper.toDomain(prismaWithNullNotes);
-    expect(domain.notes).toBeUndefined();
-  });
-  
-  it('converts domain entity to DTO', () => {
-    const domain = new Transaction({
+  it('maps Prisma transaction to domain entity', () => {
+    const prismaTransaction = {
       id: 1,
-      clerkId: 'user123',
-      name: 'Groceries',
-      amountCAD: 50,
-      amountUSD: 38,
-      categoryId: 1,
-      categoryName: 'Food',
-      notes: 'Weekly shopping',
-      type: TransactionType.EXPENSE,
-      date: testDate,
-      monthId: monthId,
-      createdAt: testDate
-    });
-
-    console.log(domain);
-    
-    
-    const dto = TransactionMapper.toDTO(domain);
-    console.log(dto);
-    
-    expect(dto).toEqual({
-      id: 1,
-      name: 'Groceries',
-      amountCAD: 50,
-      amountUSD: 38,
-      categoryId: 1,
-      categoryName: 'Food',
-      notes: 'Weekly shopping',
-      type: TransactionType.EXPENSE.toString(),
-      date: testDate.toISOString()
-    });
-  });
-  
-  it('can convert category spending data to DTO', () => {
-    const spendingData = {
-      categoryId: 1,
-      categoryName: 'Food',
-      _sum: { amountCAD: 100 },
-      _count: { amountUSD: 5 }
-    };
-
-    const result = TransactionMapper.toCategorySpendingDTO(spendingData);
-    
-    expect(result).toEqual({
-      categoryId: 1,
-      categoryName: 'Food',
-      totalSpent: 100,
-      transactionCount: 5
-    });
-  });
-
-  it('can convert raw database result directly to DTO', () => {
-    const rawDbResult = {
-      id: 1,
-      name: 'Test Transaction',
-      amount_cad: 100,
-      amount_usd: 75,
-      category_id: 2,
-      category: { name: 'Test Category' },
-      notes: 'Test notes',
-      type: 'Expense',
-      date: new Date('2023-01-01')
-    };
-
-    const result = TransactionMapper.toDTOFromRaw(rawDbResult);
-    
-    expect(result).toEqual({
-      id: 1,
+      clerkId: 'user_123',
       name: 'Test Transaction',
       amountCAD: 100,
-      amountUSD: 75,
-      categoryId: 2,
-      categoryName: 'Test Category',
+      amountUSD: null,
+      categoryId: 1,
+      category: { name: 'Food' },
       notes: 'Test notes',
       type: 'Expense',
-      date: '2023-01-01T00:00:00.000Z'
+      date: new Date('2025-01-01'),
+      monthId: 1,
+      createdAt: new Date('2025-01-01'),
+    } as any;
+
+    const result = TransactionMapper.toDomain(prismaTransaction);
+
+    expect(result).toBeInstanceOf(Transaction);
+    expect(result.id).toBe(1);
+    expect(result.name).toBe('Test Transaction');
+    expect(result.amountCAD).toBe(100);
+    expect(result.amountUSD).toBeNull();
+    expect(result.categoryName).toBe('Food');
+    expect(result.notes).toBe('Test notes');
+    expect(result.type).toBe(TransactionType.EXPENSE);
+  });
+
+  it('maps domain entity to DTO', () => {
+    const transaction = Transaction.create({
+      id: 1,
+      clerkId: 'user_123',
+      name: 'Test Transaction',
+      amountCAD: 100,
+      amountUSD: null,
+      categoryId: 1,
+      categoryName: 'Food',
+      notes: 'Test notes',
+      type: TransactionType.EXPENSE,
+      date: new Date('2025-01-01'),
+      monthId: 1,
+      createdAt: new Date('2025-01-01'),
     });
+
+    const result = TransactionMapper.toDTO(transaction);
+
+    expect(result.id).toBe(1);
+    expect(result.name).toBe('Test Transaction');
+    expect(result.amountCAD).toBe(100);
+    expect(result.amountUSD).toBeNull();
+    expect(result.categoryName).toBe('Food');
+    expect(result.notes).toBe('Test notes');
+    expect(result.type).toBe(TransactionType.EXPENSE);
+    expect(result.date).toBe('2025-01-01T00:00:00.000Z');
+  });
+
+  it('maps raw Prisma result directly to DTO', () => {
+    const rawTransaction = {
+      id: 1,
+      clerkId: 'user_123',
+      name: 'Test Transaction',
+      amountCAD: 100,
+      amountUSD: null,
+      categoryId: 1,
+      category: { name: 'Food' },
+      notes: 'Test notes',
+      type: 'Expense',
+      date: new Date('2025-01-01'),
+      monthId: 1,
+      createdAt: new Date('2025-01-01'),
+    } as any;
+
+    const result = TransactionMapper.toDTOFromRaw(rawTransaction);
+
+    expect(result.id).toBe(1);
+    expect(result.name).toBe('Test Transaction');
+    expect(result.amountCAD).toBe(100);
+    expect(result.amountUSD).toBeNull();
+    expect(result.categoryName).toBe('Food');
+    expect(result.notes).toBe('Test notes');
+    expect(result.type).toBe('Expense');
+    expect(result.date).toBe('2025-01-01T00:00:00.000Z');
+  });
+
+  it('maps array of transactions to DTOs', () => {
+    const rawTransactions = [
+      {
+        id: 1,
+        name: 'Transaction 1',
+        amountCAD: 100,
+        categoryId: 1,
+        type: 'Expense',
+        date: new Date('2025-01-01'),
+      },
+      {
+        id: 2,
+        name: 'Transaction 2',
+        amountCAD: 200,
+        categoryId: 2,
+        type: 'Income',
+        date: new Date('2025-01-02'),
+      },
+    ] as any[];
+
+    const result = TransactionMapper.toDTOs(rawTransactions);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe(1);
+    expect(result[0].name).toBe('Transaction 1');
+    expect(result[1].id).toBe(2);
+    expect(result[1].name).toBe('Transaction 2');
+  });
+
+  it('maps category spending data to DTO', () => {
+    const transaction = Transaction.create({
+      id: 1,
+      clerkId: 'user_123',
+      name: 'Test Transaction',
+      amountCAD: 100,
+      categoryId: 1,
+      categoryName: 'Food',
+      type: TransactionType.EXPENSE,
+      date: new Date('2025-01-01'),
+      monthId: 1,
+    });
+
+    const result = TransactionMapper.toCategorySpendingDTO(transaction, 500, 5);
+
+    expect(result.categoryId).toBe(1);
+    expect(result.categoryName).toBe('Food');
+    expect(result.totalSpent).toBe(500);
+    expect(result.transactionCount).toBe(5);
   });
 }); 

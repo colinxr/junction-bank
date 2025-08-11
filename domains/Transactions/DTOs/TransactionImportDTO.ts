@@ -19,10 +19,10 @@ export interface TransactionCSVRecord {
 export interface TransactionImportDTO {
   clerkId: string;
   name: string;
-  amountCAD?: number;
-  amountUSD?: number;
+  amountCAD?: number | null;
+  amountUSD?: number | null;
   categoryId: number;
-  notes?: string;
+  notes?: string | null;
   type: TransactionType;
   date: Date;
   monthId: number;

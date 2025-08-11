@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GetMonthlySpendingByCategory } from './GetMonthlySpendingByCategory';
 import { formatCurrency } from '@/infrastructure/utils';
-import type { ITransactionRepository } from '@/domains/Transactions/ITransactionRepository';
+import type { ITransactionRepository } from '@/domains/Transactions/Repositories/ITransactionRepository';
 import type { CategorySpendingDTO } from '@/domains/Transactions/DTOs/TransactionDTO';
 import type { USDSpending } from '@/app/types';
 

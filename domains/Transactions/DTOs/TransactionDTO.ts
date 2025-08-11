@@ -1,32 +1,33 @@
 import { CoreTransaction } from '../Validators/types';
 import { Transaction } from '../Entities/Transaction';
 
-export interface TransactionDTO extends Omit<CoreTransaction, 'clerkId' | 'monthId' | 'notes' | 'date'> {
+export interface TransactionDTO extends Omit<CoreTransaction, 'clerkId' | 'monthId' | 'notes' | 'date' | 'type'> {
   id: number;                // Required in output
-  notes?: string;            // Convert DB null → undefined for API cleanliness
-  date: string;             // ISO string for API responses
-  categoryName?: string;    // Enriched field
+  notes?: string | null;     // Convert DB null → null for API consistency
+  date?: string | null;      // Optional ISO string for API responses
+  type: string;              // String representation for API
+  categoryName?: string | null;    // Enriched field
 }
 
 export interface TransactionCreateDTO {
   clerkId: string;
   name: string;
-  amountCAD?: number;
-  amountUSD?: number;
+  amountCAD?: number | null;
+  amountUSD?: number | null;
   categoryId: number;
-  notes?: string;
+  notes?: string | null;
   type: string;
   date: string;
   monthId: number;
 }
 
 export interface UpdateTransactionDTO {
-  name?: string;
-  amountCAD?: number;
+  name?: string | null;
+  amountCAD?: number | null;
   amountUSD?: number | null;
-  categoryId?: number;
+  categoryId?: number | null;
   notes?: string | null;
-  type?: string;
+  type?: string | null;
 }
 
 export interface TransactionListResponseDTO {

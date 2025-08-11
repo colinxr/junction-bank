@@ -8,7 +8,7 @@ export interface CoreTransaction {
   id?: number;                // Optional for creates
   clerkId: string;            // Required
   name: string;               // Required
-  amountCAD?: number;         // Optional - can be converted from USD
+  amountCAD?: number | null;  // Optional - can be converted from USD
   amountUSD?: number | null;  // Optional - explicit null for database alignment
   categoryId: number;         // Required
   notes?: string | null;      // Optional - explicit null for database alignment

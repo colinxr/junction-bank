@@ -1,48 +1,26 @@
 import { ITransactionRepository } from '../Repositories/ITransactionRepository';
-import { TransactionNotFoundException } from '../Exceptions/TransactionException';
-import { UpdateTransactionDTO} from '../DTOs/TransactionDTO';
-import { TransactionModel } from '../Entities/TransactionModel';
+import { UpdateTransactionDTO } from '../DTOs/TransactionDTO';
 import { CoreTransaction } from '../Validators/types';
-import { CurrencyService } from '@/domains/Currency/Service/CurrencyService';
-import { toPartialCoreTransaction } from '../Adapters/TransactionAdapters';
+import { TransactionType } from '../Entities/Transaction';
 
 export class UpdateTransaction {
-  constructor(
-    private transactionRepository: ITransactionRepository,
-    private currencyService: CurrencyService
-  ) {}
+  constructor(private transactionRepository: ITransactionRepository) {}
 
-  async execute(id: number, data: UpdateTransactionDTO): Promise<TransactionModel> {
-    // Check if transaction exists
-    const transaction = await this.transactionRepository.show(id);
-    if (!transaction) {
-      throw new TransactionNotFoundException(id);
-    }
+  async execute(id: number, data: UpdateTransactionDTO): Promise<any> {
+    const updateData: Partial<CoreTransaction> = {};
 
-    // Use adapter to convert and validate DTO to partial CoreTransaction
-    let updateData = toPartialCoreTransaction(data);
+    if (data.name !== undefined && data.name !== null) updateData.name = data.name;
+    if (data.amountCAD !== undefined && data.amountCAD !== null) updateData.amountCAD = data.amountCAD;
+    if (data.amountUSD !== undefined) updateData.amountUSD = data.amountUSD;
+    if (data.notes !== undefined) updateData.notes = data.notes;
+    if (data.type !== undefined && data.type !== null) updateData.type = data.type as TransactionType;
+    if (data.categoryId !== undefined && data.categoryId !== null) updateData.categoryId = data.categoryId;
+    
+    const result = await this.transactionRepository.update(
+      id,
+      updateData
+    );
 
-    // Handle currency conversion if amounts are being updated
-    if (data.amountCAD !== undefined || data.amountUSD !== undefined) {
-      const isRemovingUsd = data.amountUSD === null;
-      
-      if (isRemovingUsd) {
-        // If explicitly removing USD amount
-        updateData.amountCAD = data.amountCAD;
-        updateData.amountUSD = null;
-      } else {
-        // Use currency service to handle amount conversion
-        const result = await this.currencyService.processCurrencyAmounts(
-          data.amountCAD, 
-          data.amountUSD ?? undefined
-        );
-        
-        updateData.amountCAD = result.amountCAD;
-        updateData.amountUSD = result.amountUSD ?? null;
-      }
-    }
-
-    // Update the transaction
-    return await this.transactionRepository.update(id, updateData);
+    return result;
   }
 } 

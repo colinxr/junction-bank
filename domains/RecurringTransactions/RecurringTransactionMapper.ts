@@ -26,7 +26,7 @@ export class RecurringTransactionMapper {
     categoryId: number;
     notes: string | null;
     dayOfMonth: number | null;
-    type?: string;
+    type?: TransactionType;
   } {
     return {
       clerkId: recurringTransaction.clerkId!,
@@ -36,7 +36,7 @@ export class RecurringTransactionMapper {
       categoryId: recurringTransaction.categoryId,
       notes: recurringTransaction.notes || null,
       dayOfMonth: recurringTransaction.dayOfMonth || null,
-      type: recurringTransaction.type.toString()
+      type: recurringTransaction.type
     };
   }
 

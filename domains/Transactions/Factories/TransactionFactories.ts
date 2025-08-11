@@ -1,67 +1,29 @@
-import { Transaction, TransactionType } from '../Entities/Transaction';
-import { TransactionModel } from '../Entities/TransactionModel';
+import { Transaction } from '../Entities/Transaction';
 import { TransactionDTO, TransactionCreateDTO } from '../DTOs/TransactionDTO';
 import { TransactionImportDTO } from '../DTOs/TransactionImportDTO';
 import { CoreTransaction } from '../Validators/types';
+import { TransactionType } from '../Entities/Transaction';
 
 /**
- * Factory for creating Transaction entities (database model)
+ * Factory for creating Transaction (domain entity)
  */
-export const mockTransaction = (overrides: Partial<Transaction> = {}): Transaction => ({
-  id: 1,
-  clerkId: 'user_123',
-  monthId: 1,
-  name: 'Test Transaction',
-  amountCAD: 100,
-  amountUSD: null,
-  categoryId: 1,
-  notes: null,
-  date: new Date('2025-01-01'),
-  createdAt: new Date(),
-  type: TransactionType.EXPENSE,
-  // Relations
-  category: {
+export const mockTransaction = (overrides: Partial<Transaction> = {}): Transaction => {
+  return Transaction.create({
     id: 1,
-    name: 'Food',
-    type: 'expense',
+    clerkId: 'user_123',
+    name: 'Test Transaction',
+    amountCAD: 100,
+    amountUSD: null,
+    categoryId: 1,
+    categoryName: 'Food',
     notes: null,
-    createdAt: new Date(),
-    isRecurring: false,
-    transactions: [],
-    recurringTransactions: []
-  },
-  month: {
-    id: 1,
-    month: 1,
-    year: 2025,
-    notes: null,
-    createdAt: new Date(),
-    totalExpenses: 0,
-    totalIncome: 0,
-    transactionCount: 0,
-    recurringExpenses: 0,
-    transactions: []
-  },
-  ...overrides
-});
-
-/**
- * Factory for creating TransactionModel (repository layer)
- */
-export const mockTransactionModel = (overrides: Partial<TransactionModel> = {}): TransactionModel => ({
-  id: 1,
-  clerkId: 'user_123',
-  monthId: 1,
-  name: 'Test Transaction',
-  amountCAD: 100,
-  amountUSD: null,
-  categoryId: 1,
-  categoryName: 'Food',
-  notes: null,
-  date: new Date('2025-01-01'),
-  type: TransactionType.EXPENSE,
-  ...overrides
-});
+    type: TransactionType.EXPENSE,
+    date: new Date('2025-01-01'),
+    monthId: 202501,
+    createdAt: new Date('2025-01-01'),
+    ...overrides
+  });
+};
 
 /**
  * Factory for creating TransactionDTO (API response)
@@ -70,10 +32,10 @@ export const mockTransactionDTO = (overrides: Partial<TransactionDTO> = {}): Tra
   id: 1,
   name: 'Test Transaction',
   amountCAD: 100,
-  amountUSD: undefined,
+  amountUSD: null,
   categoryId: 1,
   categoryName: 'Food',
-  notes: undefined,
+  notes: null,
   type: TransactionType.EXPENSE,
   date: '2025-01-01T00:00:00.000Z',
   ...overrides
@@ -87,7 +49,7 @@ export const mockTransactionCreateDTO = (overrides: Partial<TransactionCreateDTO
   name: 'Test Transaction',
   amountCAD: 100,
   categoryId: 1,
-  notes: undefined,
+  notes: null,
   type: TransactionType.EXPENSE,
   date: '2025-01-01T00:00:00.000Z',
   monthId: 1,
@@ -133,19 +95,6 @@ export const mockCoreTransaction = (overrides: Partial<CoreTransaction> = {}): C
 export const mockTransactions = (count: number = 3, overrides: Partial<Transaction> = {}): Transaction[] => {
   return Array.from({ length: count }, (_, index) => 
     mockTransaction({ 
-      id: index + 1, 
-      name: `Test Transaction ${index + 1}`,
-      ...overrides 
-    })
-  );
-};
-
-/**
- * Factory for arrays of transaction models
- */
-export const mockTransactionModels = (count: number = 3, overrides: Partial<TransactionModel> = {}): TransactionModel[] => {
-  return Array.from({ length: count }, (_, index) => 
-    mockTransactionModel({ 
       id: index + 1, 
       name: `Test Transaction ${index + 1}`,
       ...overrides 

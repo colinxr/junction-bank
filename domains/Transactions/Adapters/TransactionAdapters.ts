@@ -1,72 +1,38 @@
-import { TransactionCreateDTO, UpdateTransactionDTO } from '../DTOs/TransactionDTO';
 import { CoreTransaction } from '../Validators/types';
-import { TransactionType } from '../Entities/Transaction';
+import { TransactionCreateDTO } from '../DTOs/TransactionDTO';
+import { isValidTransactionType } from '../Validators/transactionValidators';
 
 /**
- * Converts API input DTO to CoreTransaction
- * - Parses ISO date strings to Date objects
- * - Validates transaction type enum
- * - Handles error cases with meaningful messages
+ * Converts API DTO to domain CoreTransaction
  */
 export function toCoreTransaction(dto: TransactionCreateDTO): CoreTransaction {
-  // Validate and parse date with detailed error handling
-  const date = parseISODate(dto.date);
-  
-  // Validate transaction type
-  validateTransactionType(dto.type);
+  // Validate date format
+  const date = new Date(dto.date);
+  if (isNaN(date.getTime())) {
+    throw new Error('Invalid date format');
+  }
 
   return {
     clerkId: dto.clerkId,
     name: dto.name,
     amountCAD: dto.amountCAD,
-    amountUSD: dto.amountUSD ?? undefined,
+    amountUSD: dto.amountUSD,
     categoryId: dto.categoryId,
-    notes: dto.notes === null ? null : dto.notes, // Preserve null explicitly
-    type: dto.type as TransactionType,
-    date,
+    notes: dto.notes,
+    type: dto.type as any, // Will be validated by domain
+    date: date,
     monthId: dto.monthId,
   };
 }
 
 /**
- * Parses ISO date string with enhanced error handling
+ * Updates an existing CoreTransaction with new data
  */
-function parseISODate(dateString: string): Date {
-  if (!dateString || typeof dateString !== 'string') {
-    throw new Error('Date is required and must be a string');
-  }
-
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) {
-    throw new Error('Invalid date format');
-  }
-
-  return date;
-}
-
-/**
- * Validates transaction type with detailed error message
- */
-function validateTransactionType(type: string): asserts type is TransactionType {
-  if (!isValidTransactionType(type)) {
-    throw new Error(`Invalid transaction type: ${type}. Must be 'Income' or 'Expense'`);
-  }
-}
-
-/**
- * Type guard to validate TransactionType enum values
- */
-function isValidTransactionType(type: string): type is TransactionType {
-  return type === 'Income' || type === 'Expense';
-}
-
-/**
- * Converts UpdateTransactionDTO to partial CoreTransaction for updates
- * - Handles optional fields properly
- * - Maintains null vs undefined semantics
- */
-export function toPartialCoreTransaction(dto: UpdateTransactionDTO): Partial<CoreTransaction> {
-  const result: Partial<CoreTransaction> = {};
+export function updateCoreTransaction(
+  existing: CoreTransaction, 
+  dto: Partial<TransactionCreateDTO>
+): CoreTransaction {
+  const result = { ...existing };
 
   if (dto.name !== undefined) result.name = dto.name;
   if (dto.amountCAD !== undefined) result.amountCAD = dto.amountCAD;
@@ -75,10 +41,18 @@ export function toPartialCoreTransaction(dto: UpdateTransactionDTO): Partial<Cor
   if (dto.notes !== undefined) result.notes = dto.notes;
   if (dto.type !== undefined) {
     if (!isValidTransactionType(dto.type)) {
-      throw new Error(`Invalid transaction type: ${dto.type}`);
+      throw new Error('Invalid transaction type');
     }
-    result.type = dto.type as TransactionType;
+    result.type = dto.type as any;
   }
+  if (dto.date !== undefined) {
+    const date = new Date(dto.date);
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid date format');
+    }
+    result.date = date;
+  }
+  if (dto.monthId !== undefined) result.monthId = dto.monthId;
 
   return result;
 }

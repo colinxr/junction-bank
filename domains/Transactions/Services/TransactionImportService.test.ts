@@ -19,7 +19,8 @@ describe('TransactionImportService', () => {
       update: vi.fn(),
       destroy: vi.fn(),
       findByMonthAndYear: vi.fn(),
-      hasTransactions: vi.fn()
+      hasTransactions: vi.fn(),
+      recalculateRecurringExpenses: vi.fn(),
     };
     
     service = new TransactionImportService(monthRepository);

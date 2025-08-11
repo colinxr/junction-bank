@@ -1,78 +1,18 @@
 import { ITransactionRepository } from '../Repositories/ITransactionRepository';
-import { Transaction, TransactionType } from '@/domains/Transactions/Entities/Transaction';
 import { TransactionCreateDTO } from '../DTOs/TransactionDTO';
-import { TransactionModel } from '../Entities/TransactionModel';
 import { toCoreTransaction } from '../Adapters/TransactionAdapters';
-
-import { IMonthRepository } from '@/domains/Months/IMonthRepository';
-import { Month } from '@/domains/Months/Month';
-
-import { CurrencyService } from '@/domains/Currency/Service/CurrencyService';
+import { TransactionType } from '../Entities/Transaction';
 
 export class StoreTransaction {
-  constructor(
-    private transactionRepository: ITransactionRepository,
-    private monthRepository: IMonthRepository,
-    private currencyService: CurrencyService
-  ) {}
+  constructor(private transactionRepository: ITransactionRepository) {}
 
-  async execute(data: TransactionCreateDTO): Promise<TransactionModel> {
-    // Use adapter to convert and validate DTO to CoreTransaction
+  async execute(data: TransactionCreateDTO): Promise<any> {
+    // Convert DTO to domain model
     const coreTransaction = toCoreTransaction(data);
     
-    const monthId = await this.getMonthId(coreTransaction.date);
-    const money = await this.getCurrencyAmount(coreTransaction);
-
-    // Pass validated data to repository
-    return await this.transactionRepository.store({
-      clerkId: coreTransaction.clerkId,
-      name: coreTransaction.name,
-      categoryId: coreTransaction.categoryId,
-      notes: coreTransaction.notes,
-      monthId,
-      type: coreTransaction.type,
-      amountCAD: money.amountCAD,
-      amountUSD: money.amountUSD ?? null,
-      date: coreTransaction.date
-    });
-  }
-
-  private async getMonthId(transactionDate: Date): Promise<number> {
-    const monthNumber = transactionDate.getMonth() + 1;
-    const year = transactionDate.getFullYear();
+    // Store in repository
+    const savedTransaction = await this.transactionRepository.store(coreTransaction);
     
-    // Check if month exists
-    const monthExists = await this.monthRepository.findByMonthAndYear(monthNumber, year);
-    
-    if (monthExists) {
-       // Find the month to get its ID
-       const monthEntity = await this.monthRepository.findByDate(monthNumber, year);
-       return monthEntity!.id!;
-    }
-
-    // Create the month with required properties
-    const month = Month.create({
-      month: monthNumber,
-      year,
-      notes: undefined,
-      totalIncome: 0,
-      totalExpenses: 0
-    });
-    
-    const monthEntity = await this.monthRepository.store(month);
-    return monthEntity.id!;
-  }
-
-  private async getCurrencyAmount(data: { amountCAD?: number, amountUSD?: number | null }): Promise<{amountCAD: number, amountUSD: number | undefined}> {
-    // Use the centralized currency service to handle conversion (USD to CAD only)
-    const result = await this.currencyService.processCurrencyAmounts(
-      data.amountCAD, 
-      data.amountUSD ?? undefined
-    );
-    
-    return {
-      amountCAD: result.amountCAD ?? 0,
-      amountUSD: result.amountUSD
-    };
+    return savedTransaction;
   }
 } 

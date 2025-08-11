@@ -1,54 +1,51 @@
-import { PrismaClient } from "@prisma/client";
-import { ITransactionRepository } from "./ITransactionRepository";
-import { CategorySpendingDTO } from "../DTOs/TransactionDTO";
-import { TransactionType } from "../Entities/Transaction";
-import { TransactionModel } from "../Entities/TransactionModel";
-import { TransactionImportDTO, TransactionImportResultDTO } from "../DTOs/TransactionImportDTO";
-
-import { USDSpending } from "@/app/types";
-import { CoreTransaction } from "../Validators/types";
+import { PrismaClient, Prisma } from '@prisma/client';
 import { RedisClient } from '@/infrastructure/redis';
-import { Prisma } from "@prisma/client";
+import { ITransactionRepository } from './ITransactionRepository';
+import { CoreTransaction } from '../Validators/types';
+import { TransactionCreateDTO } from '../DTOs/TransactionDTO';
+import { TransactionImportDTO, TransactionImportResultDTO } from '../DTOs/TransactionImportDTO';
+import { CategorySpendingDTO } from '../DTOs/TransactionDTO';
+import { USDSpending } from '@/app/types';
+import { TransactionType } from '../Entities/Transaction';
+import { TransactionMapper } from '../Adapters/TransactionMapper';
 
 export class TransactionRepository implements ITransactionRepository {
   constructor(private prisma: PrismaClient, private redis: RedisClient) {}
 
-  async index(monthId?: number): Promise<TransactionModel[]> {
-    const cacheKey = `transactions:${monthId || 'all'}`;
+  async index(monthId?: number): Promise<any[]> {
+    const cacheKey = monthId ? `transactions:${monthId}` : 'transactions:all';
     
-    // Try to get from cache first
-    let transactions;
     try {
       const cachedData = await this.redis.get(cacheKey);
       if (cachedData) {
-        console.log('Cache hit for transactions');
+        console.log(`Cache hit for transactions ${monthId ? monthId : 'all'}`);
         return JSON.parse(cachedData);
       }
     } catch (error) {
-      // Log but continue with database query
-      console.error('Redis cache error, falling back to database:', error);
+      console.error('Redis cache error:', error);
     }
 
-    // Cache miss or error, fetch from database
-    transactions = await this.prisma.transaction.findMany({
-      where: { monthId: monthId ?? undefined },
-      orderBy: [
-        { name: 'asc' }
-      ],
+    console.log(`Cache miss for transactions ${monthId ? monthId : 'all'}, fetching from database`);
+    
+    const whereClause = monthId ? { monthId } : {};
+    
+    const transactions = await this.prisma.transaction.findMany({
+      where: whereClause,
       include: {
         category: {
           select: {
             name: true
           }
         }
+      },
+      orderBy: {
+        date: 'desc'
       }
     });
 
-    // Store in cache (only attempt if we successfully fetched from the database)
+    // Store in cache
     try {
-      if (transactions) {
-        await this.redis.set(cacheKey, JSON.stringify(transactions), { EX: 600 }); // Cache for 10 minutes
-      }
+      await this.redis.set(cacheKey, JSON.stringify(transactions), { EX: 600 }); // Cache for 10 minutes
     } catch (error) {
       // Just log and continue - caching is a performance optimization, not critical path
       console.warn('Redis cache set error, but data was retrieved successfully:', error);
@@ -57,7 +54,7 @@ export class TransactionRepository implements ITransactionRepository {
     return transactions;
   }
 
-  async show(id: number): Promise<TransactionModel | null> {
+  async show(id: number): Promise<any | null> {
     const cacheKey = `transaction:${id}`;
     
     try {
@@ -98,7 +95,7 @@ export class TransactionRepository implements ITransactionRepository {
   async store(
     transactionData: Omit<CoreTransaction, 'id'>, 
     prismaTransaction?: Prisma.TransactionClient
-  ): Promise<TransactionModel> {
+  ): Promise<any> {
     // Format amount values to ensure no undefined values
     const amountCAD = transactionData.amountCAD ?? 0;
     const amountUSD = transactionData.amountUSD ?? null;
@@ -167,7 +164,7 @@ export class TransactionRepository implements ITransactionRepository {
     return userId;
   }
 
-  async update(id: number, data: Partial<CoreTransaction>): Promise<TransactionModel> {
+  async update(id: number, data: Partial<CoreTransaction>): Promise<any> {
     const updateData: any = {};
 
     if (data.name !== undefined) updateData.name = data.name;

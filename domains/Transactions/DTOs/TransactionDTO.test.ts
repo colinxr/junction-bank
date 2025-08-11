@@ -4,13 +4,13 @@ import { Transaction } from '../Entities/Transaction';
 import { mockTransaction } from '../Factories/TransactionFactories';
 
 describe('TransactionDTO', () => {
-  it('returns undefined for notes if null in DB', () => {
+  it('returns null for notes if null in DB', () => {
     const dbTx = mockTransaction({
       notes: null
     });
 
     const result = toTransactionDTO(dbTx);
-    expect(result.notes).toBeUndefined();
+    expect(result.notes).toBeNull();
   });
 
   it('preserves notes if present in DB', () => {
@@ -33,16 +33,7 @@ describe('TransactionDTO', () => {
 
   it('includes category name if provided', () => {
     const dbTx = mockTransaction({
-      category: { 
-        id: 1, 
-        name: 'Food', 
-        type: 'expense',
-        notes: null,
-        createdAt: new Date(),
-        isRecurring: false,
-        transactions: [],
-        recurringTransactions: []
-      }
+      categoryName: 'Food'
     });
 
     const result = toTransactionDTO(dbTx);

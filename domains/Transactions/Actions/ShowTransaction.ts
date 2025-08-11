@@ -1,17 +1,15 @@
-import { TransactionNotFoundException } from '../Exceptions/TransactionException';
 import { ITransactionRepository } from '../Repositories/ITransactionRepository';
-import { TransactionModel } from '../Entities/TransactionModel';
 
 export class ShowTransaction {
   constructor(private transactionRepository: ITransactionRepository) {}
 
-  async execute(id: number): Promise<TransactionModel> {
+  async execute(id: number): Promise<any> {
     const transaction = await this.transactionRepository.show(id);
-
+    
     if (!transaction) {
-      throw new TransactionNotFoundException(id);
+      throw new Error(`Transaction with ID ${id} not found`);
     }
-
-    return transaction
+    
+    return transaction;
   }
 } 

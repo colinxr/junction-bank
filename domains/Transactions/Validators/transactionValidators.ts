@@ -1,4 +1,12 @@
 import { CoreTransaction } from './types';
+import { TransactionType } from '../Entities/Transaction';
+
+/**
+ * Type guard to validate TransactionType enum values
+ */
+export function isValidTransactionType(type: string): type is TransactionType {
+  return type === 'Income' || type === 'Expense';
+}
 
 /**
  * Validates that a CoreTransaction has either amountCAD or amountUSD

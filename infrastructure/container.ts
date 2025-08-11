@@ -108,13 +108,13 @@ export const makeRecurringTransactionUseCases = () => {
 export const makeTransactionUseCases = () => {
   const transactionImportService = new TransactionImportService(monthRepository);
   const importTransactions = new ImportTransactions(transactionImportService, categoryRepository);
-  const batchStoreTransactions = new BatchStoreTransactions(transactionRepository, currencyService);
+  const batchStoreTransactions = new BatchStoreTransactions(transactionRepository);
   
   return {
     index: new IndexTransactions(transactionRepository),
     show: new ShowTransaction(transactionRepository),
-    store: new StoreTransaction(transactionRepository, monthRepository, currencyService),
-    update: new UpdateTransaction(transactionRepository, currencyService),
+    store: new StoreTransaction(transactionRepository),
+    update: new UpdateTransaction(transactionRepository),
     destroy: new DeleteTransaction(transactionRepository),
     getSpendingByCategory: new GetMonthlySpendingByCategory(transactionRepository),
     import: importTransactions,
