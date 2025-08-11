@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle } from "lucide-react";
-import { ImportError } from "@/domains/Transactions/TransactionImportDTO";
+import { ImportError } from "@/domains/Transactions/DTOs/TransactionImportDTO";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
@@ -32,7 +32,7 @@ export function ImportErrorDisplay({ errors, className }: ImportErrorDisplayProp
             <div key={i} className="flex items-start gap-2 text-sm">
               <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
               <div>
-                {error.row > 0 && (
+                {error.row && error.row > 0 && (
                   <span className="font-medium">Row {error.row}: </span>
                 )}
                 {error.message}

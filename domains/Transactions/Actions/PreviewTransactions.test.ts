@@ -1,8 +1,8 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { PreviewTransactions } from './PreviewTransactions';
 import { TransactionImportService } from '../Services/TransactionImportService';
-import { TransactionImportDTO, ImportError } from '../TransactionImportDTO';
-import { TransactionType } from '../Transaction';
+import { TransactionImportDTO, ImportError } from '../DTOs/TransactionImportDTO';
+import { TransactionType } from '../Entities/Transaction';
 
 describe('PreviewTransactions', () => {
   let transactionImportService: TransactionImportService;

@@ -1,12 +1,10 @@
-import { ITransactionRepository } from '../ITransactionRepository';
-import { TransactionModel } from '../TransactionModel';
+import { ITransactionRepository } from '../Repositories/ITransactionRepository';
+import { TransactionWithCategory } from '../Validators/types';
 
 export class IndexTransactions {
   constructor(private transactionRepository: ITransactionRepository) {}
 
-  async execute(monthId?: number): Promise<TransactionModel[]> {
-    const result = await this.transactionRepository.index(monthId);
-    
-    return result
+  async execute(monthId?: number): Promise<TransactionWithCategory[]> {
+    return await this.transactionRepository.index(monthId);
   }
 } 

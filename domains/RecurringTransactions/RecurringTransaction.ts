@@ -1,6 +1,6 @@
 export enum TransactionType {
-  INCOME = 'income',
-  EXPENSE = 'expense'
+  INCOME = 'Income',
+  EXPENSE = 'Expense'
 }
 
 export class RecurringTransaction {
@@ -50,6 +50,16 @@ export class RecurringTransaction {
     if (this.dayOfMonth !== undefined && (this.dayOfMonth < 1 || this.dayOfMonth > 31)) {
       throw new Error(`Day of month must be between 1 and 31, got: ${this.dayOfMonth}`);
     }
+  }
+
+  public static validateType(type: string): TransactionType {
+    if (type === 'Income' || type === TransactionType.INCOME) {
+      return TransactionType.INCOME;
+    }
+    if (type === 'Expense' || type === TransactionType.EXPENSE) {
+      return TransactionType.EXPENSE;
+    }
+    throw new Error(`Invalid transaction type: ${type}. Must be 'Income' or 'Expense'`);
   }
 
   public static create(props: {

@@ -1,197 +1,124 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { StoreTransaction } from './StoreTransaction';
-import { TransactionModel } from '../TransactionModel';
-import { TransactionCreateDTO } from '../TransactionDTO';
-import { ITransactionRepository } from '../ITransactionRepository';
-import { IMonthRepository } from '@/domains/Months/IMonthRepository';
-import { CurrencyService } from '@/domains/Currency/Service/CurrencyService';
-import { Month } from '@/domains/Months/Month';
-import { TransactionType } from '../Transaction';
+import { ITransactionRepository } from '../Repositories/ITransactionRepository';
+import { TransactionCreateDTO } from '../DTOs/TransactionDTO';
 
 describe('StoreTransaction', () => {
-  // Mock repositories and services
-  const mockTransactionRepository = {
-    index: vi.fn(),
-    indexByCategory: vi.fn(),
-    indexByMonth: vi.fn(),
-    show: vi.fn(),
-    store: vi.fn(),
-    update: vi.fn(),
-    destroy: vi.fn(),
-    getCategorySpending: vi.fn()
-  };
-  
-  const mockMonthRepository = {
-    index: vi.fn(),
-    show: vi.fn(),
-    findByDate: vi.fn(),
-    findByMonthAndYear: vi.fn(),
-    store: vi.fn()
-  };
-  
-  const mockCurrencyService = {
-    processCurrencyAmounts: vi.fn()
-  };
-  
-  const storeTransaction = new StoreTransaction(
-    mockTransactionRepository as unknown as ITransactionRepository,
-    mockMonthRepository as unknown as IMonthRepository,
-    mockCurrencyService as unknown as CurrencyService
-  );
-  
+  let transactionRepository: ITransactionRepository;
+  let action: StoreTransaction;
+
   beforeEach(() => {
-    vi.clearAllMocks();
+    transactionRepository = {
+      show: vi.fn(),
+      index: vi.fn(),
+      store: vi.fn(),
+      update: vi.fn(),
+      destroy: vi.fn(),
+      importTransactions: vi.fn(),
+      getTotalSpendingByCategory: vi.fn(),
+      getUSDSpendingByCategory: vi.fn(),
+    };
+    action = new StoreTransaction(transactionRepository);
   });
-  
-  it('stores a transaction with existing month', async () => {
-    const testDate = new Date('2023-01-15');
-    const monthId = 1;
-    
-    // Input DTO
+
+  it('stores a transaction successfully', async () => {
     const transactionData: TransactionCreateDTO = {
-      clerkId: 'user123',
-      name: 'Groceries',
-      amountCAD: 50,
+      clerkId: 'user_123',
+      name: 'Test Transaction',
+      amountCAD: 100,
       categoryId: 1,
-      monthId: monthId,
-      type: TransactionType.EXPENSE,
-      date: testDate.toISOString()
+      notes: 'Test notes',
+      type: 'Expense',
+      date: '2025-01-01T00:00:00.000Z',
+      monthId: 1,
     };
-    
-    // Mocked responses
-    mockMonthRepository.findByMonthAndYear.mockResolvedValue(true);
-    mockMonthRepository.findByDate.mockResolvedValue({ id: monthId });
-    mockCurrencyService.processCurrencyAmounts.mockResolvedValue({
-      amountCAD: 50,
-      amountUSD: undefined
-    });
-    
+
     const expectedTransactionData = {
-      clerkId: 'user123',
-      name: 'Groceries',
-      amountCAD: 50,
-      amountUSD: undefined,
+      clerkId: 'user_123',
+      name: 'Test Transaction',
+      amountCAD: 100,
       categoryId: 1,
-      notes: undefined,
-      monthId: monthId,
-      type: TransactionType.EXPENSE,
-      date: testDate
+      notes: 'Test notes',
+      type: 'Expense',
+      date: new Date('2025-01-01T00:00:00.000Z'),
+      monthId: 1,
     };
-    
-    const savedTransaction = { ...expectedTransactionData, id: 1 } as unknown as TransactionModel;
-    mockTransactionRepository.store.mockResolvedValue(savedTransaction);
-    
-    // Execute the action
-    const result = await storeTransaction.execute(transactionData);
-    
-    // Verify the results
-    expect(mockMonthRepository.findByMonthAndYear).toHaveBeenCalledWith(1, 2023);
-    expect(mockMonthRepository.findByDate).toHaveBeenCalledWith(1, 2023);
-    expect(mockCurrencyService.processCurrencyAmounts).toHaveBeenCalledWith(50, undefined);
-    expect(mockTransactionRepository.store).toHaveBeenCalledWith(expectedTransactionData);
-    expect(result).toBe(savedTransaction);
+
+    const savedTransaction = { ...expectedTransactionData, id: 1 } as any;
+
+    vi.mocked(transactionRepository.store).mockResolvedValue(savedTransaction);
+
+    const result = await action.execute(transactionData);
+
+    expect(result).toEqual(savedTransaction);
+    expect(transactionRepository.store).toHaveBeenCalledWith(expectedTransactionData);
   });
-  
-  it('creates a new month when storing a transaction for a new month', async () => {
-    const testDate = new Date('2023-02-15');
-    const monthId = 2;
-    
-    // Input DTO
+
+  it('handles transaction with USD amount', async () => {
     const transactionData: TransactionCreateDTO = {
-      clerkId: 'user123',
-      name: 'Rent',
-      amountCAD: 1200,
-      categoryId: 2,
-      monthId: monthId,
-      type: TransactionType.EXPENSE,
-      date: testDate.toISOString()
-    };
-    
-    // Mocked responses
-    mockMonthRepository.findByMonthAndYear.mockResolvedValue(false);
-    const newMonth = new Month({
-      id: monthId,
-      month: 2,
-      year: 2023,
-      totalIncome: 0,
-      totalExpenses: 0
-    });
-    mockMonthRepository.store.mockResolvedValue(newMonth);
-    mockCurrencyService.processCurrencyAmounts.mockResolvedValue({
-      amountCAD: 1200,
-      amountUSD: undefined
-    });
-    
-    const expectedTransactionData = {
-      clerkId: 'user123',
-      name: 'Rent',
-      amountCAD: 1200,
-      amountUSD: undefined,
-      categoryId: 2,
-      notes: undefined,
-      monthId: monthId,
-      type: TransactionType.EXPENSE,
-      date: testDate
-    };
-    
-    const savedTransaction = { ...expectedTransactionData, id: 2 } as unknown as TransactionModel;
-    mockTransactionRepository.store.mockResolvedValue(savedTransaction);
-    
-    // Execute the action
-    const result = await storeTransaction.execute(transactionData);
-    
-    // Verify the results
-    expect(mockMonthRepository.findByMonthAndYear).toHaveBeenCalledWith(2, 2023);
-    expect(mockMonthRepository.store).toHaveBeenCalled();
-    expect(mockCurrencyService.processCurrencyAmounts).toHaveBeenCalledWith(1200, undefined);
-    expect(mockTransactionRepository.store).toHaveBeenCalledWith(expectedTransactionData);
-    expect(result).toBe(savedTransaction);
-  });
-  
-  it('handles currency conversion for USD amounts', async () => {
-    const testDate = new Date('2023-01-15');
-    const monthId = 1;
-    
-    // Input DTO with USD amount
-    const transactionData: TransactionCreateDTO = {
-      clerkId: 'user123',
-      name: 'Online Purchase',
+      clerkId: 'user_123',
+      name: 'USD Transaction',
       amountUSD: 75,
-      categoryId: 3,
-      monthId: monthId,
-      type: TransactionType.EXPENSE,
-      date: testDate.toISOString()
+      categoryId: 1,
+      notes: null,
+      type: 'Expense',
+      date: '2025-01-01T00:00:00.000Z',
+      monthId: 1,
     };
-    
-    // Mocked responses
-    mockMonthRepository.findByMonthAndYear.mockResolvedValue(true);
-    mockMonthRepository.findByDate.mockResolvedValue({ id: monthId });
-    mockCurrencyService.processCurrencyAmounts.mockResolvedValue({
-      amountCAD: 100, // Assuming conversion rate
-      amountUSD: 75
-    });
-    
+
     const expectedTransactionData = {
-      clerkId: 'user123',
-      name: 'Online Purchase',
+      clerkId: 'user_123',
+      name: 'USD Transaction',
+      amountUSD: 75,
+      categoryId: 1,
+      notes: null,
+      type: 'Expense',
+      date: new Date('2025-01-01T00:00:00.000Z'),
+      monthId: 1,
+    };
+
+    const savedTransaction = { ...expectedTransactionData, id: 2 } as any;
+
+    vi.mocked(transactionRepository.store).mockResolvedValue(savedTransaction);
+
+    const result = await action.execute(transactionData);
+
+    expect(result).toEqual(savedTransaction);
+    expect(transactionRepository.store).toHaveBeenCalledWith(expectedTransactionData);
+  });
+
+  it('handles transaction with both CAD and USD amounts', async () => {
+    const transactionData: TransactionCreateDTO = {
+      clerkId: 'user_123',
+      name: 'Dual Currency Transaction',
       amountCAD: 100,
       amountUSD: 75,
-      categoryId: 3,
-      notes: undefined,
-      monthId: monthId,
-      type: TransactionType.EXPENSE,
-      date: testDate
+      categoryId: 1,
+      notes: 'Test notes',
+      type: 'Income',
+      date: '2025-01-01T00:00:00.000Z',
+      monthId: 1,
     };
-    
-    const savedTransaction = { ...expectedTransactionData, id: 3 } as unknown as TransactionModel;
-    mockTransactionRepository.store.mockResolvedValue(savedTransaction);
-    
-    // Execute the action
-    const result = await storeTransaction.execute(transactionData);
-    
-    // Verify the results
-    expect(mockCurrencyService.processCurrencyAmounts).toHaveBeenCalledWith(undefined, 75);
-    expect(mockTransactionRepository.store).toHaveBeenCalledWith(expectedTransactionData);
-    expect(result).toBe(savedTransaction);
+
+    const expectedTransactionData = {
+      clerkId: 'user_123',
+      name: 'Dual Currency Transaction',
+      amountCAD: 100,
+      amountUSD: 75,
+      categoryId: 1,
+      notes: 'Test notes',
+      type: 'Income',
+      date: new Date('2025-01-01T00:00:00.000Z'),
+      monthId: 1,
+    };
+
+    const savedTransaction = { ...expectedTransactionData, id: 3 } as any;
+
+    vi.mocked(transactionRepository.store).mockResolvedValue(savedTransaction);
+
+    const result = await action.execute(transactionData);
+
+    expect(result).toEqual(savedTransaction);
+    expect(transactionRepository.store).toHaveBeenCalledWith(expectedTransactionData);
   });
 }); 

@@ -98,5 +98,32 @@ describe('RecurringTransaction', () => {
     expect(transaction.name).toBe('Gym Membership');
     expect(transaction.clerkId).toBe('user123');
     expect(transaction.amountCAD).toBe(50);
+    expect(transaction.type).toBe(TransactionType.EXPENSE);
+  });
+
+  describe('validateType', () => {
+    it('validates Income type from string', () => {
+      expect(RecurringTransaction.validateType('Income')).toBe(TransactionType.INCOME);
+    });
+
+    it('validates Expense type from string', () => {
+      expect(RecurringTransaction.validateType('Expense')).toBe(TransactionType.EXPENSE);
+    });
+
+    it('validates Income type from enum', () => {
+      expect(RecurringTransaction.validateType(TransactionType.INCOME)).toBe(TransactionType.INCOME);
+    });
+
+    it('validates Expense type from enum', () => {
+      expect(RecurringTransaction.validateType(TransactionType.EXPENSE)).toBe(TransactionType.EXPENSE);
+    });
+
+    it('throws error for invalid type', () => {
+      expect(() => RecurringTransaction.validateType('invalid')).toThrow('Invalid transaction type: invalid. Must be \'Income\' or \'Expense\'');
+    });
+
+    it('throws error for empty string', () => {
+      expect(() => RecurringTransaction.validateType('')).toThrow('Invalid transaction type: . Must be \'Income\' or \'Expense\'');
+    });
   });
 }); 

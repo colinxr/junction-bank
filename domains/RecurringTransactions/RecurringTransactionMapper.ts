@@ -1,4 +1,4 @@
-import { RecurringTransaction as PrismaRecurringTransaction } from '@prisma/client';
+import { RecurringTransaction as PrismaRecurringTransaction, TransactionType as PrismaTransactionType } from '@prisma/client';
 import { RecurringTransaction, TransactionType } from './RecurringTransaction';
 import { RecurringTransactionDTO } from './RecurringTransactionDTO';
 
@@ -13,7 +13,7 @@ export class RecurringTransactionMapper {
       categoryId: raw.categoryId,
       notes: raw.notes || undefined,
       dayOfMonth: raw.dayOfMonth || undefined,
-      type: raw.type as TransactionType,
+      type: RecurringTransaction.validateType(raw.type),
       createdAt: raw.createdAt
     });
   }
@@ -26,7 +26,7 @@ export class RecurringTransactionMapper {
     categoryId: number;
     notes: string | null;
     dayOfMonth: number | null;
-    type: string;
+    type?: TransactionType;
   } {
     return {
       clerkId: recurringTransaction.clerkId!,

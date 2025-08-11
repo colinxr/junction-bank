@@ -6,7 +6,7 @@ import { ImportPreviewModal } from "@/components/transactions/ImportPreviewModal
 import { ImportErrorDisplay } from "@/components/transactions/ImportErrorDisplay";
 import { ImportSuccessSummary } from "@/components/transactions/ImportSuccessSummary";
 import { useTransactionImport } from "@/app/hooks/useTransactionImport";
-import { TransactionImportDTO } from "@/domains/Transactions/TransactionImportDTO";
+import { TransactionImportDTO } from "@/domains/Transactions/DTOs/TransactionImportDTO";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, FileSpreadsheet, RefreshCw } from "lucide-react";
 

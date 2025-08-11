@@ -39,8 +39,8 @@ import { UpdateRecurringTransaction } from '@/domains/RecurringTransactions/Acti
 import { DeleteRecurringTransaction } from '@/domains/RecurringTransactions/Actions/DeleteRecurringTransaction';
 
 // Transactions
-import { ITransactionRepository } from '@/domains/Transactions/ITransactionRepository';
-import { TransactionRepository } from '@/domains/Transactions/TransactionRepository';
+import { ITransactionRepository } from '@/domains/Transactions/Repositories/ITransactionRepository';
+import { TransactionRepository } from '@/domains/Transactions/Repositories/TransactionRepository';
 import { IndexTransactions } from '@/domains/Transactions/Actions/IndexTransactions';
 import { StoreTransaction } from '@/domains/Transactions/Actions/StoreTransaction';
 import { ShowTransaction } from '@/domains/Transactions/Actions/ShowTransaction';
@@ -108,13 +108,13 @@ export const makeRecurringTransactionUseCases = () => {
 export const makeTransactionUseCases = () => {
   const transactionImportService = new TransactionImportService(monthRepository);
   const importTransactions = new ImportTransactions(transactionImportService, categoryRepository);
-  const batchStoreTransactions = new BatchStoreTransactions(transactionRepository, currencyService);
+  const batchStoreTransactions = new BatchStoreTransactions(transactionRepository);
   
   return {
     index: new IndexTransactions(transactionRepository),
     show: new ShowTransaction(transactionRepository),
-    store: new StoreTransaction(transactionRepository, monthRepository, currencyService),
-    update: new UpdateTransaction(transactionRepository, currencyService),
+    store: new StoreTransaction(transactionRepository),
+    update: new UpdateTransaction(transactionRepository),
     destroy: new DeleteTransaction(transactionRepository),
     getSpendingByCategory: new GetMonthlySpendingByCategory(transactionRepository),
     import: importTransactions,

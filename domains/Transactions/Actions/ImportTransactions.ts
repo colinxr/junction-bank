@@ -1,5 +1,5 @@
 import { TransactionImportService } from '../Services/TransactionImportService';
-import { TransactionImportDTO, TransactionImportResultDTO, ImportError } from '../TransactionImportDTO';
+import { TransactionImportDTO, TransactionImportResultDTO, ImportError } from '../DTOs/TransactionImportDTO';
 import { ICategoryRepository } from '@/domains/Categories/ICategoryRepository';
 
 interface ImportTransactionsRequest {

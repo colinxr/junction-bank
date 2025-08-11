@@ -1,6 +1,6 @@
 import { formatCurrency } from '@/infrastructure/utils';
-import { ITransactionRepository } from '@/domains/Transactions/ITransactionRepository';
-import { CategorySpendingDTO } from '@/domains/Transactions/TransactionDTO';
+import { ITransactionRepository } from '@/domains/Transactions/Repositories/ITransactionRepository';
+import { CategorySpendingDTO } from '@/domains/Transactions/DTOs/TransactionDTO';
 
 import { FormatedCategorySpending, USDSpending } from '@/app/types';
 

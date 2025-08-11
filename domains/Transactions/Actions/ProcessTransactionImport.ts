@@ -1,6 +1,6 @@
 import { ImportTransactions } from './ImportTransactions';
-import { BatchStoreTransactions, BatchStoreResult } from './BatchStoreTransactions';
-import { ImportError } from '../TransactionImportDTO';
+import { BatchStoreTransactions } from './BatchStoreTransactions';
+import { ImportError } from '../DTOs/TransactionImportDTO';
 
 interface ProcessTransactionImportRequest {
   csvContent: string;
@@ -48,19 +48,14 @@ export class ProcessTransactionImport {
     const storeResult = await this.batchStoreTransactions.execute(validTransactions);
     
     // Convert BatchStoreResult errors to ImportError format
-    storeResult.errors.forEach(error => {
-      allErrors.push({
-        message: error.error,
-        originalData: {
-          date: error.transaction.date.toISOString(),
-          name: error.transaction.name,
-          amount_cad: error.transaction.amountCAD?.toString() || '',
-          amount_usd: error.transaction.amountUSD?.toString() || '',
-          category_id: error.transaction.categoryId.toString(),
-          notes: error.transaction.notes || ''
-        }
+    if (storeResult.errors) {
+      storeResult.errors.forEach(error => {
+        allErrors.push({
+          message: error.message,
+          row: error.row,
+        });
       });
-    });
+    }
 
     const totalCount = validTransactions.length + errors.length;
     

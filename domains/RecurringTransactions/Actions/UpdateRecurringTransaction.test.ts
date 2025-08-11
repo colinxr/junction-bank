@@ -238,4 +238,53 @@ describe('UpdateRecurringTransaction', () => {
     });
     expect(result).toBe(updatedTransaction);
   });
+
+  it('throws error for invalid transaction type', async () => {
+    const existingTransaction = new RecurringTransaction({
+      id: 1,
+      clerkId: 'user123',
+      name: 'Monthly Rent',
+      amountCAD: 1500,
+      categoryId: 2,
+      type: TransactionType.EXPENSE
+    });
+    
+    mockRepository.show.mockResolvedValue(existingTransaction);
+    
+    await expect(updateRecurringTransaction.execute(1, { 
+      type: 'invalid_type'
+    })).rejects.toThrow('Invalid transaction type: invalid_type. Must be \'Income\' or \'Expense\'');
+  });
+
+  it('handles valid string transaction type', async () => {
+    const existingTransaction = new RecurringTransaction({
+      id: 1,
+      clerkId: 'user123',
+      name: 'Monthly Rent',
+      amountCAD: 1500,
+      categoryId: 2,
+      type: TransactionType.EXPENSE
+    });
+    
+    const updatedTransaction = new RecurringTransaction({
+      id: 1,
+      clerkId: 'user123',
+      name: 'Monthly Rent',
+      amountCAD: 1500,
+      categoryId: 2,
+      type: TransactionType.INCOME
+    });
+    
+    mockRepository.show.mockResolvedValue(existingTransaction);
+    mockRepository.update.mockResolvedValue(updatedTransaction);
+    
+    const result = await updateRecurringTransaction.execute(1, { 
+      type: 'Income'
+    });
+    
+    expect(mockRepository.update).toHaveBeenCalledWith(1, { 
+      type: TransactionType.INCOME
+    });
+    expect(result).toBe(updatedTransaction);
+  });
 }); 

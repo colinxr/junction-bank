@@ -1,4 +1,4 @@
-import { TransactionType } from './Transaction';
+import { TransactionType } from '../Entities/Transaction';
 
 /**
  * Represents a raw CSV record before validation and mapping
@@ -19,10 +19,10 @@ export interface TransactionCSVRecord {
 export interface TransactionImportDTO {
   clerkId: string;
   name: string;
-  amountCAD?: number;
-  amountUSD?: number;
+  amountCAD?: number | null;
+  amountUSD?: number | null;
   categoryId: number;
-  notes?: string;
+  notes?: string | null;
   type: TransactionType;
   date: Date;
   monthId: number;

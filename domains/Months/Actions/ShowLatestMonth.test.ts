@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ShowLatestMonth } from './ShowLatestMonth';
 import { Month } from '../Month';
 import { MonthNotFoundException } from '../MonthException';
-import type { IMonthRepository } from '../IMonthRepository';
+import { IMonthRepository } from '../IMonthRepository';
 
 describe('ShowLatestMonth', () => {
   // Create mock repository with all required methods
@@ -76,7 +76,7 @@ describe('ShowLatestMonth', () => {
       expect.fail('Expected MonthNotFoundException to be thrown');
     } catch (error) {
       expect(error).toBeInstanceOf(MonthNotFoundException);
-      expect(error.message).toBe('No months found in the database');
+      expect((error as MonthNotFoundException).message).toBe('No months found in the database');
     }
     
     // Assert repository was called

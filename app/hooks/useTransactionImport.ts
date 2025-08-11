@@ -4,7 +4,7 @@ import {
   TransactionImportDTO, 
   TransactionImportResultDTO, 
   ImportError 
-} from '@/domains/Transactions/TransactionImportDTO';
+} from '@/domains/Transactions/DTOs/TransactionImportDTO';
 
 interface ImportState {
   step: 'idle' | 'uploading' | 'preview' | 'importing' | 'success' | 'error';

@@ -3,6 +3,7 @@ import { RecurringTransaction } from '../RecurringTransaction';
 import { UpdateRecurringTransactionDTO } from '../RecurringTransactionDTO';
 import { RecurringTransactionNotFoundException, RecurringTransactionAlreadyExistsException } from '../RecurringTransactionException';
 import { CurrencyService } from '@/domains/Currency/Service/CurrencyService';
+import { TransactionType } from '../RecurringTransaction';
 
 export class UpdateRecurringTransaction {
   constructor(
@@ -34,7 +35,7 @@ export class UpdateRecurringTransaction {
       categoryId?: number;
       notes?: string;
       dayOfMonth?: number;
-      type?: any;
+      type?: TransactionType;
       amountCAD?: number;
       amountUSD?: number;
     };
@@ -44,7 +45,7 @@ export class UpdateRecurringTransaction {
       categoryId: data.categoryId,
       notes: data.notes === null ? undefined : data.notes,
       dayOfMonth: data.dayOfMonth === null ? undefined : data.dayOfMonth,
-      type: data.type as any
+      type: data.type ? RecurringTransaction.validateType(data.type) : undefined
     };
 
     // Handle currency conversion if needed

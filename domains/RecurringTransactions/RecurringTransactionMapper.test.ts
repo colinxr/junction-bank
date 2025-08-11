@@ -82,7 +82,7 @@ describe('RecurringTransactionMapper', () => {
       categoryId: 2,
       notes: 'Test notes',
       dayOfMonth: 1,
-      type: 'expense'
+      type: 'Expense'
     });
   });
   
@@ -94,6 +94,26 @@ describe('RecurringTransactionMapper', () => {
     
     const domain = RecurringTransactionMapper.toDomain(prismaWithNullNotes as any);
     expect(domain.notes).toBeUndefined();
+  });
+
+  it('throws error for invalid transaction type in prisma entity', () => {
+    const prismaWithInvalidType = {
+      ...prismaRecurringTransactionData,
+      type: 'invalid_type'
+    };
+    
+    expect(() => RecurringTransactionMapper.toDomain(prismaWithInvalidType as any))
+      .toThrow('Invalid transaction type: invalid_type. Must be \'Income\' or \'Expense\'');
+  });
+
+  it('handles valid string transaction type in prisma entity', () => {
+    const prismaWithStringType = {
+      ...prismaRecurringTransactionData,
+      type: 'Income'
+    };
+    
+    const domain = RecurringTransactionMapper.toDomain(prismaWithStringType as any);
+    expect(domain.type).toBe(TransactionType.INCOME);
   });
   
   it('converts domain entity to DTO', () => {
@@ -119,9 +139,10 @@ describe('RecurringTransactionMapper', () => {
       amountCAD: 1500,
       amountUSD: 1200,
       categoryId: 2,
+      categoryName: undefined,
       notes: 'Test notes',
       dayOfMonth: 1,
-      type: 'expense',
+      type: 'Expense',
       createdAt: testDate.toISOString()
     });
   });

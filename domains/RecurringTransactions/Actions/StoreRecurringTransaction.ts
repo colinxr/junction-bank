@@ -14,7 +14,7 @@ export class StoreRecurringTransaction {
     const money = await this.getCurrencyAmount(data);
     const recurringTransaction = RecurringTransaction.create({
       ...data,
-      type: data.type as TransactionType,
+      type: data.type ? RecurringTransaction.validateType(data.type) : undefined,
       ...money
     });
 

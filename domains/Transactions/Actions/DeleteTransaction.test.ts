@@ -1,57 +1,46 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DeleteTransaction } from './DeleteTransaction';
-import { TransactionNotFoundException } from '../TransactionException';
-import type { ITransactionRepository } from '../ITransactionRepository';
-import { TransactionModel } from '../TransactionModel';
+import { ITransactionRepository } from '../Repositories/ITransactionRepository';
 
 describe('DeleteTransaction', () => {
-  // Create mock repository
-  const mockRepository = {
-    index: vi.fn(),
-    indexByCategory: vi.fn(),
-    indexByMonth: vi.fn(),
-    show: vi.fn(),
-    store: vi.fn(),
-    update: vi.fn(),
-    destroy: vi.fn(),
-    getCategorySpending: vi.fn()
-  };
-  
-  const deleteTransaction = new DeleteTransaction(mockRepository as unknown as ITransactionRepository);
-  
+  let transactionRepository: ITransactionRepository;
+  let action: DeleteTransaction;
+
   beforeEach(() => {
-    vi.clearAllMocks();
+    transactionRepository = {
+      show: vi.fn(),
+      index: vi.fn(),
+      store: vi.fn(),
+      update: vi.fn(),
+      destroy: vi.fn(),
+      importTransactions: vi.fn(),
+      getTotalSpendingByCategory: vi.fn(),
+      getUSDSpendingByCategory: vi.fn(),
+    };
+    action = new DeleteTransaction(transactionRepository);
   });
-  
-  it('deletes a transaction when it exists', async () => {
-    const testDate = new Date('2023-01-01');
-    const testTransaction = {
+
+  it('deletes a transaction successfully', async () => {
+    const mockTransaction = {
       id: 1,
-      clerkId: 'user123',
-      name: 'Groceries',
-      amountCAD: 50,
-      categoryId: 1,
-      type: 'Expense',
-      date: testDate,
-      monthId: 202301
-    } as unknown as TransactionModel;
-    
-    mockRepository.show.mockResolvedValue(testTransaction);
-    mockRepository.destroy.mockResolvedValue(undefined);
-    
-    await deleteTransaction.execute(1);
-    
-    expect(mockRepository.show).toHaveBeenCalledWith(1);
-    expect(mockRepository.destroy).toHaveBeenCalledWith(1);
+      name: 'Test Transaction',
+      monthId: 1,
+    } as any;
+
+    vi.mocked(transactionRepository.show).mockResolvedValue(mockTransaction);
+    vi.mocked(transactionRepository.destroy).mockResolvedValue();
+
+    await action.execute(1);
+
+    expect(transactionRepository.show).toHaveBeenCalledWith(1);
+    expect(transactionRepository.destroy).toHaveBeenCalledWith(1);
   });
-  
-  it('throws TransactionNotFoundException when transaction not found', async () => {
-    mockRepository.show.mockResolvedValue(null);
-    
-    await expect(deleteTransaction.execute(999))
-      .rejects.toThrow(TransactionNotFoundException);
-    
-    expect(mockRepository.show).toHaveBeenCalledWith(999);
-    expect(mockRepository.destroy).not.toHaveBeenCalled();
+
+  it('throws an error when transaction does not exist', async () => {
+    vi.mocked(transactionRepository.show).mockResolvedValue(null);
+
+    await expect(action.execute(999)).rejects.toThrow('Transaction with ID 999 not found');
+    expect(transactionRepository.show).toHaveBeenCalledWith(999);
+    expect(transactionRepository.destroy).not.toHaveBeenCalled();
   });
 }); 
