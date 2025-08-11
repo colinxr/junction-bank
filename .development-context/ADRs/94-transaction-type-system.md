@@ -74,6 +74,12 @@ interface CoreTransaction {
 - `mockTransaction()`, `mockTransactionDTO()`, etc.
 - Type-safe test data creation
 
+#### 5. Domain Organization
+- **Adapters**: `domains/Transactions/Adapters/` - API boundary conversions
+- **Factories**: `domains/Transactions/Factories/` - Test data creation utilities
+- **Services**: `domains/Transactions/Services/` - Domain-specific services (currency conversion)
+- **Validators**: Transaction validation utilities within the domain
+
 ## Implementation Details
 
 ### Type Mapping Rules
@@ -113,6 +119,8 @@ graph LR
 - **Developer Experience**: Factory functions improve test writing
 - **Scalability**: Clear patterns for future transaction features
 - **Reliability**: Strict typing catches errors at compile time
+- **Domain Cohesion**: All transaction-related code organized within the domain
+- **Clean Architecture**: Proper separation of concerns with dedicated directories
 
 ## Trade-offs
 
@@ -165,8 +173,38 @@ graph LR
 - **API Docs**: Updated schemas and examples
 - **Developer Guide**: Type mapping and factory usage
 
+## File Structure
+
+The implementation follows Domain-Driven Design principles with clear organization:
+
+```
+domains/Transactions/
+├── Actions/                    # Domain actions (existing)
+├── Adapters/                   # API boundary conversions
+│   ├── TransactionAdapters.ts
+│   └── TransactionAdapters.test.ts
+├── Factories/                  # Test data creation
+│   └── TransactionFactories.ts
+├── Services/                   # Domain services
+│   ├── currency.ts
+│   ├── currency.test.ts
+│   └── TransactionImportService.ts
+├── types.ts                    # Core domain types
+├── transactionValidators.ts    # Validation utilities
+├── TransactionDTO.ts          # Data transfer objects
+├── TransactionMapper.ts       # Mapping utilities
+└── ... (other domain files)
+```
+
+### Key Organizational Principles
+1. **Cohesion**: Related functionality grouped together
+2. **Separation of Concerns**: Clear boundaries between adapters, factories, and services
+3. **Domain Purity**: External infrastructure moved out of shared directories
+4. **Testability**: Test utilities co-located with domain logic
+
 ---
 
-**Implementation Timeline**: 6 commits, TDD approach  
+**Implementation Timeline**: 7 commits, TDD approach  
 **Code Quality**: No type casting in tests, 100% test coverage on critical paths  
+**Domain Organization**: Proper DDD structure with cohesive component placement  
 **Deployment**: Backward-compatible through API versioning
