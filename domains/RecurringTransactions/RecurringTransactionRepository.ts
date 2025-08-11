@@ -50,10 +50,7 @@ export class RecurringTransactionRepository implements IRecurringTransactionRepo
   }
 
   async store(recurringTransactionData: Omit<RecurringTransaction, 'id' | 'createdAt'>): Promise<RecurringTransaction> {
-    const prismaData = {
-      ...RecurringTransactionMapper.toPersistence(recurringTransactionData),
-      type: recurringTransactionData.type as TransactionType
-    };
+    const prismaData = RecurringTransactionMapper.toPersistence(recurringTransactionData);
 
     const created = await this.prisma.recurringTransaction.create({
       data: prismaData
