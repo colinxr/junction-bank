@@ -1,6 +1,7 @@
 import { CoreTransaction } from '../Validators/types';
 import { TransactionCreateDTO } from '../DTOs/TransactionDTO';
 import { isValidTransactionType } from '../Validators/transactionValidators';
+import { cleanUpdateData } from '../../Shared/Utils/cleanUpdateData';
 
 /**
  * Converts API DTO to domain CoreTransaction
@@ -34,25 +35,21 @@ export function updateCoreTransaction(
 ): CoreTransaction {
   const result = { ...existing };
 
-  if (dto.name !== undefined) result.name = dto.name;
-  if (dto.amountCAD !== undefined) result.amountCAD = dto.amountCAD;
-  if (dto.amountUSD !== undefined) result.amountUSD = dto.amountUSD;
-  if (dto.categoryId !== undefined) result.categoryId = dto.categoryId;
-  if (dto.notes !== undefined) result.notes = dto.notes;
-  if (dto.type !== undefined) {
-    if (!isValidTransactionType(dto.type)) {
-      throw new Error('Invalid transaction type');
+  const updates = cleanUpdateData(dto, {
+    type: (value) => {
+      if (!isValidTransactionType(value)) {
+        throw new Error('Invalid transaction type');
+      }
+      return value as any;
+    },
+    date: (value) => {
+      const date = new Date(value);
+      if (isNaN(date.getTime())) {
+        throw new Error('Invalid date format');
+      }
+      return date;
     }
-    result.type = dto.type as any;
-  }
-  if (dto.date !== undefined) {
-    const date = new Date(dto.date);
-    if (isNaN(date.getTime())) {
-      throw new Error('Invalid date format');
-    }
-    result.date = date;
-  }
-  if (dto.monthId !== undefined) result.monthId = dto.monthId;
+  }) as Partial<CoreTransaction>;
 
-  return result;
+  return { ...result, ...updates };
 }

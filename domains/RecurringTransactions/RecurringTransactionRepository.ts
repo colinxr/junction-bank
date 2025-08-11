@@ -2,6 +2,8 @@ import { PrismaClient, Prisma } from '@prisma/client';
 import { IRecurringTransactionRepository } from './IRecurringTransactionRepository';
 import { RecurringTransaction, TransactionType } from './RecurringTransaction';
 import { RecurringTransactionMapper } from './RecurringTransactionMapper';
+import { cleanUpdateData } from '@/domains/Shared/Utils/cleanUpdateData';
+
 
 export class RecurringTransactionRepository implements IRecurringTransactionRepository {
   constructor(private prisma: PrismaClient) {}
@@ -60,15 +62,10 @@ export class RecurringTransactionRepository implements IRecurringTransactionRepo
   }
 
   async update(id: number, data: Partial<RecurringTransaction>): Promise<RecurringTransaction> {
-    const updateData: Prisma.RecurringTransactionUpdateInput = {};
-
-    if (data.name !== undefined) updateData.name = data.name;
-    if (data.amountCAD !== undefined) updateData.amountCAD = data.amountCAD;
-    if (data.amountUSD !== undefined) updateData.amountUSD = data.amountUSD;
-    if (data.categoryId !== undefined) updateData.category = { connect: { id: data.categoryId } };
-    if (data.notes !== undefined) updateData.notes = data.notes;
-    if (data.dayOfMonth !== undefined) updateData.dayOfMonth = data.dayOfMonth;
-    if (data.type !== undefined) updateData.type = data.type as TransactionType;
+    const updateData = cleanUpdateData(data, {
+      type: (value: any) => value as TransactionType,
+      categoryId: (value: any) => ({ connect: { id: value } })
+    }) as Prisma.RecurringTransactionUpdateInput;
 
     const updated = await this.prisma.recurringTransaction.update({
       where: { id },

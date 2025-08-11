@@ -9,6 +9,7 @@ import { USDSpending } from '@/app/types';
 import { TransactionType } from '../Entities/Transaction';
 import { TransactionMapper } from '../Adapters/TransactionMapper';
 import { TransactionWithCategory } from '../Validators/types';
+import { cleanUpdateData } from '../../Shared/Utils/cleanUpdateData';
 
 export class TransactionRepository implements ITransactionRepository {
   constructor(private prisma: PrismaClient, private redis: RedisClient) {}
@@ -166,14 +167,10 @@ export class TransactionRepository implements ITransactionRepository {
   }
 
   async update(id: number, data: Partial<CoreTransaction>): Promise<TransactionWithCategory> {
-    const updateData: Prisma.TransactionUpdateInput = {};
-
-    if (data.name !== undefined) updateData.name = data.name;
-    if (data.amountCAD !== undefined && data.amountCAD !== null) updateData.amountCAD = data.amountCAD;
-    if (data.amountUSD !== undefined) updateData.amountUSD = data.amountUSD === null ? null : data.amountUSD;
-    if (data.notes !== undefined) updateData.notes = data.notes;
-    if (data.type !== undefined) updateData.type = data.type as TransactionType;
-    if (data.categoryId !== undefined) updateData.category = { connect: { id: data.categoryId } };
+    const updateData = cleanUpdateData(data, {
+      type: (value) => value as TransactionType,
+      categoryId: (value) => ({ connect: { id: value } })
+    }) as Prisma.TransactionUpdateInput;
     
     const transaction = await this.prisma.transaction.update({
       where: { id },
