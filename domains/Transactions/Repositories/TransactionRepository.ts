@@ -8,11 +8,12 @@ import { CategorySpendingDTO } from '../DTOs/TransactionDTO';
 import { USDSpending } from '@/app/types';
 import { TransactionType } from '../Entities/Transaction';
 import { TransactionMapper } from '../Adapters/TransactionMapper';
+import { TransactionWithCategory } from '../Validators/types';
 
 export class TransactionRepository implements ITransactionRepository {
   constructor(private prisma: PrismaClient, private redis: RedisClient) {}
 
-  async index(monthId?: number): Promise<any[]> {
+  async index(monthId?: number): Promise<TransactionWithCategory[]> {
     const cacheKey = monthId ? `transactions:${monthId}` : 'transactions:all';
     
     try {
@@ -54,7 +55,7 @@ export class TransactionRepository implements ITransactionRepository {
     return transactions;
   }
 
-  async show(id: number): Promise<any | null> {
+  async show(id: number): Promise<TransactionWithCategory | null> {
     const cacheKey = `transaction:${id}`;
     
     try {
@@ -95,7 +96,7 @@ export class TransactionRepository implements ITransactionRepository {
   async store(
     transactionData: Omit<CoreTransaction, 'id'>, 
     prismaTransaction?: Prisma.TransactionClient
-  ): Promise<any> {
+  ): Promise<TransactionWithCategory> {
     // Format amount values to ensure no undefined values
     const amountCAD = transactionData.amountCAD ?? 0;
     const amountUSD = transactionData.amountUSD ?? null;
@@ -104,15 +105,15 @@ export class TransactionRepository implements ITransactionRepository {
     const client = prismaTransaction || this.prisma;
     
     // Prepare create data
-    const createData: any = {
+    const createData: Prisma.TransactionCreateInput = {
       name: transactionData.name,
       amountCAD: amountCAD,
       amountUSD: amountUSD,
       notes: transactionData.notes ?? null,
       type: transactionData.type === TransactionType.INCOME ? 'Income' : 'Expense',
       date: transactionData.date,
-      categoryId: transactionData.categoryId,
-      monthId: transactionData.monthId,
+      category: { connect: { id: transactionData.categoryId } },
+      month: { connect: { id: transactionData.monthId } },
       clerkId: transactionData.clerkId || 'anonymous' // Ensure clerkId always has a value
     };
     
@@ -164,12 +165,12 @@ export class TransactionRepository implements ITransactionRepository {
     return userId;
   }
 
-  async update(id: number, data: Partial<CoreTransaction>): Promise<any> {
-    const updateData: any = {};
+  async update(id: number, data: Partial<CoreTransaction>): Promise<TransactionWithCategory> {
+    const updateData: Prisma.TransactionUpdateInput = {};
 
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.amountCAD !== undefined) updateData.amountCAD = data.amountCAD;
-    if (data.amountUSD !== undefined) updateData.amountUSD = data.amountUSD;
+    if (data.amountCAD !== undefined && data.amountCAD !== null) updateData.amountCAD = data.amountCAD;
+    if (data.amountUSD !== undefined) updateData.amountUSD = data.amountUSD === null ? null : data.amountUSD;
     if (data.notes !== undefined) updateData.notes = data.notes;
     if (data.type !== undefined) updateData.type = data.type as TransactionType;
     if (data.categoryId !== undefined) updateData.category = { connect: { id: data.categoryId } };
@@ -327,15 +328,16 @@ export class TransactionRepository implements ITransactionRepository {
         for (const transaction of transactions) {
           try {
             // Prepare data using the same structure as store method
-            const createData: any = {
+            const createData: Prisma.TransactionCreateInput = {
               name: transaction.name,
               amountCAD: transaction.amountCAD ?? 0,
               amountUSD: transaction.amountUSD ?? null,
               notes: transaction.notes || null,
               type: transaction.type === TransactionType.INCOME ? 'Income' : 'Expense',
               date: transaction.date,
-              categoryId: transaction.categoryId,
-              monthId: transaction.monthId
+              category: { connect: { id: transaction.categoryId } },
+              month: { connect: { id: transaction.monthId } },
+              clerkId: transaction.clerkId || 'anonymous'
             };
 
             // Add clerkId if provided

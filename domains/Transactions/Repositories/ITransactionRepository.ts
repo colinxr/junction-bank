@@ -5,12 +5,14 @@ import { TransactionImportDTO } from '../DTOs/TransactionImportDTO';
 import { TransactionImportResultDTO } from '../DTOs/TransactionImportDTO';
 import { CategorySpendingDTO } from '../DTOs/TransactionDTO';
 import { USDSpending } from '@/app/types';
+import { TransactionWithCategory } from '../Validators/types';
+import { Prisma } from '@prisma/client';
 
 export interface ITransactionRepository {
-  index(monthId?: number): Promise<any[]>; // Using any[] for now, will refine with Prisma types
-  show(id: number): Promise<any | null>; // Using any for now, will refine with Prisma types
-  store(transaction: Omit<CoreTransaction, 'id'>, prismaTransaction?: any): Promise<any>; // Using any for now, will refine with Prisma types
-  update(id: number, transaction: Partial<CoreTransaction>): Promise<any>; // Using any for now, will refine with Prisma types
+  index(monthId?: number): Promise<TransactionWithCategory[]>;
+  show(id: number): Promise<TransactionWithCategory | null>;
+  store(transaction: Omit<CoreTransaction, 'id'>, prismaTransaction?: Prisma.TransactionClient): Promise<TransactionWithCategory>;
+  update(id: number, transaction: Partial<CoreTransaction>): Promise<TransactionWithCategory>;
   destroy(id: number): Promise<void>;
   importTransactions(transactions: TransactionImportDTO[]): Promise<TransactionImportResultDTO>;
   getTotalSpendingByCategory(monthId: number): Promise<CategorySpendingDTO[]>;

@@ -1,5 +1,7 @@
 import { Transaction, TransactionType } from '../Entities/Transaction';
 import { TransactionDTO } from '../DTOs/TransactionDTO';
+import { TransactionWithCategory } from '../Validators/types';
+import { CategorySpendingDTO } from '../DTOs/TransactionDTO';
 
 /**
  * Mapper class for converting between different Transaction representations
@@ -10,7 +12,7 @@ export class TransactionMapper {
   /**
    * Maps a Prisma transaction result to a domain Transaction entity
    */
-  static toDomain(prismaTransaction: any): Transaction {
+  static toDomain(prismaTransaction: TransactionWithCategory): Transaction {
     return Transaction.create({
       id: prismaTransaction.id,
       clerkId: prismaTransaction.clerkId,
@@ -30,14 +32,28 @@ export class TransactionMapper {
   /**
    * Converts domain entity to persistence format
    */
-  static toPersistence(transaction: Transaction): any {
+  static toPersistence(transaction: Transaction): {
+    clerkId: string;
+    name: string;
+    amountCAD: number;
+    amountUSD: number | null;
+    categoryId: number;
+    notes: string | null;
+    type: string;
+    date: Date;
+    monthId: number;
+  } {
+    if (!transaction.date || !transaction.monthId) {
+      throw new Error('Transaction date and monthId are required for persistence');
+    }
+    
     return {
       clerkId: transaction.clerkId,
       name: transaction.name,
       amountCAD: transaction.amountCAD,
-      amountUSD: transaction.amountUSD,
+      amountUSD: transaction.amountUSD ?? null,
       categoryId: transaction.categoryId,
-      notes: transaction.notes,
+      notes: transaction.notes ?? null,
       type: transaction.type.toString(),
       date: transaction.date,
       monthId: transaction.monthId
@@ -64,7 +80,7 @@ export class TransactionMapper {
   /**
    * Maps a Prisma transaction result directly to a TransactionDTO (for API responses)
    */
-  static toDTOFromRaw(raw: any): TransactionDTO {
+  static toDTOFromRaw(raw: TransactionWithCategory): TransactionDTO {
     return {
       id: raw.id,
       name: raw.name,
@@ -81,17 +97,17 @@ export class TransactionMapper {
   /**
    * Maps an array of Prisma transaction results to TransactionDTOs
    */
-  static toDTOs(transactions: any[]): TransactionDTO[] {
+  static toDTOs(transactions: TransactionWithCategory[]): TransactionDTO[] {
     return transactions.map(TransactionMapper.toDTOFromRaw);
   }
 
   /**
    * Maps a domain Transaction entity to a CategorySpendingDTO
    */
-  static toCategorySpendingDTO(transaction: Transaction, totalSpent: number, transactionCount: number): any {
+  static toCategorySpendingDTO(transaction: Transaction, totalSpent: number, transactionCount: number): CategorySpendingDTO {
     return {
       categoryId: transaction.categoryId,
-      categoryName: transaction.categoryName,
+      categoryName: transaction.categoryName || '',
       totalSpent,
       transactionCount,
     };

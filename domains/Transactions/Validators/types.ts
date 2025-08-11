@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { TransactionType } from '../Entities/Transaction';
 
 /**
@@ -16,6 +17,17 @@ export interface CoreTransaction {
   type: TransactionType;      // Strict enum
   monthId: number;            // Required
 }
+
+/**
+ * Prisma-generated types for repository operations
+ * These types match exactly what Prisma returns with includes
+ */
+export type TransactionWithCategory = Prisma.TransactionGetPayload<{
+  include: { category: { select: { name: true } } }
+}>;
+
+export type TransactionCreateInput = Prisma.TransactionCreateInput;
+export type TransactionUpdateInput = Prisma.TransactionUpdateInput;
 
 // Validation functions moved to transactionValidators.ts
 export { validateCoreTransaction } from './transactionValidators';

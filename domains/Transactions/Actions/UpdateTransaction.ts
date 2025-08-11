@@ -2,11 +2,12 @@ import { ITransactionRepository } from '../Repositories/ITransactionRepository';
 import { UpdateTransactionDTO } from '../DTOs/TransactionDTO';
 import { CoreTransaction } from '../Validators/types';
 import { TransactionType } from '../Entities/Transaction';
+import { TransactionWithCategory } from '../Validators/types';
 
 export class UpdateTransaction {
   constructor(private transactionRepository: ITransactionRepository) {}
 
-  async execute(id: number, data: UpdateTransactionDTO): Promise<any> {
+  async execute(id: number, data: UpdateTransactionDTO): Promise<TransactionWithCategory> {
     const updateData: Partial<CoreTransaction> = {};
 
     if (data.name !== undefined && data.name !== null) updateData.name = data.name;
