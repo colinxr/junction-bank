@@ -31,11 +31,14 @@ export class TransactionImportService {
         'name': 'name',
         'AMOUNT CAD': 'amount_cad',
         'Amount CAD': 'amount_cad',
+        'amount_cad': 'amount_cad',
         'AMOUNT USD': 'amount_usd', 
         'Amount USD': 'amount_usd',
+        'amount_usd': 'amount_usd',
         'CategoryId': 'category_id',
         'Category Id': 'category_id',
         'Category ID': 'category_id',
+        'category_id': 'category_id',
         'notes': 'notes',
         'Notes': 'notes',
         'Type': 'type',
@@ -102,6 +105,9 @@ export class TransactionImportService {
         const headerLine = lines[0];
         const expectedFieldCount = headerLine.split(',').length;
         
+        console.log('Expected field count:', expectedFieldCount);
+        console.log('Header line:', headerLine);
+        
         const normalizedLines = [headerLine];
         
         for (let i = 1; i < lines.length; i++) {
@@ -110,6 +116,8 @@ export class TransactionImportService {
           
           // Simple CSV field count validation/normalization
           const fields = line.split(',');
+          
+          console.log(`Row ${i}: ${fields.length} fields - ${line}`);
           
           if (fields.length > expectedFieldCount) {
             // Too many fields - combine extra fields into the last expected field
@@ -130,6 +138,7 @@ export class TransactionImportService {
         }
         
         cleanedContent = normalizedLines.join('\n');
+        console.log('Cleaned content preview:', cleanedContent.substring(0, 500));
       }
 
       // Parse CSV with more lenient settings
@@ -151,11 +160,16 @@ export class TransactionImportService {
 
       // Map CSV records to TransactionCSVRecord objects
       if (Array.isArray(parseResult.data)) {
+        console.log('Parsed CSV data:', parseResult.data);
+        console.log('Header mapping:', headerMapping);
+        
         parseResult.data.forEach((row, index) => {
           if (!row || typeof row !== 'object') {
             console.error('Invalid row at index', index, row);
             return;
           }
+          
+          console.log(`Processing row ${index}:`, row);
           
           const record: Partial<TransactionCSVRecord> = {};
           
@@ -174,8 +188,11 @@ export class TransactionImportService {
           for (const [csvHeader, recordField] of Object.entries(headerMapping)) {
             if (row[csvHeader] !== undefined) {
               record[recordField as keyof TransactionCSVRecord] = row[csvHeader];
+              console.log(`Mapped ${csvHeader} -> ${recordField}: ${row[csvHeader]}`);
             }
           }
+          
+          console.log('Mapped record:', record);
           
           // Validate required fields
           if (!record.date || !record.name) {
@@ -189,6 +206,8 @@ export class TransactionImportService {
           
           records.push(record as TransactionCSVRecord);
         });
+        
+        console.log('Final records:', records);
       } else {
         throw new Error('Papa Parse did not return an array of data');
       }
@@ -217,6 +236,7 @@ export class TransactionImportService {
       // Wait for all validations to complete
       await Promise.all(pendingValidations);
 
+      console.log('Final validation results:', { validTransactions, errors });
       return { validTransactions, errors };
     } catch (err) {
       console.error('Error in parseCSV:', err);
@@ -240,9 +260,12 @@ export class TransactionImportService {
     error?: ImportError 
   }> {
     try {
+      console.log(`Processing record ${rowIndex}:`, record);
+      
       // Parse date
       const date = this.parseDate(record.date);
       if (!date) {
+        console.log(`Invalid date for row ${rowIndex}: ${record.date}`);
         return {
           valid: false,
           error: {
@@ -303,6 +326,14 @@ export class TransactionImportService {
         ? TransactionType.INCOME 
         : TransactionType.EXPENSE;
 
+      // Override type if explicitly provided in CSV
+      if (record.type) {
+        const normalizedType = record.type.toLowerCase();
+        if (normalizedType === 'income' || normalizedType === 'expense') {
+          type = normalizedType === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE;
+        }
+      }
+
       // Normalize amount to positive value
       const normalizedAmountCAD = amountCAD !== undefined ? Math.abs(amountCAD) : undefined;
       const normalizedAmountUSD = amountUSD !== undefined ? Math.abs(amountUSD) : undefined;
@@ -362,7 +393,7 @@ export class TransactionImportService {
         amountUSD: normalizedAmountUSD,
         categoryId,
         notes: record.notes,
-        type: record.type as TransactionType,
+        type: type, // Use the processed type, not the raw record.type
         date,
         monthId
       };
