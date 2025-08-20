@@ -9,7 +9,10 @@ export async function POST(request: NextRequest) {
   try {
     const { fields, files } = await parseFormData(request);
     const file = files.file?.[0];
-    const clerkId = fields.clerkId?.[0];
+    const clerkId = request.headers.get('x-user-id');
+
+    console.log('got here');
+    
 
     if (!file || !clerkId) {
       return ApiErrorHandler.validationError('File and clerkId are required');

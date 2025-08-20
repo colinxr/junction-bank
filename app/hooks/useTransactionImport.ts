@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useUser } from '@clerk/nextjs';
 import { 
   TransactionImportDTO, 
   TransactionImportResultDTO, 
@@ -15,6 +16,7 @@ interface ImportState {
 }
 
 export function useTransactionImport() {
+  const { user } = useUser();
   const [state, setState] = useState<ImportState>({
     step: 'idle',
     file: null,
@@ -50,6 +52,11 @@ export function useTransactionImport() {
       return;
     }
 
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      return;
+    }
+
     setState(prev => ({ ...prev, step: 'uploading' }));
 
     try {
@@ -71,8 +78,8 @@ export function useTransactionImport() {
       setState(prev => ({
         ...prev,
         step: 'preview',
-        transactions: data.transactions || [],
-        errors: data.errors || [],
+        transactions: data.data?.transactions || [],
+        errors: data.data?.errors || [],
       }));
 
     } catch (error) {
@@ -102,6 +109,11 @@ export function useTransactionImport() {
   const confirmImport = async (selectedTransactions: TransactionImportDTO[]) => {
     if (!state.file || selectedTransactions.length === 0) {
       toast.error('No transactions selected for import');
+      return;
+    }
+
+    if (!user?.id) {
+      toast.error('User not authenticated');
       return;
     }
 

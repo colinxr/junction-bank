@@ -9,11 +9,11 @@ export async function POST(request: NextRequest) {
   try {
     const { fields, files } = await parseFormData(request);
     const file = files.file?.[0];
-    const userId = fields.userId?.[0];
+    const clerkId = request.headers.get('x-user-id');
 
-    if (!file || !userId) {
+    if (!file || !clerkId) {
       return NextResponse.json(
-        { error: 'File and userId are required' },
+        { error: 'File and clerkId are required' },
         { status: 400 }
       );
     }
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     // Use the preview action to process the CSV content
     const result = await transactionActions.preview.execute({
       csvContent,
-      userId,
+      userId: clerkId,
     });
 
     return NextResponse.json({
