@@ -139,6 +139,22 @@ function detectCategory(description) {
 }
 ```
 
+## E2E Testing (Playwright)
+
+Install browsers:
+
+```bash
+npm run e2e:install
+```
+
+Run tests:
+
+```bash
+npm run e2e
+```
+
+The E2E suite targets CRUD for categories, months, transactions, and recurring transactions using API routes. Middleware includes a test-only bypass via `E2E_AUTH_BYPASS_USER_ID` that injects `x-user-id` into API requests.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

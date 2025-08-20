@@ -23,6 +23,15 @@ const isPublicRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   const { pathname } = req.nextUrl;
 
+  // E2E test bypass: when E2E_AUTH_BYPASS_USER_ID is set, skip Clerk for API routes
+  if (pathname.startsWith(ROUTES.api) && process.env.E2E_AUTH_BYPASS_USER_ID) {
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-user-id', process.env.E2E_AUTH_BYPASS_USER_ID);
+    return NextResponse.next({
+      request: { headers: requestHeaders }
+    });
+  }
+
   // Allow public routes without protection
   if (isPublicRoute(req)) {
     // For login page - redirect to dashboard if already authenticated
