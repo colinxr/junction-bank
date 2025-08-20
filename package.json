@@ -14,7 +14,7 @@
     "test": "dotenv -e .env.test -- vitest run",
     "test:coverage": "dotenv -e .env.test -- vitest run --coverage",
     "seed-transactions": "ts-node prisma/seed-transactions.ts",
-    "prepareCSV": "node scripts/convert-credit-card-csv.js",
+    "prepareCSV": "node scripts/convert-credit-card-csv.cjs",
     "trainModel": "node scripts/build-category-model.js",
     "redis:clear": "docker exec junction-bank-valkey-1 redis-cli FLUSHALL"
   },
