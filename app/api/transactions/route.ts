@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json();
 
-    if (!data.name || !data.amountCAD || !data.category) {
-      return ApiErrorHandler.validationError('Name, amountCAD, and category are required');
+    if (!data.name || !data.amountCAD || !data.categoryId) {
+      return ApiErrorHandler.validationError('Name, amountCAD, and categoryId are required');
     }
 
     const transaction = await transactionActions.store.execute({
