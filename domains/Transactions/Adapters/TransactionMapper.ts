@@ -81,6 +81,12 @@ export class TransactionMapper {
    * Maps a Prisma transaction result directly to a TransactionDTO (for API responses)
    */
   static toDTOFromRaw(raw: TransactionWithCategory): TransactionDTO {
+    // Handle both Date objects (from Prisma) and date strings (from Redis cache)
+    const dateValue = raw.date;
+    const isoDate = dateValue instanceof Date 
+      ? dateValue.toISOString() 
+      : dateValue ? new Date(dateValue).toISOString() : undefined;
+
     return {
       id: raw.id,
       name: raw.name,
@@ -90,7 +96,7 @@ export class TransactionMapper {
       categoryName: raw.category?.name,
       notes: raw.notes,
       type: raw.type,
-      date: raw.date?.toISOString(),
+      date: isoDate,
     };
   }
 

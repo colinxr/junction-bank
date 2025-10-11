@@ -136,4 +136,44 @@ describe('TransactionMapper', () => {
     expect(result.totalSpent).toBe(500);
     expect(result.transactionCount).toBe(5);
   });
+
+  it('handles both Date objects and date strings in toDTOFromRaw', () => {
+    // Test with Date object (from Prisma)
+    const rawTransactionWithDate = {
+      id: 1,
+      clerkId: 'user_123',
+      name: 'Test Transaction',
+      amountCAD: 100,
+      amountUSD: null,
+      categoryId: 1,
+      category: { name: 'Food' },
+      notes: 'Test notes',
+      type: 'Expense',
+      date: new Date('2025-01-01'),
+      monthId: 1,
+      createdAt: new Date('2025-01-01'),
+    } as any;
+
+    const resultWithDate = TransactionMapper.toDTOFromRaw(rawTransactionWithDate);
+    expect(resultWithDate.date).toBe('2025-01-01T00:00:00.000Z');
+
+    // Test with date string (from Redis cache)
+    const rawTransactionWithString = {
+      id: 2,
+      clerkId: 'user_123',
+      name: 'Test Transaction 2',
+      amountCAD: 200,
+      amountUSD: null,
+      categoryId: 2,
+      category: { name: 'Transport' },
+      notes: 'Test notes 2',
+      type: 'Income',
+      date: '2025-01-02T00:00:00.000Z', // String instead of Date
+      monthId: 2,
+      createdAt: '2025-01-02T00:00:00.000Z',
+    } as any;
+
+    const resultWithString = TransactionMapper.toDTOFromRaw(rawTransactionWithString);
+    expect(resultWithString.date).toBe('2025-01-02T00:00:00.000Z');
+  });
 }); 
