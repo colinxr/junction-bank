@@ -16,7 +16,7 @@
 
 - [ ] `docker/php/Dockerfile.dev` with Xdebug support
 - [ ] `docker/php/Dockerfile.prod` optimized for size
-- [ ] `docker/nginx/nginx.conf` with Laravel-specific configuration
+- [ ] `docker/caddy/Caddyfile` with Laravel-specific configuration
 - [ ] `compose.yml` base configuration
 - [ ] `compose.dev.yml` with development tools
 - [ ] `compose.prod.yml` with production optimizations
@@ -25,8 +25,7 @@
 ## Technical Specifications
 
 - PHP 8.3-FPM Alpine base
-- Nginx with FastCGI cache
+- Caddy with automatic HTTPS and HTTP/3 support
 - PostgreSQL 16 with performance tuning
 - Redis 7 with persistence configuration
 - Health checks on all containers
-
