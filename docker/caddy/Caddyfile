@@ -1,0 +1,101 @@
+{
+    # Global options
+    auto_https off
+    admin off
+}
+
+:80 {
+    # Set root directory
+    root * /var/www/html/public
+    
+    # Enable compression
+    encode gzip zstd
+    
+    # PHP-FPM configuration
+    php_fastcgi php:9000
+    
+    # Laravel-specific rewrites
+    @notStatic {
+        not path *.css *.js *.jpg *.jpeg *.png *.gif *.svg *.woff *.woff2 *.ttf *.eot *.ico *.webp
+    }
+    
+    # Serve static files directly
+    file_server
+    
+    # Laravel front controller
+    try_files {path} {path}/ /index.php?{query}
+    
+    # Security headers
+    header {
+        # Remove server information
+        -Server
+        -X-Powered-By
+        
+        # Security headers
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        
+        # Optional: Uncomment for production with HTTPS
+        # Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    }
+    
+    # Disable .ht* files
+    @htfiles {
+        path *.ht*
+    }
+    respond @htfiles 404
+    
+    # Access logs
+    log {
+        output stdout
+        format json {
+            time_format "iso8601"
+        }
+        level INFO
+    }
+}
+
+# Production HTTPS configuration (uncomment and configure for production)
+# {$APP_DOMAIN:localhost} {
+#     root * /var/www/html/public
+#     
+#     encode gzip zstd
+#     
+#     php_fastcgi php:9000 {
+#         split_path .php
+#         env APP_ENV {$APP_ENV}
+#         env APP_DEBUG {$APP_DEBUG}
+#         dial_timeout 30s
+#         read_timeout 300s
+#         write_timeout 300s
+#     }
+#     
+#     file_server
+#     try_files {path} {path}/ /index.php?{query}
+#     
+#     header {
+#         -Server
+#         -X-Powered-By
+#         X-Content-Type-Options "nosniff"
+#         X-Frame-Options "SAMEORIGIN"
+#         X-XSS-Protection "1; mode=block"
+#         Referrer-Policy "strict-origin-when-cross-origin"
+#         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+#     }
+#     
+#     @htfiles {
+#         path *.ht*
+#     }
+#     respond @htfiles 404
+#     
+#     log {
+#         output stdout
+#         format json {
+#             time_format "iso8601"
+#         }
+#         level INFO
+#     }
+# }
+

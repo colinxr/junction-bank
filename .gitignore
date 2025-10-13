@@ -45,3 +45,28 @@ temp/
 
 # database backups
 database-backups/
+
+# Docker
+docker/postgres/backups/*.dump
+docker/postgres/backups/*.sql
+
+# Environment
+.env
+.env.local
+.env.production
+!.env.example
+
+# Coverage
+coverage/
+
+# Laravel (for new Laravel app)
+app/vendor/
+app/node_modules/
+app/storage/*.key
+app/.env
+app/.env.backup
+app/.phpunit.result.cache
+app/Homestead.json
+app/Homestead.yaml
+app/npm-debug.log
+app/yarn-error.log

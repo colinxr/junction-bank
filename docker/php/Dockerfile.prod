@@ -1,0 +1,84 @@
+FROM php:8.3-fpm-alpine AS base
+
+# Install system dependencies
+RUN apk add --no-cache \
+  libpng \
+  libzip \
+  postgresql-libs \
+  oniguruma \
+  icu-libs
+
+# Install build dependencies in separate layer
+FROM base AS builder
+
+RUN apk add --no-cache --virtual .build-deps \
+  $PHPIZE_DEPS \
+  libpng-dev \
+  libzip-dev \
+  postgresql-dev \
+  oniguruma-dev \
+  icu-dev
+
+# Install PHP extensions
+RUN docker-php-ext-install \
+  pdo_pgsql \
+  pgsql \
+  mbstring \
+  zip \
+  exif \
+  pcntl \
+  bcmath \
+  gd \
+  intl \
+  opcache
+
+# Install Redis extension
+RUN pecl install redis && docker-php-ext-enable redis
+
+# Clean up build dependencies
+RUN apk del .build-deps && \
+  rm -rf /tmp/* /var/cache/apk/*
+
+# Production image
+FROM base
+
+# Copy PHP extensions from builder
+COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+
+# Copy production PHP configuration
+COPY php-prod.ini /usr/local/etc/php/conf.d/php-custom.ini
+
+# Copy Composer from official image
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Create application directory
+WORKDIR /var/www/html
+
+# Create non-root user
+RUN addgroup -g 1000 laravel && \
+  adduser -D -u 1000 -G laravel laravel
+
+# Application files will be copied at runtime via volume or COPY
+# For production, uncomment the following and build with context
+# COPY --chown=laravel:laravel . /var/www/html
+
+# Set proper permissions
+RUN chown -R laravel:laravel /var/www/html && \
+  chmod -R 755 /var/www/html
+
+# Switch to non-root user
+USER laravel
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD php-fpm -t || exit 1
+
+# Security: Run in read-only mode where possible
+# (storage and cache directories need write access)
+VOLUME ["/var/www/html/storage", "/var/www/html/bootstrap/cache"]
+
+EXPOSE 9000
+
+CMD ["php-fpm", "-F", "-R"]
+

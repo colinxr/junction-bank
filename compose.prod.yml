@@ -1,0 +1,354 @@
+version: '3.9'
+
+# Production environment overrides
+# Usage: docker compose -f compose.yml -f compose.prod.yml up -d
+
+services:
+  php:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile.prod
+      args:
+        - USER_ID=1000
+        - GROUP_ID=1000
+    image: junction-bank/php:prod
+    restart: always
+    # Security: Read-only root filesystem
+    read_only: true
+    # Security: Reduce capabilities
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    # Security: No new privileges
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      # Production: Mount application code as read-only
+      - ./app:/var/www/html:ro
+      # Writable volumes for storage and cache
+      - php_storage:/var/www/html/storage
+      - php_cache:/var/www/html/bootstrap/cache
+      # Temporary directory
+      - /tmp
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - LOG_LEVEL=warning
+      - LOG_CHANNEL=stack
+      - SESSION_SECURE_COOKIE=true
+      - SANCTUM_STATEFUL_DOMAINS=${SANCTUM_STATEFUL_DOMAINS}
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  caddy:
+    restart: always
+    # Security: Read-only root filesystem
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./app:/var/www/html:ro
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - /tmp
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    restart: always
+    # Don't expose PostgreSQL port in production
+    ports: []
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/backups:/backups
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+      # Production tuning for larger datasets
+      - POSTGRES_SHARED_BUFFERS=512MB
+      - POSTGRES_EFFECTIVE_CACHE_SIZE=2GB
+      - POSTGRES_MAINTENANCE_WORK_MEM=128MB
+      - POSTGRES_WORK_MEM=32MB
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+    command: >
+      postgres
+      -c shared_buffers=512MB
+      -c effective_cache_size=2GB
+      -c maintenance_work_mem=128MB
+      -c work_mem=32MB
+      -c max_connections=200
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c min_wal_size=2GB
+      -c max_wal_size=8GB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c max_worker_processes=4
+      -c max_parallel_workers_per_gather=2
+      -c max_parallel_workers=4
+      -c password_encryption=scram-sha-256
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    healthcheck:
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    restart: always
+    # Don't expose Redis port in production
+    ports: []
+    volumes:
+      - redis_data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    command: >
+      redis-server /usr/local/etc/redis/redis.conf
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  # Queue Worker - Production
+  queue:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile.prod
+    image: junction-bank/php:prod
+    container_name: junction-bank-queue-prod
+    restart: always
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    security_opt:
+      - no-new-privileges:true
+    working_dir: /var/www/html
+    volumes:
+      - ./app:/var/www/html:ro
+      - php_storage:/var/www/html/storage
+      - php_cache:/var/www/html/bootstrap/cache
+      - /tmp
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      - php
+      - redis
+    networks:
+      - junction-bank-network
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    command: php artisan queue:work --tries=3 --timeout=90 --sleep=3 --max-jobs=1000 --max-time=3600
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Scheduler - Production
+  scheduler:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile.prod
+    image: junction-bank/php:prod
+    container_name: junction-bank-scheduler-prod
+    restart: always
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    security_opt:
+      - no-new-privileges:true
+    working_dir: /var/www/html
+    volumes:
+      - ./app:/var/www/html:ro
+      - php_storage:/var/www/html/storage
+      - php_cache:/var/www/html/bootstrap/cache
+      - /tmp
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    depends_on:
+      - php
+    networks:
+      - junction-bank-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    command: >
+      sh -c "while true; do
+        php artisan schedule:run --verbose --no-interaction &
+        sleep 60
+      done"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Backup Service
+  backup:
+    image: postgres:16-alpine
+    container_name: junction-bank-backup
+    restart: "no"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data:ro
+      - ./docker/postgres/backups:/backups
+    environment:
+      - PGHOST=postgres
+      - PGDATABASE=${DB_DATABASE}
+      - PGUSER=${DB_USERNAME}
+      - PGPASSWORD=${DB_PASSWORD}
+    depends_on:
+      - postgres
+    networks:
+      - junction-bank-network
+    entrypoint: >
+      sh -c "
+        pg_dump -Fc > /backups/backup_$$(date +%Y%m%d_%H%M%S).dump &&
+        find /backups -name '*.dump' -mtime +30 -delete
+      "
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+

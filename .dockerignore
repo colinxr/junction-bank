@@ -1,9 +1,67 @@
-node_modules
-.next
-Dockerfile
-docker-compose.yml
+# Docker
+.docker/
+docker/
+Dockerfile*
+compose*.yml
+.dockerignore
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README*
+docs/
+PRDs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+tests/
+coverage/
+.phpunit.result.cache
+phpunit.xml
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment
 .env
+.env.*
+!.env.example
+
+# Laravel
+storage/
+bootstrap/cache/
+vendor/
+
+# Build artifacts
 *.log
-.git
-.vscode
-README.md
+*.cache
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.circleci/
+
+# Backups
+*.sql
+*.dump
+backups/
+

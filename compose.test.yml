@@ -1,0 +1,281 @@
+version: '3.9'
+
+# Test environment overrides
+# Usage: docker compose -f compose.yml -f compose.test.yml up --abort-on-container-exit
+
+services:
+  php:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile.dev
+      args:
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
+    image: junction-bank/php:test
+    container_name: junction-bank-php-test
+    volumes:
+      - ./app:/var/www/html:cached
+      - php_test_storage:/var/www/html/storage
+      - php_test_cache:/var/www/html/bootstrap/cache
+      - test_vendor:/var/www/html/vendor
+    environment:
+      - APP_ENV=testing
+      - APP_DEBUG=true
+      - APP_KEY=base64:test_key_for_testing_only_do_not_use_in_production
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres-test
+      - DB_PORT=5432
+      - DB_DATABASE=junction_bank_test
+      - DB_USERNAME=test_user
+      - DB_PASSWORD=test_password
+      - REDIS_HOST=redis-test
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=array
+      - QUEUE_CONNECTION=sync
+      - MAIL_MAILER=array
+      - LOG_CHANNEL=stderr
+      - BCRYPT_ROUNDS=4
+      - HASH_ROUNDS=4
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - junction-bank-test-network
+    command: >
+      sh -c "
+        composer install --no-interaction --prefer-dist --optimize-autoloader &&
+        php artisan config:clear &&
+        php artisan cache:clear &&
+        php artisan migrate:fresh --seed --force &&
+        php artisan test --parallel --coverage --min=80
+      "
+
+  # Isolated PostgreSQL for testing
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: junction-bank-postgres-test
+    tmpfs:
+      - /var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=junction_bank_test
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    networks:
+      - junction-bank-test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d junction_bank_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    command: >
+      postgres
+      -c shared_buffers=128MB
+      -c fsync=off
+      -c synchronous_commit=off
+      -c full_page_writes=off
+      -c max_connections=100
+      -c client_min_messages=warning
+    logging:
+      driver: "none"
+
+  # Isolated Redis for testing
+  redis-test:
+    image: redis:7-alpine
+    container_name: junction-bank-redis-test
+    tmpfs:
+      - /data
+    command: redis-server --save "" --appendonly no --loglevel warning
+    networks:
+      - junction-bank-test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: "none"
+
+  # PHPUnit test runner with coverage
+  phpunit:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile.dev
+    image: junction-bank/php:test
+    container_name: junction-bank-phpunit
+    working_dir: /var/www/html
+    volumes:
+      - ./app:/var/www/html:cached
+      - php_test_storage:/var/www/html/storage
+      - php_test_cache:/var/www/html/bootstrap/cache
+      - test_vendor:/var/www/html/vendor
+      - ./coverage:/var/www/html/coverage
+    environment:
+      - APP_ENV=testing
+      - APP_DEBUG=true
+      - APP_KEY=base64:test_key_for_testing_only_do_not_use_in_production
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres-test
+      - DB_PORT=5432
+      - DB_DATABASE=junction_bank_test
+      - DB_USERNAME=test_user
+      - DB_PASSWORD=test_password
+      - REDIS_HOST=redis-test
+      - REDIS_PORT=6379
+      - XDEBUG_MODE=coverage
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - junction-bank-test-network
+    profiles:
+      - phpunit
+    command: >
+      sh -c "
+        composer install --no-interaction --prefer-dist &&
+        php artisan config:clear &&
+        php artisan test --parallel --coverage-html=coverage --min=80
+      "
+
+  # Pest test runner (alternative to PHPUnit)
+  pest:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile.dev
+    image: junction-bank/php:test
+    container_name: junction-bank-pest
+    working_dir: /var/www/html
+    volumes:
+      - ./app:/var/www/html:cached
+      - php_test_storage:/var/www/html/storage
+      - php_test_cache:/var/www/html/bootstrap/cache
+      - test_vendor:/var/www/html/vendor
+      - ./coverage:/var/www/html/coverage
+    environment:
+      - APP_ENV=testing
+      - APP_DEBUG=true
+      - APP_KEY=base64:test_key_for_testing_only_do_not_use_in_production
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres-test
+      - DB_PORT=5432
+      - DB_DATABASE=junction_bank_test
+      - DB_USERNAME=test_user
+      - DB_PASSWORD=test_password
+      - REDIS_HOST=redis-test
+      - REDIS_PORT=6379
+      - XDEBUG_MODE=coverage
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - junction-bank-test-network
+    profiles:
+      - pest
+    command: >
+      sh -c "
+        composer install --no-interaction --prefer-dist &&
+        php artisan config:clear &&
+        ./vendor/bin/pest --parallel --coverage --min=80
+      "
+
+  # Static Analysis with PHPStan
+  phpstan:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile.dev
+    image: junction-bank/php:test
+    container_name: junction-bank-phpstan
+    working_dir: /var/www/html
+    volumes:
+      - ./app:/var/www/html:cached
+      - test_vendor:/var/www/html/vendor
+    environment:
+      - APP_ENV=testing
+    networks:
+      - junction-bank-test-network
+    profiles:
+      - static-analysis
+    command: >
+      sh -c "
+        composer install --no-interaction --prefer-dist &&
+        ./vendor/bin/phpstan analyse --memory-limit=1G
+      "
+
+  # Code Style with PHP CS Fixer
+  php-cs-fixer:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile.dev
+    image: junction-bank/php:test
+    container_name: junction-bank-php-cs-fixer
+    working_dir: /var/www/html
+    volumes:
+      - ./app:/var/www/html:cached
+      - test_vendor:/var/www/html/vendor
+    networks:
+      - junction-bank-test-network
+    profiles:
+      - code-style
+    command: >
+      sh -c "
+        composer install --no-interaction --prefer-dist &&
+        ./vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
+      "
+
+  # Architecture Tests with PHPArkitect
+  phparkitect:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile.dev
+    image: junction-bank/php:test
+    container_name: junction-bank-phparkitect
+    working_dir: /var/www/html
+    volumes:
+      - ./app:/var/www/html:cached
+      - test_vendor:/var/www/html/vendor
+    networks:
+      - junction-bank-test-network
+    profiles:
+      - architecture
+    command: >
+      sh -c "
+        composer install --no-interaction --prefer-dist &&
+        ./vendor/bin/phparkitect check
+      "
+
+networks:
+  junction-bank-test-network:
+    driver: bridge
+    name: junction-bank-test-network
+
+volumes:
+  php_test_storage:
+    name: junction-bank-php-test-storage
+  php_test_cache:
+    name: junction-bank-php-test-cache
+  test_vendor:
+    name: junction-bank-test-vendor
+
+# Remove Caddy from test environment - not needed for API testing
+# Override to prevent starting
+caddy:
+  profiles:
+    - manual
+
+postgres:
+  profiles:
+    - manual
+
+redis:
+  profiles:
+    - manual
+

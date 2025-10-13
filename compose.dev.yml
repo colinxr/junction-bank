@@ -1,0 +1,179 @@
+version: '3.9'
+
+# Development environment overrides
+# Usage: docker compose -f compose.yml -f compose.dev.yml up
+
+services:
+  php:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile.dev
+      args:
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
+    image: junction-bank/php:dev
+    volumes:
+      # Use cached mode for better performance on macOS
+      - ./app:/var/www/html:cached
+      # Override with writable volumes
+      - php_storage:/var/www/html/storage
+      - php_cache:/var/www/html/bootstrap/cache
+      # Mount composer cache for faster installs
+      - composer_cache:/home/laravel/.composer/cache
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - LOG_LEVEL=debug
+      - XDEBUG_MODE=${XDEBUG_MODE:-debug}
+      - XDEBUG_CONFIG=client_host=host.docker.internal
+      - PHP_IDE_CONFIG=serverName=junction-bank
+    ports:
+      # Expose Xdebug port
+      - "9003:9003"
+    # Remove read-only restrictions for development
+    read_only: false
+
+  caddy:
+    volumes:
+      # Use cached mode for source files
+      - ./app:/var/www/html:cached
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+
+  postgres:
+    ports:
+      # Expose PostgreSQL for local development tools (using 5433 to avoid conflicts)
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-scripts:/docker-entrypoint-initdb.d:ro
+      # Mount local backup/dump directory
+      - ./docker/postgres/backups:/backups
+    environment:
+      # Development database settings
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      # Enable query logging for development
+      - POSTGRES_LOG_STATEMENT=all
+
+  redis:
+    ports:
+      # Expose Redis for local development tools (using 6380 to avoid conflict with local Redis)
+      - "6380:6379"
+    command: redis-server --loglevel verbose --save 60 1
+
+  # MailHog for email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: junction-bank-mailhog
+    ports:
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP
+    networks:
+      - junction-bank-network
+
+  # Laravel Queue Worker for development
+  queue:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile.dev
+    image: junction-bank/php:dev
+    container_name: junction-bank-queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./app:/var/www/html:cached
+      - php_storage:/var/www/html/storage
+      - php_cache:/var/www/html/bootstrap/cache
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-junction_bank}
+      - DB_USERNAME=${DB_USERNAME:-junction_user}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      - php
+      - redis
+    networks:
+      - junction-bank-network
+    command: php artisan queue:work --tries=3 --timeout=90
+
+  # Laravel Scheduler (Cron)
+  scheduler:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile.dev
+    image: junction-bank/php:dev
+    container_name: junction-bank-scheduler
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./app:/var/www/html:cached
+      - php_storage:/var/www/html/storage
+      - php_cache:/var/www/html/bootstrap/cache
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-junction_bank}
+      - DB_USERNAME=${DB_USERNAME:-junction_user}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - php
+    networks:
+      - junction-bank-network
+    command: >
+      sh -c "while true; do
+        php artisan schedule:run --verbose --no-interaction &
+        sleep 60
+      done"
+
+  # pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: junction-bank-pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@junction-bank.local}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin}
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - junction-bank-network
+
+  # Redis Commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: junction-bank-redis-commander
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - junction-bank-network
+
+volumes:
+  composer_cache:
+    name: junction-bank-composer-cache
+  pgadmin_data:
+    name: junction-bank-pgadmin-data
+

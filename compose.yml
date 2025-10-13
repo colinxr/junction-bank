@@ -1,63 +1,152 @@
+version: '3.9'
+
+# Base configuration shared across all environments
+# Override with compose.dev.yml, compose.prod.yml, or compose.test.yml
+
 services:
-  # Next.js app
-  nextjs:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
+  # PHP-FPM Service
+  php:
+    image: junction-bank/php:${ENV:-dev}
+    container_name: junction-bank-php
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./app:/var/www/html:delegated
+      - php_storage:/var/www/html/storage
+      - php_cache:/var/www/html/bootstrap/cache
     environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_REDIS_URL=redis://valkey:6379
-      - PORT=3000
-      - HOSTNAME=0.0.0.0
-      - NEXT_PUBLIC_DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - APP_ENV=${APP_ENV:-local}
+      - APP_DEBUG=${APP_DEBUG:-true}
+      - APP_KEY=${APP_KEY}
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-junction_bank}
+      - DB_USERNAME=${DB_USERNAME:-junction_user}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
     depends_on:
-      valkey:
-        condition: service_healthy
       postgres:
         condition: service_healthy
-    restart: unless-stopped
+      redis:
+        condition: service_healthy
+    networks:
+      - junction-bank-network
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet localhost:3000 || exit 1"]
+      test: ["CMD", "php-fpm", "-t"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 40s
 
-  # Valkey server (Redis-compatible)
-  valkey:
-    image: valkey/valkey:alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - valkey-data:/data
+  # Caddy Web Server
+  caddy:
+    image: caddy:2-alpine
+    container_name: junction-bank-caddy
     restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:80"
+      - "${APP_HTTPS_PORT:-8443}:443"
+      - "${APP_HTTP3_PORT:-8443}:443/udp"
+    volumes:
+      - ./app:/var/www/html:ro
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - APP_ENV=${APP_ENV:-local}
+      - APP_DEBUG=${APP_DEBUG:-false}
+      - APP_DOMAIN=${APP_DOMAIN:-localhost}
+    depends_on:
+      php:
+        condition: service_healthy
+    networks:
+      - junction-bank-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/api/health"]
+      interval: 30s
+      timeout: 10s
       retries: 3
+      start_period: 10s
 
-  # PostgreSQL database
+  # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
+    container_name: junction-bank-postgres
     restart: unless-stopped
+    # Ports exposed in environment-specific overrides
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-scripts:/docker-entrypoint-initdb.d:ro
+    environment:
+      - POSTGRES_DB=${DB_DATABASE:-junction_bank}
+      - POSTGRES_USER=${DB_USERNAME:-junction_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-secret}
+      - POSTGRES_INITDB_ARGS=-E UTF8 --locale=en_US.utf8
+      # Performance tuning
+      - POSTGRES_SHARED_BUFFERS=256MB
+      - POSTGRES_EFFECTIVE_CACHE_SIZE=1GB
+      - POSTGRES_MAINTENANCE_WORK_MEM=64MB
+      - POSTGRES_WORK_MEM=16MB
+    networks:
+      - junction-bank-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-junction_user} -d ${DB_DATABASE:-junction_bank}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c work_mem=16MB
+      -c max_connections=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+
+  # Redis Cache and Queue
+  redis:
+    image: redis:7-alpine
+    container_name: junction-bank-redis
+    restart: unless-stopped
+    # Ports exposed in environment-specific overrides
+    volumes:
+      - redis_data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - junction-bank-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+networks:
+  junction-bank-network:
+    driver: bridge
+    name: junction-bank-network
 
 volumes:
-  valkey-data:
-  postgres-data:
+  postgres_data:
+    name: junction-bank-postgres-data
+  redis_data:
+    name: junction-bank-redis-data
+  php_storage:
+    name: junction-bank-php-storage
+  php_cache:
+    name: junction-bank-php-cache
+  caddy_data:
+    name: junction-bank-caddy-data
+  caddy_config:
+    name: junction-bank-caddy-config
+

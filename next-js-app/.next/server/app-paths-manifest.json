@@ -1,0 +1,12 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/auth/login/route": "app/api/auth/login/route.js",
+  "/api/auth/logout/route": "app/api/auth/logout/route.js",
+  "/api/categories/route": "app/api/categories/route.js",
+  "/api/transactions/route": "app/api/transactions/route.js",
+  "/auth/login/page": "app/auth/login/page.js",
+  "/dashboard/months/page": "app/dashboard/months/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/transactions/page": "app/dashboard/transactions/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js"
+}
