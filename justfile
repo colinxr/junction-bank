@@ -13,9 +13,10 @@ dev:
     docker compose -f compose.yml -f compose.dev.yml up -d
     @echo "Development environment started!"
     @echo "App: http://localhost:8000"
-    @echo "MailHog: http://localhost:8025"
-    @echo "PgAdmin: http://localhost:5050"
+    @echo "Adminer: http://localhost:8080"
     @echo "Redis Commander: http://localhost:8081"
+    @echo "MailHog: http://localhost:8025"
+    @echo "Vite Dev Server: http://localhost:5173"
 
 # Stop development environment
 dev-stop:
@@ -67,18 +68,20 @@ test-pest:
     docker compose -f compose.yml -f compose.test.yml down -v
 
 # Run static analysis (PHPStan)
-test-phpstan:
-    docker compose -f compose.yml -f compose.test.yml --profile static-analysis up --abort-on-container-exit
-    docker compose -f compose.yml -f compose.test.yml down -v
+phpstan:
+    docker compose -f compose.yml -f compose.dev.yml exec php ./vendor/bin/phpstan analyse
 
-# Check code style
-test-cs:
-    docker compose -f compose.yml -f compose.test.yml --profile code-style up --abort-on-container-exit
-    docker compose -f compose.yml -f compose.test.yml down -v
+# Run static analysis with verbose output
+phpstan-verbose:
+    docker compose -f compose.yml -f compose.dev.yml exec php ./vendor/bin/phpstan analyse --verbose
 
-# Fix code style
-test-cs-fix:
-    docker compose -f compose.yml -f compose.dev.yml exec php ./vendor/bin/php-cs-fixer fix
+# Check code style with Pint
+pint:
+    docker compose -f compose.yml -f compose.dev.yml exec php ./vendor/bin/pint
+
+# Check code style without fixing
+pint-test:
+    docker compose -f compose.yml -f compose.dev.yml exec php ./vendor/bin/pint --test
 
 # Run architecture tests
 test-arch:
@@ -145,6 +148,36 @@ psql:
 # Access Redis CLI
 redis-cli:
     docker compose -f compose.yml -f compose.dev.yml exec redis redis-cli
+
+# Asset Compilation Commands
+# ===========================
+
+# Build assets for production
+assets-build:
+    docker compose -f compose.yml -f compose.dev.yml exec node npm run build
+
+# Install npm dependencies
+npm-install:
+    docker compose -f compose.yml -f compose.dev.yml exec node npm install
+
+# Update npm dependencies
+npm-update:
+    docker compose -f compose.yml -f compose.dev.yml exec node npm update
+
+# View Node/Vite logs
+vite-logs:
+    docker compose -f compose.yml -f compose.dev.yml logs -f node
+
+# Code Quality Commands
+# ======================
+
+# Run all quality checks
+quality: phpstan pint-test
+    @echo "All quality checks passed!"
+
+# Fix all code style issues
+fix: pint
+    @echo "Code style fixed!"
 
 # Build Commands
 # ==============

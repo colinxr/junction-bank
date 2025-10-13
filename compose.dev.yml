@@ -14,7 +14,7 @@ services:
     image: junction-bank/php:dev
     volumes:
       # Use cached mode for better performance on macOS
-      - ./app:/var/www/html:cached
+      - .:/var/www/html:cached
       # Override with writable volumes
       - php_storage:/var/www/html/storage
       - php_cache:/var/www/html/bootstrap/cache
@@ -36,7 +36,7 @@ services:
   caddy:
     volumes:
       # Use cached mode for source files
-      - ./app:/var/www/html:cached
+      - .:/var/www/html:cached
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
     environment:
       - APP_ENV=local
@@ -83,7 +83,7 @@ services:
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
-      - ./app:/var/www/html:cached
+      - .:/var/www/html:cached
       - php_storage:/var/www/html/storage
       - php_cache:/var/www/html/bootstrap/cache
     environment:
@@ -115,7 +115,7 @@ services:
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
-      - ./app:/var/www/html:cached
+      - .:/var/www/html:cached
       - php_storage:/var/www/html/storage
       - php_cache:/var/www/html/bootstrap/cache
     environment:
@@ -139,19 +139,16 @@ services:
         sleep 60
       done"
 
-  # pgAdmin for database management
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: junction-bank-pgadmin
+  # Adminer for database management
+  adminer:
+    image: adminer:latest
+    container_name: junction-bank-adminer
     restart: unless-stopped
     ports:
-      - "5050:80"
+      - "8080:8080"
     environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@junction-bank.local}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin}
-      - PGADMIN_CONFIG_SERVER_MODE=False
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
+      - ADMINER_DEFAULT_SERVER=postgres
+      - ADMINER_DESIGN=pepa-linha
     depends_on:
       - postgres
     networks:
@@ -171,9 +168,26 @@ services:
     networks:
       - junction-bank-network
 
+  # Node.js for asset compilation and Vite dev server
+  node:
+    image: node:20-alpine
+    container_name: junction-bank-node
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - .:/app:cached
+      - node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    networks:
+      - junction-bank-network
+
 volumes:
   composer_cache:
     name: junction-bank-composer-cache
-  pgadmin_data:
-    name: junction-bank-pgadmin-data
+  node_modules:
+    name: junction-bank-node-modules
 
