@@ -1,61 +1,305 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Junction Bank
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Domain-driven personal finance management system built with Laravel, Next.js, and PostgreSQL.
 
-## About Laravel
+## Architecture
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+```mermaid
+graph TB
+    subgraph "Client"
+        Next[Next.js Frontend<br/>TypeScript, React]
+    end
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+    subgraph "API Layer"
+        Laravel[Laravel API<br/>PHP 8.3, DDD]
+        Sanctum[Laravel Sanctum<br/>Authentication]
+    end
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+    subgraph "Infrastructure"
+        Caddy[Caddy<br/>HTTP/2, HTTP/3]
+        Redis[(Redis<br/>Cache, Session, Queue)]
+        Postgres[(PostgreSQL 16<br/>Primary Database)]
+    end
 
-## Learning Laravel
+    Next -->|REST API| Caddy
+    Caddy --> Laravel
+    Laravel --> Sanctum
+    Laravel --> Postgres
+    Laravel --> Redis
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## System Requirements
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+-   Docker Desktop 4.0+
+-   Just (command runner)
+-   Git
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Quick Start
 
-## Laravel Sponsors
+```bash
+# Clone repository
+git clone <repository-url>
+cd junction-bank
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# Initial setup
+just setup
 
-### Premium Partners
+# Access application
+open http://localhost:8000
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Project Structure
+
+```
+junction-bank/
+├── app/                          # Laravel application
+│   ├── Domains/                  # Domain-driven design modules
+│   │   └── Categories/
+│   │       ├── Actions/          # Business logic
+│   │       ├── DTOs/             # Data transfer objects
+│   │       ├── Models/           # Eloquent models
+│   │       └── Repositories/     # Data access layer
+│   ├── Http/
+│   │   ├── Controllers/          # HTTP controllers (thin)
+│   │   └── Middleware/           # HTTP middleware
+│   └── Policies/                 # Authorization policies
+├── next-js-app/                  # Next.js frontend
+│   ├── app/                      # App router pages
+│   ├── components/               # React components
+│   ├── domains/                  # Frontend domain logic
+│   └── infrastructure/           # API clients, utils
+├── docker/                       # Docker configuration
+│   ├── php/                      # PHP-FPM images
+│   ├── caddy/                    # Caddy config
+│   ├── postgres/                 # PostgreSQL config
+│   └── redis/                    # Redis config
+├── .development-context/         # Development docs
+│   ├── ADRs/                     # Architecture decisions
+│   ├── PRDs/                     # Product requirements
+│   └── rules/                    # Development rules
+└── tests/                        # Test suite
+```
+
+## Development
+
+### Essential Commands
+
+```bash
+# Environment management
+just dev              # Start development environment
+just dev-stop         # Stop development environment
+just dev-logs         # View logs
+
+# Application
+just artisan [cmd]    # Run artisan command
+just composer [cmd]   # Run composer command
+just ssh              # SSH into PHP container
+
+# Database
+just migrate          # Run migrations
+just migrate-fresh    # Fresh migration + seed
+just seed             # Run seeders
+just db-backup        # Backup database
+just db-restore       # Restore latest backup
+just psql             # PostgreSQL CLI
+
+# Code quality
+just phpstan          # Static analysis
+just pint             # Code style check/fix
+just test             # Run tests
+just quality          # All quality checks
+
+# Build
+just build-dev        # Build dev images
+just build-prod       # Build prod images
+```
+
+Full command reference: `just --list`
+
+### Development Services
+
+| Service         | URL                   | Purpose              |
+| --------------- | --------------------- | -------------------- |
+| Application     | http://localhost:8000 | Main Laravel API     |
+| Next.js         | http://localhost:3000 | Frontend application |
+| Vite Dev Server | http://localhost:5173 | Hot module reload    |
+| Adminer         | http://localhost:8080 | Database management  |
+| MailHog         | http://localhost:8025 | Email testing        |
+| Redis Commander | http://localhost:8081 | Redis management     |
+
+### Environment Configuration
+
+1. Copy `.env.example` to `.env`
+2. Configure essential variables:
+
+```env
+APP_NAME="Junction Bank"
+APP_ENV=local
+APP_DEBUG=true
+
+DB_CONNECTION=pgsql
+DB_HOST=postgres
+DB_DATABASE=junction_bank
+
+REDIS_HOST=redis
+CACHE_DRIVER=redis
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis
+```
+
+### Domain-Driven Design
+
+Junction Bank follows DDD principles. Each domain is self-contained:
+
+```
+app/Domains/{DomainName}/
+├── Actions/              # Business logic (use cases)
+├── DTOs/                 # Data transfer objects
+├── Models/               # Eloquent models
+├── Repositories/         # Data access abstraction
+└── Policies/             # Authorization rules
+```
+
+**Key Principles:**
+
+-   Controllers delegate to Actions
+-   Actions contain business logic
+-   Repositories abstract data access
+-   DTOs transfer data between layers
+-   Models stay in their domain
+
+See: [.development-context/rules/](.development-context/rules/) for complete guidelines.
+
+## Testing
+
+```bash
+# Run all tests
+just test
+
+# Run specific test suites
+just test-pest          # Pest PHP tests
+just test-arch          # Architecture tests
+
+# Code quality
+just phpstan            # Static analysis
+just pint-test          # Style check without fixing
+```
+
+### Test Structure
+
+```bash
+tests/
+├── Feature/            # Integration tests
+├── Unit/               # Unit tests
+└── Architecture/       # Architecture constraints
+```
+
+## API Documentation
+
+API documentation available at `/api/documentation` when running in development mode.
+
+See: [.development-context/api-endpoints-reference.md](.development-context/api-endpoints-reference.md)
+
+## Architecture Decisions
+
+Key architectural decisions documented in [.development-context/ADRs/](.development-context/ADRs/):
+
+-   [Docker + Laravel Infrastructure](/.development-context/ADRs/001-docker-laravel-infrastructure.md)
+-   [Transaction Type System](/.development-context/ADRs/94-transaction-type-system.md)
+-   [Controller Control Flow](/.development-context/ADRs/control%20flow%20through%20controllers.md)
+-   [Resource Drawer Pattern](/.development-context/ADRs/resource-drawer-usage.md)
+
+## Troubleshooting
+
+### Common Issues
+
+**Container won't start:**
+
+```bash
+just dev-logs           # Check logs
+just health             # Service status
+just clean && just setup # Nuclear option
+```
+
+**Permission errors:**
+
+```bash
+echo "USER_ID=$(id -u)" >> .env
+echo "GROUP_ID=$(id -g)" >> .env
+just build-dev
+```
+
+**Database connection:**
+
+```bash
+just psql               # Test connection
+just migrate-fresh      # Reset database
+```
+
+**Cache issues:**
+
+```bash
+just artisan cache:clear
+just artisan config:clear
+just artisan route:clear
+just artisan view:clear
+```
+
+Complete troubleshooting: [docker/README.md](docker/README.md)
+
+## Production Deployment
+
+```bash
+# Build production images
+just build-prod
+
+# Deploy
+just prod
+
+# Run migrations
+docker compose -f compose.yml -f compose.prod.yml exec php php artisan migrate --force
+```
+
+Production configuration includes:
+
+-   Read-only filesystem
+-   OPcache with JIT
+-   Resource limits
+-   Security hardening
+-   Automated backups
+
+See: [docker/README.md](docker/README.md) for complete deployment guide.
 
 ## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow and guidelines.
 
-## Code of Conduct
+## Security
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+-   Laravel Sanctum for API authentication
+-   Security headers middleware
+-   CORS configuration
+-   Rate limiting
+-   SQL injection protection (PDO)
+-   XSS protection (Blade escaping)
 
-## Security Vulnerabilities
+Security issues: Create a private security advisory.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Performance
+
+-   PostgreSQL 16 with query optimization
+-   Redis for caching, sessions, queues
+-   OPcache with JIT (production)
+-   HTTP/2 and HTTP/3 support
+-   Asset compilation and minification
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Proprietary. All rights reserved.
+
+## Support
+
+1. Check [docker/README.md](docker/README.md)
+2. Review [.development-context/](.development-context/)
+3. Run `just health` for diagnostics
+4. Check `storage/logs/` for application logs

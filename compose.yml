@@ -1,5 +1,3 @@
-version: '3.9'
-
 # Base configuration shared across all environments
 # Override with compose.dev.yml, compose.prod.yml, or compose.test.yml
 

@@ -1,0 +1,1032 @@
+openapi: 3.0.3
+info:
+  title: Junction Bank API
+  description: |
+    Domain-driven personal finance management system API.
+
+    ## Authentication
+    All authenticated endpoints require a Bearer token via Laravel Sanctum.
+
+    ## Rate Limiting
+    - Authenticated: 120 requests/minute
+    - Import endpoints: 10 requests/minute
+    - Auth endpoints: 10 requests/minute
+
+  version: 1.0.0
+  contact:
+    name: Junction Bank Development
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8000/api
+    description: Development server
+  - url: https://api.junctionbank.com/api
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and registration
+  - name: Categories
+    description: Category management
+  - name: Transactions
+    description: Transaction management and CSV import
+  - name: Recurring Transactions
+    description: Recurring transaction patterns
+  - name: Months
+    description: Monthly budget periods
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Authentication
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, password_confirmation]
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  example: SecurePassword123!
+                password_confirmation:
+                  type: string
+                  format: password
+                  example: SecurePassword123!
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+                      token:
+                        type: string
+                        example: "1|abc123def456..."
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  format: password
+                  example: SecurePassword123!
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+                      token:
+                        type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout user
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/User"
+
+  # Categories
+  /categories:
+    get:
+      tags: [Categories]
+      summary: List all categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+
+    post:
+      tags: [Categories]
+      summary: Create category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Category"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /categories/{id}:
+    parameters:
+      - $ref: "#/components/parameters/CategoryId"
+
+    get:
+      tags: [Categories]
+      summary: Get category by ID
+      responses:
+        "200":
+          description: Category details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Categories]
+      summary: Delete category
+      responses:
+        "200":
+          description: Category deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  # Transactions
+  /transactions:
+    get:
+      tags: [Transactions]
+      summary: List transactions
+      parameters:
+        - name: monthId
+          in: query
+          description: Filter by month ID
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+
+    post:
+      tags: [Transactions]
+      summary: Create transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionInput"
+      responses:
+        "201":
+          description: Transaction created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Transaction"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+  /transactions/{id}:
+    parameters:
+      - $ref: "#/components/parameters/TransactionId"
+
+    get:
+      tags: [Transactions]
+      summary: Get transaction by ID
+      responses:
+        "200":
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Transactions]
+      summary: Update transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionInput"
+      responses:
+        "200":
+          description: Transaction updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Transaction"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Transactions]
+      summary: Delete transaction
+      responses:
+        "200":
+          description: Transaction deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /transactions/preview:
+    post:
+      tags: [Transactions]
+      summary: Preview CSV import
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV file with transactions
+      responses:
+        "200":
+          description: Import preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportPreview"
+
+  /transactions/import:
+    post:
+      tags: [Transactions]
+      summary: Import validated transactions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [transactions]
+              properties:
+                transactions:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/TransactionInput"
+      responses:
+        "200":
+          description: Import successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResult"
+
+  # Months
+  /months:
+    get:
+      tags: [Months]
+      summary: List months
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 12
+      responses:
+        "200":
+          description: List of months
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Month"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+
+    post:
+      tags: [Months]
+      summary: Create month
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonthInput"
+      responses:
+        "201":
+          description: Month created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Month"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /months/latest:
+    get:
+      tags: [Months]
+      summary: Get latest month
+      responses:
+        "200":
+          description: Latest month
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonthDetailed"
+
+  /months/{id}:
+    parameters:
+      - $ref: "#/components/parameters/MonthId"
+
+    get:
+      tags: [Months]
+      summary: Get month by ID
+      responses:
+        "200":
+          description: Month details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonthDetailed"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Months]
+      summary: Update month
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonthInput"
+      responses:
+        "200":
+          description: Month updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Month"
+
+    delete:
+      tags: [Months]
+      summary: Delete month
+      responses:
+        "200":
+          description: Month deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /months/{id}/spending:
+    parameters:
+      - $ref: "#/components/parameters/MonthId"
+    get:
+      tags: [Months]
+      summary: Get spending by category
+      responses:
+        "200":
+          description: Category spending
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategorySpending"
+
+  /months/recalculate:
+    post:
+      tags: [Months]
+      summary: Recalculate recurring expenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                monthId:
+                  type: integer
+                  nullable: true
+      responses:
+        "200":
+          description: Recalculation complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  monthsUpdated:
+                    type: integer
+
+  # Recurring Transactions
+  /recurring-transactions:
+    get:
+      tags: [Recurring Transactions]
+      summary: List recurring transactions
+      responses:
+        "200":
+          description: List of recurring transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RecurringTransaction"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+
+    post:
+      tags: [Recurring Transactions]
+      summary: Create recurring transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringTransactionInput"
+      responses:
+        "201":
+          description: Recurring transaction created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RecurringTransaction"
+
+  /recurring-transactions/{id}:
+    parameters:
+      - $ref: "#/components/parameters/RecurringTransactionId"
+
+    get:
+      tags: [Recurring Transactions]
+      summary: Get recurring transaction by ID
+      responses:
+        "200":
+          description: Recurring transaction details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringTransaction"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Recurring Transactions]
+      summary: Update recurring transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringTransactionInput"
+      responses:
+        "200":
+          description: Recurring transaction updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringTransaction"
+
+    delete:
+      tags: [Recurring Transactions]
+      summary: Delete recurring transaction
+      responses:
+        "200":
+          description: Recurring transaction deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+
+  parameters:
+    CategoryId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Category ID
+
+    TransactionId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Transaction ID
+
+    MonthId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Month ID
+
+    RecurringTransactionId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Recurring transaction ID
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+        notes:
+          type: string
+          nullable: true
+        isRecurring:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    CategoryInput:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+          example: Groceries
+        type:
+          type: string
+          enum: [income, expense]
+          example: expense
+        notes:
+          type: string
+          nullable: true
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        name:
+          type: string
+        amountCAD:
+          type: number
+          format: decimal
+        amountUSD:
+          type: number
+          format: decimal
+          nullable: true
+        categoryId:
+          type: integer
+        categoryName:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [Income, Expense]
+        date:
+          type: string
+          format: date
+        monthId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    TransactionInput:
+      type: object
+      required: [name, amountCAD, categoryId, date, monthId]
+      properties:
+        name:
+          type: string
+        amountCAD:
+          type: number
+          format: decimal
+        amountUSD:
+          type: number
+          format: decimal
+          nullable: true
+        categoryId:
+          type: integer
+        notes:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [Income, Expense]
+          default: Expense
+        date:
+          type: string
+          format: date
+        monthId:
+          type: integer
+
+    Month:
+      type: object
+      properties:
+        id:
+          type: integer
+        month:
+          type: integer
+          minimum: 1
+          maximum: 12
+        year:
+          type: integer
+        notes:
+          type: string
+          nullable: true
+        totalIncome:
+          type: number
+          format: decimal
+        totalExpenses:
+          type: number
+          format: decimal
+        recurringExpenses:
+          type: number
+          format: decimal
+        transactionCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    MonthDetailed:
+      allOf:
+        - $ref: "#/components/schemas/Month"
+        - type: object
+          properties:
+            calculated:
+              type: object
+              properties:
+                cashflow:
+                  type: number
+                nonRecurringExpenses:
+                  type: number
+                projectedDailyBudget:
+                  type: number
+                remainingDailyBudget:
+                  type: number
+                actualDailySpend:
+                  type: number
+                daysTotal:
+                  type: integer
+                daysLeft:
+                  type: integer
+                daysPassed:
+                  type: integer
+                isCurrentMonth:
+                  type: boolean
+
+    MonthInput:
+      type: object
+      required: [month, year]
+      properties:
+        month:
+          type: integer
+          minimum: 1
+          maximum: 12
+        year:
+          type: integer
+          minimum: 1900
+          maximum: 2100
+        notes:
+          type: string
+          nullable: true
+
+    RecurringTransaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        name:
+          type: string
+        amountCAD:
+          type: number
+          format: decimal
+          nullable: true
+        amountUSD:
+          type: number
+          format: decimal
+          nullable: true
+        categoryId:
+          type: integer
+        categoryName:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        dayOfMonth:
+          type: integer
+          minimum: 1
+          maximum: 31
+          nullable: true
+        type:
+          type: string
+          enum: [Income, Expense]
+        createdAt:
+          type: string
+          format: date-time
+
+    RecurringTransactionInput:
+      type: object
+      required: [name, categoryId]
+      properties:
+        name:
+          type: string
+        amountCAD:
+          type: number
+          format: decimal
+          nullable: true
+        amountUSD:
+          type: number
+          format: decimal
+          nullable: true
+        categoryId:
+          type: integer
+        notes:
+          type: string
+          nullable: true
+        dayOfMonth:
+          type: integer
+          minimum: 1
+          maximum: 31
+          nullable: true
+        type:
+          type: string
+          enum: [Income, Expense]
+          default: Expense
+
+    CategorySpending:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+        categoryName:
+          type: string
+        totalAmountCAD:
+          type: string
+        totalAmountUSD:
+          type: string
+        total:
+          type: number
+
+    ImportPreview:
+      type: object
+      properties:
+        validTransactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransactionInput"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              row:
+                type: integer
+              message:
+                type: string
+              originalData:
+                type: object
+        summary:
+          type: object
+          properties:
+            totalRows:
+              type: integer
+            validRows:
+              type: integer
+            errorRows:
+              type: integer
+
+    ImportResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        summary:
+          type: object
+          properties:
+            imported:
+              type: integer
+            failed:
+              type: integer
+            totalProcessed:
+              type: integer
+        createdTransactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+
+    Pagination:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+        totalPages:
+          type: integer
+        totalItems:
+          type: integer
+        perPage:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+            code:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Conflict:
+      description: Resource conflict (duplicate or constraint violation)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
