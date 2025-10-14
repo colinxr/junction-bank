@@ -13,14 +13,9 @@ return new class extends Migration
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();
-            $table->enum('type', ['income', 'expense']);
-            $table->text('notes')->nullable();
-            $table->boolean('is_recurring')->default(false);
+            $table->string('name', 255)->unique();
+            $table->string('notes', 1000)->nullable();
             $table->timestamps();
-
-            $table->index('type');
-            $table->index('is_recurring');
         });
     }
 

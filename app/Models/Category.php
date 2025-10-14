@@ -13,9 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property int $id
  * @property string $name
- * @property string $type
  * @property string|null $notes
- * @property bool $is_recurring
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
  */
@@ -38,9 +36,7 @@ class Category extends Model
    */
   protected $fillable = [
     'name',
-    'type',
     'notes',
-    'is_recurring',
   ];
 
   /**
@@ -51,7 +47,6 @@ class Category extends Model
   protected function casts(): array
   {
     return [
-      'is_recurring' => 'boolean',
       'created_at' => 'datetime',
       'updated_at' => 'datetime',
     ];
