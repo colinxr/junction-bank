@@ -181,18 +181,6 @@ describe('CategoryCacheKeys Helper', function () {
 });
 ```
 
-### Redis Connection Tests
-
-```php
-describe('Redis Connection', function () {
-    it('can connect to Redis')
-    it('can set and get cache values')
-    it('respects TTL expiration')
-    it('can delete cache keys')
-    it('can delete by pattern')
-});
-```
-
 ## Acceptance Criteria
 
 -   [ ] Redis configured in `config/cache.php`
@@ -202,7 +190,6 @@ describe('Redis Connection', function () {
 -   [ ] TTL getter methods implemented
 -   [ ] Pattern generation for invalidation
 -   [ ] PHPDoc on all methods
--   [ ] Redis connection test passes
 -   [ ] All cache key generation tests pass
 -   [ ] Usage documentation in class comments
 
