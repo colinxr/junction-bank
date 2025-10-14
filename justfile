@@ -89,7 +89,7 @@ test-arch:
     docker compose -f compose.yml -f compose.test.yml down -v
 
 # Run all quality checks
-test-all: test test-phpstan test-cs test-arch
+test-all: test phpstan pint-test test-arch
 
 # Application Commands
 # ====================
