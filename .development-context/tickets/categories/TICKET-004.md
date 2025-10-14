@@ -228,7 +228,107 @@ describe('ICategoryRepository Interface', function () {
 
 ## Related PRD Sections
 
--   **Repository Interfaces:** Lines 412-416
--   **Repository Implementations:** Lines 431-435
--   **Dependency Injection:** Lines 465-484
--   **Business Rules:** Lines 528-547
+### Repository Pattern (Lines 412-416)
+
+```
+#### Domain Layer
+**Repository Interfaces:**
+- ICategoryRepository: Contract for data access
+```
+
+### Repository Implementation (Lines 431-435)
+
+```
+#### Infrastructure Layer
+**Repository Implementations:**
+- CategoryRepository: Eloquent implementation with Redis caching
+```
+
+### Dependency Injection (Lines 465-484)
+
+```php
+// In AppServiceProvider
+$this->app->singleton(ICategoryRepository::class, function ($app) {
+    return new CategoryRepository(
+        $app->make('db'),
+        $app->make('redis')
+    );
+});
+```
+
+### Business Rules (Lines 528-547)
+
+```
+### Rule 1: Unique Category Names
+**Description:** Each category name must be unique within the system
+**Triggers:** Create and update operations
+**Implementation:** Database unique constraint + application validation
+
+### Rule 2: Category Deletion Protection
+**Description:** Cannot delete categories with associated transactions or recurring transactions
+**Triggers:** Delete operation
+**Implementation:** Check foreign key constraints before deletion
+
+### Rule 3: Category Type Validation
+**Description:** Category type must be either 'income' or 'expense'
+**Triggers:** Create and update operations
+**Implementation:** Enum constraint + form validation
+```
+
+### Caching Strategy (Lines 505-525)
+
+```
+### Cache Keys
+categories:list:{user_id}:{page}:{limit}:{type}    # Paginated lists
+categories:{id}                                     # Single category
+categories:user:{user_id}                          # All user categories
+
+### Cache TTL
+- List queries: 1 hour
+- Single category: 24 hours
+- User categories: 1 hour
+
+### Invalidation Rules
+**Trigger:** Create, Update, Delete
+**Invalidate:**
+- categories:list:{user_id}:*
+- categories:{id}
+- categories:user:{user_id}
+```
+
+### Domain Model (Lines 143-177)
+
+```
+Category
+├── id: int - Primary key
+├── name: string - Category name (unique)
+├── type: string - 'income' or 'expense'
+├── notes: string|null - Optional description
+├── isRecurring: boolean - Recurring flag
+└── createdAt: DateTime - Creation timestamp
+
+Business Rules:
+- Name must be unique across all categories
+- Type must be 'income' or 'expense'
+- Cannot delete if has associated transactions
+- Cannot delete if has associated recurring transactions
+```
+
+### Error Handling (Lines 593-623)
+
+```
+### Exception Hierarchy
+CategoryException
+├── CategoryNotFoundException
+├── CategoryAlreadyExistsException
+├── CategoryHasTransactionsException
+├── InvalidCategoryTypeException
+└── CategoryNameEmptyException
+
+### Error Codes
+| Code | Exception | HTTP Status | Message |
+|------|-----------|-------------|---------|
+| CATEGORY_NOT_FOUND | CategoryNotFoundException | 404 | Category not found |
+| CATEGORY_EXISTS | CategoryAlreadyExistsException | 409 | Category name already exists |
+| CATEGORY_HAS_TRANSACTIONS | CategoryHasTransactionsException | 409 | Cannot delete category with transactions |
+```
