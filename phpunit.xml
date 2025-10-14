@@ -3,10 +3,13 @@
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
+         executionOrder="random"
+         cacheDirectory=".phpunit.cache"
 >
     <testsuites>
         <testsuite name="Unit">
             <directory>tests/Unit</directory>
+            <directory>app</directory>
         </testsuite>
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
@@ -16,7 +19,19 @@
         <include>
             <directory>app</directory>
         </include>
+        <exclude>
+            <directory>app/bootstrap</directory>
+            <directory>app/storage</directory>
+        </exclude>
     </source>
+    <coverage includeUncoveredFiles="true"
+              ignoreDeprecatedCodeUnits="true">
+        <report>
+            <html outputDirectory="coverage/html"/>
+            <text outputFile="coverage/coverage.txt"/>
+            <clover outputFile="coverage/clover.xml"/>
+        </report>
+    </coverage>
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
