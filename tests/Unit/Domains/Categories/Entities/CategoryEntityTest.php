@@ -59,11 +59,12 @@ describe('Category Entity Name Validation', function () {
       ->toThrow(InvalidCategoryNameException::class, 'Category name cannot be empty');
   });
 
-  it('throws exception when name exceeds 255 characters', function () {
-    $longName = str_repeat('a', 256);
+  it('truncates name when it exceeds 255 characters', function () {
+    $longName = str_repeat('a', 300);
+    $category = new Category($longName);
 
-    expect(fn() => new Category($longName))
-      ->toThrow(InvalidCategoryNameException::class, 'Category name cannot exceed 255 characters');
+    expect($category->getName())->toBe(str_repeat('a', 255))
+      ->and(strlen($category->getName()))->toBe(255);
   });
 
   it('accepts name at exactly 255 characters', function () {
@@ -178,12 +179,14 @@ describe('Category Entity Business Methods - updateName', function () {
       ->toThrow(InvalidCategoryNameException::class, 'Category name cannot be empty');
   });
 
-  it('throws exception when updating to name exceeding 255 characters', function () {
+  it('truncates name when updating to name exceeding 255 characters', function () {
     $category = new Category('Groceries');
-    $longName = str_repeat('a', 256);
+    $longName = str_repeat('b', 300);
 
-    expect(fn() => $category->updateName($longName))
-      ->toThrow(InvalidCategoryNameException::class, 'Category name cannot exceed 255 characters');
+    $category->updateName($longName);
+
+    expect($category->getName())->toBe(str_repeat('b', 255))
+      ->and(strlen($category->getName()))->toBe(255);
   });
 
   it('allows updating to name at exactly 255 characters', function () {
@@ -324,6 +327,37 @@ describe('Category Entity Edge Cases', function () {
     $category = new Category('Café ☕ & Restaurant');
 
     expect($category->getName())->toBe('Café ☕ & Restaurant');
+  });
+
+  it('truncates unicode names correctly', function () {
+    $unicodeName = '🏠' . str_repeat('a', 300) . '🏠'; // 302 chars total
+    $category = new Category($unicodeName);
+
+    expect(strlen($category->getName()))->toBeLessThanOrEqual(255);
+  });
+
+  it('truncates name with leading whitespace correctly', function () {
+    $longName = '   ' . str_repeat('a', 300);
+    $category = new Category($longName);
+
+    expect($category->getName())->toBe(str_repeat('a', 255))
+      ->and(strlen($category->getName()))->toBe(255);
+  });
+
+  it('truncates name with trailing whitespace correctly', function () {
+    $longName = str_repeat('a', 300) . '   ';
+    $category = new Category($longName);
+
+    expect($category->getName())->toBe(str_repeat('a', 255))
+      ->and(strlen($category->getName()))->toBe(255);
+  });
+
+  it('truncates name with both leading and trailing whitespace correctly', function () {
+    $longName = '   ' . str_repeat('a', 300) . '   ';
+    $category = new Category($longName);
+
+    expect($category->getName())->toBe(str_repeat('a', 255))
+      ->and(strlen($category->getName()))->toBe(255);
   });
 
   it('preserves internal structure of notes', function () {

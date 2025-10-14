@@ -41,12 +41,29 @@ final class Category
     ?int $id = null,
     ?DateTimeInterface $createdAt = null
   ) {
-    $this->name = trim($name);
+    $this->name = $this->normalizeName($name);
     $this->notes = $notes;
     $this->id = $id;
     $this->createdAt = $createdAt;
 
     $this->validate();
+  }
+
+  /**
+   * Normalize category name by trimming and truncating if necessary.
+   *
+   * @param string $name Raw category name
+   * @return string Normalized name (trimmed, max 255 characters)
+   */
+  private function normalizeName(string $name): string
+  {
+    $trimmed = trim($name);
+
+    if (strlen($trimmed) > self::MAX_NAME_LENGTH) {
+      return substr($trimmed, 0, self::MAX_NAME_LENGTH);
+    }
+
+    return $trimmed;
   }
 
   /**
@@ -59,12 +76,6 @@ final class Category
   {
     if (empty($this->name)) {
       throw new InvalidCategoryNameException('Category name cannot be empty');
-    }
-
-    if (strlen($this->name) > self::MAX_NAME_LENGTH) {
-      throw new InvalidCategoryNameException(
-        sprintf('Category name cannot exceed %d characters', self::MAX_NAME_LENGTH)
-      );
     }
 
     if ($this->notes !== null && strlen($this->notes) > self::MAX_NOTES_LENGTH) {
@@ -117,13 +128,13 @@ final class Category
   /**
    * Update the category name.
    *
-   * @param string $newName New name (will be trimmed)
+   * @param string $newName New name (will be trimmed and truncated if necessary)
    *
    * @throws InvalidCategoryNameException If new name is invalid
    */
   public function updateName(string $newName): void
   {
-    $this->name = trim($newName);
+    $this->name = $this->normalizeName($newName);
     $this->validate();
   }
 
