@@ -24,23 +24,17 @@ class Category
 {
     private ?int $id;
     private string $name;
-    private string $type; // 'income' | 'expense'
     private ?string $notes;
-    private bool $isRecurring;
     private ?\DateTimeInterface $createdAt;
 
     public function __construct(
         string $name,
-        string $type,
         ?string $notes = null,
-        bool $isRecurring = false,
         ?int $id = null,
         ?\DateTimeInterface $createdAt = null
     ) {
         $this->name = $name;
-        $this->type = $type;
         $this->notes = $notes;
-        $this->isRecurring = $isRecurring;
         $this->id = $id;
         $this->createdAt = $createdAt;
 
@@ -64,11 +58,6 @@ class Category
 -   **Exception:** `CategoryNameEmptyException` if empty
 -   **Exception:** `InvalidCategoryNameException` if > 255 chars
 
-#### Type Validation
-
--   **Required:** Must be 'income' or 'expense'
--   **Exception:** `InvalidCategoryTypeException` if not in ['income', 'expense']
-
 #### Notes Validation
 
 -   **Optional:** Can be null
@@ -84,9 +73,7 @@ Create in `app/Domains/Categories/Exceptions/`
 abstract class CategoryException extends \Exception {}
 
 // Specific exceptions
-class CategoryNameEmptyException extends CategoryException {}
-class InvalidCategoryNameException extends CategoryException {}
-class InvalidCategoryTypeException extends CategoryException {}
+class InvalidCategoryNameException extends CategoryException {} // invalid characters + empty name.
 class InvalidCategoryNotesException extends CategoryException {}
 class CategoryNotFoundException extends CategoryException {}
 class CategoryAlreadyExistsException extends CategoryException {}
@@ -96,11 +83,8 @@ class CategoryHasTransactionsException extends CategoryException {}
 ### Business Methods
 
 ```php
-public function changeName(string $newName): void
-public function changeType(string $newType): void
+public function updateName(string $newName): void
 public function updateNotes(?string $newNotes): void
-public function markAsRecurring(): void
-public function markAsNonRecurring(): void
 ```
 
 ## Implementation Tasks
@@ -109,10 +93,10 @@ public function markAsNonRecurring(): void
 2. Implement constructor with validation
 3. Implement `validate()` method with all rules
 4. Create all exception classes
-5. Add getter methods
-6. Add business methods for state changes
-7. Add PHPDoc annotations
-8. Write comprehensive unit tests
+5. Add business methods for state changes
+6. Add PHPDoc annotations
+7. Write comprehensive unit tests
+8. update the category db table to remove any refernces to recurring and type. these columns are not needed. I want to move those to the transaction model instead.
 
 ## Test Cases
 
@@ -129,43 +113,12 @@ describe('Category Entity Name Validation', function () {
 });
 ```
 
-### Type Validation Tests
-
-```php
-describe('Category Entity Type Validation', function () {
-    it('accepts income type')
-    it('accepts expense type')
-    it('throws exception for invalid type')
-    it('throws exception for null type')
-    it('throws exception for empty type')
-    it('throws exception for uppercase INCOME')
-    it('validates new type on changeType')
-});
-```
-
-### Notes Validation Tests
-
-```php
-describe('Category Entity Notes Validation', function () {
-    it('accepts null notes')
-    it('accepts empty string notes')
-    it('accepts valid notes')
-    it('throws exception when notes exceed 1000 characters')
-    it('accepts notes at exactly 1000 characters')
-    it('validates new notes on updateNotes')
-});
-```
-
 ### Constructor Tests
 
 ```php
 describe('Category Entity Constructor', function () {
-    it('creates entity with all fields')
-    it('creates entity with minimal fields')
-    it('validates on construction')
-    it('sets default values correctly')
-    it('preserves id when provided')
-    it('preserves createdAt when provided')
+    it('constructs with required fields and validates')
+    it('preserves optional fields when provided')
 });
 ```
 
@@ -174,20 +127,7 @@ describe('Category Entity Constructor', function () {
 ```php
 describe('Category Entity Business Methods', function () {
     it('updates name via changeName and validates')
-    it('updates type via changeType and validates')
     it('updates notes via updateNotes and validates')
-    it('sets flag to true via markAsRecurring')
-    it('sets flag to false via markAsNonRecurring')
-});
-```
-
-### Immutability Tests
-
-```php
-describe('Category Entity Immutability', function () {
-    it('has properties that are not publicly accessible')
-    it('allows changes only via methods')
-    it('returns values correctly via getters')
 });
 ```
 
@@ -207,7 +147,6 @@ describe('Category Entity Edge Cases', function () {
 -   [ ] Entity class created at correct location
 -   [ ] All 7 exception classes created
 -   [ ] Name validation implemented per PRD
--   [ ] Type validation implemented per PRD
 -   [ ] Notes validation implemented per PRD
 -   [ ] Constructor validates on instantiation
 -   [ ] All getters implemented
@@ -216,13 +155,13 @@ describe('Category Entity Edge Cases', function () {
 -   [ ] 100% unit test coverage
 -   [ ] All 30+ test cases pass
 -   [ ] No infrastructure dependencies (pure domain logic)
+-   [ ] no references to Type or Recurring.
 
 ## Validation Checklist
 
 -   [ ] Entity instantiates with valid data
 -   [ ] Empty name throws `CategoryNameEmptyException`
 -   [ ] Long name (256 chars) throws `InvalidCategoryNameException`
--   [ ] Invalid type throws `InvalidCategoryTypeException`
 -   [ ] Long notes (1001 chars) throws `InvalidCategoryNotesException`
 -   [ ] Run tests: `php artisan test --filter=CategoryEntityTest`
 -   [ ] Code coverage: `php artisan test --coverage --min=100`
@@ -238,8 +177,77 @@ describe('Category Entity Edge Cases', function () {
 
 ## Related PRD Sections
 
--   **Domain Model - Entities:** Lines 145-165
--   **Business Rules:** Lines 528-547
--   **Validation Rules - Entity Validation:** Lines 553-575
--   **Exception Hierarchy:** Lines 595-603
--   **Layer Architecture - Domain Layer:** Lines 408-417
+### Domain Model - Entities (Lines 145-165)
+
+```
+Category
+├── id: int - Primary key
+├── name: string - Category name (unique)
+├── notes: string|null - Optional description
+└── createdAt: DateTime - Creation timestamp
+
+Business Rules:
+- Name must be unique across all categories
+- Cannot delete if has associated transactions
+- Cannot delete if has associated recurring transactions
+
+Validation:
+- Name required, max 255 characters
+- Type must be one of: 'income', 'expense'
+- Notes optional, max 1000 characters
+```
+
+### Business Rules (Lines 528-547)
+
+**Rule 1: Unique Category Names**  
+**Description:** Each category name must be unique within the system  
+**Triggers:** Create and update operations  
+**Implementation:** Database unique constraint + application validation  
+**Exceptions:** None
+
+**Rule 2: Category Deletion Protection**  
+**Description:** Cannot delete categories with associated transactions or recurring transactions  
+**Triggers:** Delete operation  
+**Implementation:** Check foreign key constraints before deletion  
+**Exceptions:** None
+
+### Validation Rules - Entity Validation (Lines 553-575)
+
+```php
+class Category {
+    private function validate(): void {
+        if (empty($this->name) || strlen($this->name) > 255) {
+            throw new InvalidCategoryNameException('Category name too long');
+        }
+
+        // Notes validation
+        if ($this->notes && strlen($this->notes) > 1000) {
+            throw new InvalidCategoryNotesException('Category notes too long');
+        }
+    }
+}
+```
+
+### Exception Hierarchy (Lines 595-603)
+
+```
+CategoryException
+├── CategoryNotFoundException
+├── CategoryAlreadyExistsException
+├── CategoryHasTransactionsException
+└── InvalidCategoryNameException
+```
+
+### Layer Architecture - Domain Layer (Lines 408-417)
+
+**Entities:**
+
+-   Category: Core business entity with validation
+
+**Repository Interfaces:**
+
+-   ICategoryRepository: Contract for data access
+
+**Domain Services:**
+
+-   None
