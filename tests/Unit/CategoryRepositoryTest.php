@@ -23,21 +23,24 @@ beforeEach(function () {
 
 describe('CategoryRepository', function () {
   describe('findAll', function () {
-    it('finds all categories with pagination', function () {
-      // Create test categories
+    it('returns paginated categories with correct structure', function () {
+      // Arrange
       CategoryModel::factory()->count(25)->create();
 
+      // Act
       $result = $this->repository->findAll(1, 10);
 
-      expect($result)->toHaveKey('data');
-      expect($result)->toHaveKey('pagination');
-      expect($result['data'])->toHaveCount(10);
-      expect($result['pagination']['currentPage'])->toBe(1);
-      expect($result['pagination']['totalPages'])->toBe(3);
-      expect($result['pagination']['totalItems'])->toBe(25);
-      expect($result['pagination']['itemsPerPage'])->toBe(10);
+      // Assert - Pagination structure
+      expect($result)
+        ->toHaveKey('data')
+        ->and($result)->toHaveKey('pagination')
+        ->and($result['data'])->toHaveCount(10)
+        ->and($result['pagination']['currentPage'])->toBe(1)
+        ->and($result['pagination']['totalPages'])->toBe(3)
+        ->and($result['pagination']['totalItems'])->toBe(25)
+        ->and($result['pagination']['itemsPerPage'])->toBe(10);
 
-      // Verify all items are Category entities
+      // Assert - All items are Category entities
       foreach ($result['data'] as $category) {
         expect($category)->toBeInstanceOf(Category::class);
       }
@@ -45,48 +48,58 @@ describe('CategoryRepository', function () {
   });
 
   describe('findById', function () {
-    it('finds single category by id', function () {
+    it('returns category entity when category exists', function () {
+      // Arrange
       $model = CategoryModel::factory()->create([
         'name' => 'Test Category',
         'notes' => 'Test notes'
       ]);
 
+      // Act
       $category = $this->repository->findById($model->id);
 
-      expect($category)->toBeInstanceOf(Category::class);
-      expect($category->getId())->toBe($model->id);
-      expect($category->getName())->toBe('Test Category');
-      expect($category->getNotes())->toBe('Test notes');
+      // Assert
+      expect($category)
+        ->toBeInstanceOf(Category::class)
+        ->and($category->getId())->toBe($model->id)
+        ->and($category->getName())->toBe('Test Category')
+        ->and($category->getNotes())->toBe('Test notes');
     });
 
-    it('throws exception when category not found', function () {
+    it('throws exception when category does not exist', function () {
+      // Act & Assert
       expect(fn() => $this->repository->findById(999))
         ->toThrow(CategoryNotFoundException::class, 'Category with ID 999 not found');
     });
   });
 
   describe('create', function () {
-    it('creates new category', function () {
+    it('creates new category with valid data', function () {
+      // Arrange
       $category = new Category(
         name: 'New Category',
         notes: 'New notes'
       );
 
+      // Act
       $created = $this->repository->create($category);
 
-      expect($created)->toBeInstanceOf(Category::class);
-      expect($created->getId())->not->toBeNull();
-      expect($created->getName())->toBe('New Category');
-      expect($created->getNotes())->toBe('New notes');
+      // Assert - Entity properties
+      expect($created)
+        ->toBeInstanceOf(Category::class)
+        ->and($created->getId())->not->toBeNull()
+        ->and($created->getName())->toBe('New Category')
+        ->and($created->getNotes())->toBe('New notes');
 
-      // Verify it was saved to database
+      // Assert - Database state
       $this->assertDatabaseHas('categories', [
         'name' => 'New Category',
         'notes' => 'New notes'
       ]);
     });
 
-    it('throws exception when creating duplicate name', function () {
+    it('throws exception when creating category with duplicate name', function () {
+      // Arrange
       CategoryModel::factory()->create(['name' => 'Existing Category']);
 
       $category = new Category(
@@ -94,13 +107,15 @@ describe('CategoryRepository', function () {
         notes: 'Some notes'
       );
 
+      // Act & Assert
       expect(fn() => $this->repository->create($category))
         ->toThrow(CategoryAlreadyExistsException::class, "Category with name 'Existing Category' already exists");
     });
   });
 
   describe('update', function () {
-    it('updates existing category', function () {
+    it('updates existing category with new data', function () {
+      // Arrange
       $model = CategoryModel::factory()->create([
         'name' => 'Original Name',
         'notes' => 'Original notes'
@@ -113,14 +128,17 @@ describe('CategoryRepository', function () {
         createdAt: $model->created_at
       );
 
+      // Act
       $updated = $this->repository->update($category);
 
-      expect($updated)->toBeInstanceOf(Category::class);
-      expect($updated->getId())->toBe($model->id);
-      expect($updated->getName())->toBe('Updated Name');
-      expect($updated->getNotes())->toBe('Updated notes');
+      // Assert - Entity properties
+      expect($updated)
+        ->toBeInstanceOf(Category::class)
+        ->and($updated->getId())->toBe($model->id)
+        ->and($updated->getName())->toBe('Updated Name')
+        ->and($updated->getNotes())->toBe('Updated notes');
 
-      // Verify it was updated in database
+      // Assert - Database state
       $this->assertDatabaseHas('categories', [
         'id' => $model->id,
         'name' => 'Updated Name',
