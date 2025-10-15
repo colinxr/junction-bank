@@ -14,7 +14,8 @@ beforeEach(function () {
 
 describe('CategoryMapper', function () {
   describe('toEntity', function () {
-    it('converts model to entity correctly', function () {
+    it('converts model to entity with all properties', function () {
+      // Arrange
       $model = CategoryModel::factory()->make([
         'name' => 'Test Category',
         'notes' => 'Test notes',
@@ -23,16 +24,20 @@ describe('CategoryMapper', function () {
       ]);
       $model->id = 1;
 
+      // Act
       $entity = $this->mapper->toEntity($model);
 
-      expect($entity)->toBeInstanceOf(Category::class);
-      expect($entity->getId())->toBe(1);
-      expect($entity->getName())->toBe('Test Category');
-      expect($entity->getNotes())->toBe('Test notes');
-      expect($entity->getCreatedAt())->toBeInstanceOf(Carbon::class);
+      // Assert - Group related checks with chained assertions
+      expect($entity)
+        ->toBeInstanceOf(Category::class)
+        ->and($entity->getId())->toBe(1)
+        ->and($entity->getName())->toBe('Test Category')
+        ->and($entity->getNotes())->toBe('Test notes')
+        ->and($entity->getCreatedAt())->toBeInstanceOf(Carbon::class);
     });
 
-    it('handles null timestamps in to entity', function () {
+    it('handles null timestamps and notes in model conversion', function () {
+      // Arrange
       $model = CategoryModel::factory()->make([
         'name' => 'Test Category',
         'notes' => null,
@@ -41,16 +46,20 @@ describe('CategoryMapper', function () {
       ]);
       $model->id = 1;
 
+      // Act
       $entity = $this->mapper->toEntity($model);
 
-      expect($entity)->toBeInstanceOf(Category::class);
-      expect($entity->getId())->toBe(1);
-      expect($entity->getName())->toBe('Test Category');
-      expect($entity->getNotes())->toBeNull();
-      expect($entity->getCreatedAt())->toBeNull();
+      // Assert
+      expect($entity)
+        ->toBeInstanceOf(Category::class)
+        ->and($entity->getId())->toBe(1)
+        ->and($entity->getName())->toBe('Test Category')
+        ->and($entity->getNotes())->toBeNull()
+        ->and($entity->getCreatedAt())->toBeNull();
     });
 
-    it('handles empty notes field', function () {
+    it('handles empty string notes in model conversion', function () {
+      // Arrange
       $model = CategoryModel::factory()->make([
         'name' => 'Test Category',
         'notes' => '',
@@ -58,14 +67,17 @@ describe('CategoryMapper', function () {
       ]);
       $model->id = 1;
 
+      // Act
       $entity = $this->mapper->toEntity($model);
 
+      // Assert
       expect($entity->getNotes())->toBe('');
     });
   });
 
   describe('toModel', function () {
-    it('converts entity to model correctly', function () {
+    it('converts entity to model with all properties', function () {
+      // Arrange
       $entity = new Category(
         name: 'Test Category',
         notes: 'Test notes',
@@ -73,16 +85,20 @@ describe('CategoryMapper', function () {
         createdAt: Carbon::now()
       );
 
+      // Act
       $model = $this->mapper->toModel($entity);
 
-      expect($model)->toBeInstanceOf(CategoryModel::class);
-      expect($model->id)->toBe(1);
-      expect($model->name)->toBe('Test Category');
-      expect($model->notes)->toBe('Test notes');
-      expect($model->created_at)->toBeInstanceOf(Carbon::class);
+      // Assert
+      expect($model)
+        ->toBeInstanceOf(CategoryModel::class)
+        ->and($model->id)->toBe(1)
+        ->and($model->name)->toBe('Test Category')
+        ->and($model->notes)->toBe('Test notes')
+        ->and($model->created_at)->toBeInstanceOf(Carbon::class);
     });
 
-    it('handles null id in to model', function () {
+    it('handles null id and timestamps in entity conversion', function () {
+      // Arrange
       $entity = new Category(
         name: 'Test Category',
         notes: null,
@@ -90,18 +106,22 @@ describe('CategoryMapper', function () {
         createdAt: null
       );
 
+      // Act
       $model = $this->mapper->toModel($entity);
 
-      expect($model)->toBeInstanceOf(CategoryModel::class);
-      expect($model->id)->toBeNull();
-      expect($model->name)->toBe('Test Category');
-      expect($model->notes)->toBeNull();
-      expect($model->created_at)->toBeNull();
+      // Assert
+      expect($model)
+        ->toBeInstanceOf(CategoryModel::class)
+        ->and($model->id)->toBeNull()
+        ->and($model->name)->toBe('Test Category')
+        ->and($model->notes)->toBeNull()
+        ->and($model->created_at)->toBeNull();
     });
   });
 
-  describe('toEntityArray', function () {
-    it('converts array of models to entities', function () {
+  describe('toEntities', function () {
+    it('converts array of models to entity array', function () {
+      // Arrange
       $model1 = CategoryModel::factory()->make([
         'name' => 'Category 1',
         'notes' => 'Notes 1',
@@ -116,18 +136,21 @@ describe('CategoryMapper', function () {
       $model2->id = 2;
 
       $models = [$model1, $model2];
-      $entities = $this->mapper->toEntityArray($models);
 
-      expect($entities)->toHaveCount(2);
-      expect($entities[0])->toBeInstanceOf(Category::class);
-      expect($entities[1])->toBeInstanceOf(Category::class);
-      expect($entities[0]->getName())->toBe('Category 1');
-      expect($entities[1]->getName())->toBe('Category 2');
+      // Act
+      $entities = $this->mapper->toEntities($models);
+
+      // Assert
+      expect($entities)
+        ->toHaveCount(2)
+        ->and($entities[0])->toBeInstanceOf(Category::class)
+        ->and($entities[1])->toBeInstanceOf(Category::class)
+        ->and($entities[0]->getName())->toBe('Category 1')
+        ->and($entities[1]->getName())->toBe('Category 2');
     });
-  });
 
-  describe('toEntityCollection', function () {
-    it('converts collection of models to entities', function () {
+    it('converts collection of models to entity array', function () {
+      // Arrange
       $model1 = CategoryModel::factory()->make([
         'name' => 'Category 1',
         'notes' => 'Notes 1',
@@ -142,18 +165,57 @@ describe('CategoryMapper', function () {
       $model2->id = 2;
 
       $collection = new Collection([$model1, $model2]);
-      $entities = $this->mapper->toEntityCollection($collection);
 
-      expect($entities)->toHaveCount(2);
-      expect($entities[0])->toBeInstanceOf(Category::class);
-      expect($entities[1])->toBeInstanceOf(Category::class);
-      expect($entities[0]->getName())->toBe('Category 1');
-      expect($entities[1]->getName())->toBe('Category 2');
+      // Act
+      $entities = $this->mapper->toEntities($collection);
+
+      // Assert
+      expect($entities)
+        ->toHaveCount(2)
+        ->and($entities[0])->toBeInstanceOf(Category::class)
+        ->and($entities[1])->toBeInstanceOf(Category::class)
+        ->and($entities[0]->getName())->toBe('Category 1')
+        ->and($entities[1]->getName())->toBe('Category 2');
+    });
+  });
+
+  describe('toModels', function () {
+    it('converts array of entities to model array', function () {
+      // Arrange
+      $entity1 = new Category(
+        name: 'Category 1',
+        notes: 'Notes 1',
+        id: 1,
+        createdAt: Carbon::now()
+      );
+
+      $entity2 = new Category(
+        name: 'Category 2',
+        notes: null,
+        id: 2,
+        createdAt: Carbon::now()
+      );
+
+      $entities = [$entity1, $entity2];
+
+      // Act
+      $models = $this->mapper->toModels($entities);
+
+      // Assert
+      expect($models)
+        ->toHaveCount(2)
+        ->and($models[0])->toBeInstanceOf(CategoryModel::class)
+        ->and($models[1])->toBeInstanceOf(CategoryModel::class)
+        ->and($models[0]->name)->toBe('Category 1')
+        ->and($models[1]->name)->toBe('Category 2')
+        ->and($models[0]->notes)->toBe('Notes 1')
+        ->and($models[1]->notes)->toBeNull();
     });
   });
 
   describe('round-trip conversion', function () {
-    it('preserves all entity properties in conversion', function () {
+    it('preserves all entity properties through model conversion cycle', function () {
+      // Arrange
       $originalEntity = new Category(
         name: 'Original Category',
         notes: 'Original notes',
@@ -161,13 +223,16 @@ describe('CategoryMapper', function () {
         createdAt: Carbon::parse('2023-01-01 12:00:00')
       );
 
+      // Act
       $model = $this->mapper->toModel($originalEntity);
       $convertedEntity = $this->mapper->toEntity($model);
 
-      expect($convertedEntity->getId())->toBe($originalEntity->getId());
-      expect($convertedEntity->getName())->toBe($originalEntity->getName());
-      expect($convertedEntity->getNotes())->toBe($originalEntity->getNotes());
-      expect($convertedEntity->getCreatedAt())->toEqual($originalEntity->getCreatedAt());
+      // Assert
+      expect($convertedEntity)
+        ->and($convertedEntity->getId())->toBe($originalEntity->getId())
+        ->and($convertedEntity->getName())->toBe($originalEntity->getName())
+        ->and($convertedEntity->getNotes())->toBe($originalEntity->getNotes())
+        ->and($convertedEntity->getCreatedAt())->toEqual($originalEntity->getCreatedAt());
     });
   });
 });

@@ -58,29 +58,36 @@ class CategoryMapper
   }
 
   /**
-   * Convert array of models to array of entities
+   * Convert multiple models to array of entities
+   * Accepts both arrays and Eloquent Collections
    *
-   * @param CategoryModel[] $models Array of database models
+   * @param iterable $models Array or Collection of database models
    * @return Category[] Array of domain entities
    */
-  public function toEntityArray(array $models): array
+  public function toEntities(iterable $models): array
   {
+    $items = $models instanceof Collection ? $models->all() : $models;
+
     return array_map(
       fn(CategoryModel $model) => $this->toEntity($model),
-      $models
+      $items
     );
   }
 
   /**
-   * Convert collection of models to array of entities
+   * Convert multiple entities to array of models
+   * Accepts both arrays and other iterables
    *
-   * @param Collection $collection Eloquent collection of models
-   * @return Category[] Array of domain entities
+   * @param iterable $entities Array or iterable of domain entities
+   * @return CategoryModel[] Array of database models
    */
-  public function toEntityCollection(Collection $collection): array
+  public function toModels(iterable $entities): array
   {
-    return $collection->map(
-      fn(CategoryModel $model) => $this->toEntity($model)
-    )->toArray();
+    $items = is_array($entities) ? $entities : iterator_to_array($entities);
+
+    return array_map(
+      fn(Category $entity) => $this->toModel($entity),
+      $items
+    );
   }
 }

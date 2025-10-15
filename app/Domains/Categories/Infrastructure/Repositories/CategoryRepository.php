@@ -46,7 +46,7 @@ class CategoryRepository implements ICategoryRepository
       ->get();
 
     return [
-      'data' => $this->mapper->toEntityCollection($categories),
+      'data' => $this->mapper->toEntities($categories),
       'pagination' => [
         'currentPage' => $page,
         'totalPages' => (int) ceil($total / $limit),
