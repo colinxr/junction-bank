@@ -1,19 +1,93 @@
 # TICKET-006: Category Repository Implementation
 
-**Estimate:** 4-5 hours  
+**Estimate:** 3-4 hours  
 **Priority:** Critical  
 **Dependencies:** TICKET-002, TICKET-004, TICKET-005  
-**PRD Reference:** Lines 431-439, 505-525
+**PRD Reference:** Lines 431-439
 
 ## Overview
 
-Implement the concrete CategoryRepository class that fulfills the ICategoryRepository contract. This repository handles all data persistence operations using Eloquent ORM, implements Redis caching for performance, and manages cache invalidation.
+Implement the concrete CategoryRepository class that fulfills the ICategoryRepository contract. This repository handles all data persistence operations using Eloquent ORM with basic CRUD functionality, uniqueness validation, and dependency checks.
 
 ## Technical Specifications
+
+### Service Provider Location
+
+`app/Domains/Categories/Providers/CategoryServiceProvider.php`
 
 ### Repository Location
 
 `app/Domains/Categories/Infrastructure/Repositories/CategoryRepository.php`
+
+### CategoryServiceProvider Structure
+
+```php
+namespace App\Domains\Categories\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use App\Domains\Categories\Repositories\ICategoryRepository;
+use App\Domains\Categories\Infrastructure\Repositories\CategoryRepository;
+use App\Domains\Categories\Infrastructure\Mappers\CategoryMapper;
+
+class CategoryServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        // Register CategoryMapper
+        $this->app->bind(CategoryMapper::class);
+
+        // Register CategoryRepository
+        $this->app->bind(ICategoryRepository::class, function ($app) {
+            return new CategoryRepository(
+                $app->make(CategoryMapper::class)
+            );
+        });
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        // Load category routes if they exist
+        if (file_exists(base_path('app/Domains/Categories/routes/api.php'))) {
+            $this->loadRoutesFrom(base_path('app/Domains/Categories/routes/api.php'));
+        }
+
+        // Load category configuration if it exists
+        if (file_exists(base_path('app/Domains/Categories/config/categories.php'))) {
+            $this->mergeConfigFrom(
+                base_path('app/Domains/Categories/config/categories.php'),
+                'categories'
+            );
+        }
+
+        // Load category views if they exist
+        if (is_dir(base_path('app/Domains/Categories/Resources/views'))) {
+            $this->loadViewsFrom(
+                base_path('app/Domains/Categories/Resources/views'),
+                'categories'
+            );
+        }
+    }
+}
+```
+
+### AppServiceProvider Registration
+
+```php
+// In app/Providers/AppServiceProvider.php
+use App\Domains\Categories\Providers\CategoryServiceProvider;
+
+public function register(): void
+{
+    // Register domain service providers
+    $this->app->register(CategoryServiceProvider::class);
+}
+```
 
 ### Repository Structure
 
@@ -27,10 +101,8 @@ use App\Domains\Categories\Exceptions\{
     CategoryAlreadyExistsException,
     CategoryHasTransactionsException
 };
-use App\Domains\Categories\Infrastructure\Cache\CategoryCacheKeys;
 use App\Domains\Categories\Infrastructure\Mappers\CategoryMapper;
 use App\Models\Category as CategoryModel;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CategoryRepository implements ICategoryRepository
@@ -41,27 +113,27 @@ class CategoryRepository implements ICategoryRepository
 
     public function findAll(int $page = 1, int $limit = 20, ?string $type = null): array
     {
-        // Implementation with caching
+        // Implementation with pagination
     }
 
     public function findById(int $id): Category
     {
-        // Implementation with caching
+        // Implementation
     }
 
     public function create(Category $category): Category
     {
-        // Implementation with cache invalidation
+        // Implementation with uniqueness check
     }
 
     public function update(Category $category): Category
     {
-        // Implementation with cache invalidation
+        // Implementation with uniqueness check
     }
 
     public function delete(int $id): void
     {
-        // Implementation with dependency checks and cache invalidation
+        // Implementation with dependency checks
     }
 
     public function existsByName(string $name, ?int $excludeId = null): bool
@@ -78,63 +150,48 @@ class CategoryRepository implements ICategoryRepository
     {
         // Implementation - returns false for now
     }
-
-    private function invalidateCache(int $id, int $userId): void
-    {
-        // Cache invalidation logic
-    }
 }
 ```
 
 ### Implementation Details
 
-#### findAll() - Paginated List with Caching
+#### findAll() - Paginated List
 
 ```php
 public function findAll(int $page = 1, int $limit = 20, ?string $type = null): array
 {
     $userId = auth()->id(); // Get from authenticated user
-    $cacheKey = CategoryCacheKeys::list($userId, $page, $limit, $type);
-    $ttl = CategoryCacheKeys::getListTTL();
+    $query = CategoryModel::where('user_id', $userId);
 
-    return Cache::remember($cacheKey, $ttl, function () use ($page, $limit, $type, $userId) {
-        $query = CategoryModel::where('user_id', $userId);
+    if ($type) {
+        $query->where('type', $type);
+    }
 
-        if ($type) {
-            $query->where('type', $type);
-        }
+    $total = $query->count();
+    $categories = $query
+        ->orderBy('created_at', 'desc')
+        ->skip(($page - 1) * $limit)
+        ->take($limit)
+        ->get();
 
-        $total = $query->count();
-        $categories = $query
-            ->orderBy('created_at', 'desc')
-            ->skip(($page - 1) * $limit)
-            ->take($limit)
-            ->get();
-
-        return [
-            'data' => $categories->map(fn($model) => $this->mapper->toEntity($model))->toArray(),
-            'pagination' => [
-                'currentPage' => $page,
-                'totalPages' => (int) ceil($total / $limit),
-                'totalItems' => $total,
-                'itemsPerPage' => $limit,
-            ]
-        ];
-    });
+    return [
+        'data' => $categories->map(fn($model) => $this->mapper->toEntity($model))->toArray(),
+        'pagination' => [
+            'currentPage' => $page,
+            'totalPages' => (int) ceil($total / $limit),
+            'totalItems' => $total,
+            'itemsPerPage' => $limit,
+        ]
+    ];
 }
 ```
 
-#### findById() - Single Category with Caching
+#### findById() - Single Category
 
 ```php
 public function findById(int $id): Category
 {
-    $cacheKey = CategoryCacheKeys::single($id);
-    $ttl = CategoryCacheKeys::getSingleTTL();
-
-    $category = Cache::remember($cacheKey, $ttl, function () use ($id) {
-        return CategoryModel::find($id);
-    });
+    $category = CategoryModel::find($id);
 
     if (!$category) {
         throw new CategoryNotFoundException("Category with ID {$id} not found");
@@ -144,7 +201,7 @@ public function findById(int $id): Category
 }
 ```
 
-#### create() - With Uniqueness Check and Cache Invalidation
+#### create() - With Uniqueness Check
 
 ```php
 public function create(Category $category): Category
@@ -159,15 +216,11 @@ public function create(Category $category): Category
     $model->user_id = auth()->id();
     $model->save();
 
-    $entity = $this->mapper->toEntity($model);
-
-    $this->invalidateCache($model->id, $model->user_id);
-
-    return $entity;
+    return $this->mapper->toEntity($model);
 }
 ```
 
-#### update() - With Uniqueness Check and Cache Invalidation
+#### update() - With Uniqueness Check
 
 ```php
 public function update(Category $category): Category
@@ -192,11 +245,7 @@ public function update(Category $category): Category
     $model->is_recurring = $category->isRecurring();
     $model->save();
 
-    $entity = $this->mapper->toEntity($model);
-
-    $this->invalidateCache($model->id, $model->user_id);
-
-    return $entity;
+    return $this->mapper->toEntity($model);
 }
 ```
 
@@ -223,10 +272,7 @@ public function delete(int $id): void
         );
     }
 
-    $userId = $model->user_id;
     $model->delete();
-
-    $this->invalidateCache($id, $userId);
 }
 ```
 
@@ -246,41 +292,23 @@ public function existsByName(string $name, ?int $excludeId = null): bool
 }
 ```
 
-#### Cache Invalidation
-
-```php
-private function invalidateCache(int $id, int $userId): void
-{
-    // Invalidate specific category cache
-    Cache::forget(CategoryCacheKeys::single($id));
-
-    // Invalidate user's category list cache
-    Cache::forget(CategoryCacheKeys::userCategories($userId));
-
-    // Invalidate all paginated list caches for user
-    // Note: In production, consider using cache tags or dedicated invalidation strategy
-    $pattern = CategoryCacheKeys::listPattern($userId);
-    // Implementation depends on cache driver (Redis supports pattern deletion)
-}
-```
-
 ## Implementation Tasks
 
-1. Create CategoryRepository class
-2. Inject CategoryMapper dependency
-3. Implement findAll with pagination and caching
-4. Implement findById with caching
-5. Implement create with uniqueness check
-6. Implement update with uniqueness check
-7. Implement delete with dependency checks
-8. Implement existsByName
-9. Implement hasTransactions (stub)
-10. Implement hasRecurringTransactions (stub)
-11. Implement cache invalidation logic
-12. Add comprehensive PHPDoc
-13. Write unit tests for all methods
-14. Write integration tests with database
-15. Write cache behavior tests
+1. Create CategoryServiceProvider class
+2. Register CategoryServiceProvider in AppServiceProvider
+3. Create CategoryRepository class
+4. Inject CategoryMapper dependency
+5. Implement findAll with pagination
+6. Implement findById
+7. Implement create with uniqueness check
+8. Implement update with uniqueness check
+9. Implement delete with dependency checks
+10. Implement existsByName
+11. Implement hasTransactions (stub)
+12. Implement hasRecurringTransactions (stub)
+13. Add comprehensive PHPDoc
+14. Write unit tests for all methods
+15. Write integration tests with database
 
 ## Test Cases
 
@@ -303,23 +331,6 @@ describe('CategoryRepository CRUD Operations', function () {
 });
 ```
 
-### Cache Behavior Tests
-
-```php
-describe('CategoryRepository Caching', function () {
-    it('caches findAll results')
-    it('returns cached data on subsequent calls')
-    it('invalidates list cache on create')
-    it('invalidates list cache on update')
-    it('invalidates list cache on delete')
-    it('caches findById results')
-    it('invalidates specific cache on update')
-    it('invalidates specific cache on delete')
-    it('respects TTL for list cache')
-    it('respects TTL for single category cache')
-});
-```
-
 ### Uniqueness Tests
 
 ```php
@@ -328,18 +339,6 @@ describe('CategoryRepository Uniqueness', function () {
     it('allows same name for different users')
     it('excludes self when checking uniqueness on update')
     it('is case sensitive for name comparison')
-});
-```
-
-### Pagination Tests
-
-```php
-describe('CategoryRepository Pagination', function () {
-    it('returns correct page of results')
-    it('calculates total pages correctly')
-    it('returns correct pagination metadata')
-    it('handles empty results')
-    it('respects limit parameter')
 });
 ```
 
@@ -355,11 +354,11 @@ describe('CategoryRepository User Isolation', function () {
 
 ## Acceptance Criteria
 
+-   [ ] CategoryServiceProvider created and registered
+-   [ ] CategoryServiceProvider registered in AppServiceProvider
 -   [ ] Repository class implements ICategoryRepository
 -   [ ] All 8 interface methods implemented
 -   [ ] CategoryMapper injected via constructor
--   [ ] Redis caching on read operations
--   [ ] Cache invalidation on write operations
 -   [ ] Uniqueness check before create/update
 -   [ ] Dependency check before delete
 -   [ ] User isolation for all operations
@@ -367,31 +366,187 @@ describe('CategoryRepository User Isolation', function () {
 -   [ ] PHPDoc on all methods
 -   [ ] 100% unit test coverage
 -   [ ] All integration tests pass
--   [ ] All cache tests pass
 
 ## Validation Checklist
 
+-   [ ] CategoryServiceProvider loads without errors
+-   [ ] Container bindings resolve correctly
 -   [ ] Create category via repository
--   [ ] Verify it's cached: check Redis keys
--   [ ] Fetch same category: verify cache hit
--   [ ] Update category: verify cache invalidation
+-   [ ] Fetch category by ID: verify correct data returned
+-   [ ] Update category: verify changes persisted
 -   [ ] Create duplicate name: verify exception thrown
 -   [ ] Test pagination: create 25 categories, fetch page 2
 -   [ ] Test filtering: create income/expense, filter each
 -   [ ] Run tests: `php artisan test --filter=CategoryRepositoryTest`
+-   [ ] Run tests: `php artisan test --filter=CategoryServiceProviderTest`
 
 ## Notes
 
+-   CategoryServiceProvider centralizes all category domain registrations
 -   Repository is infrastructure layer, uses Eloquent and Laravel services
 -   hasTransactions() returns false until Transactions domain is implemented
--   Cache invalidation by pattern may require Redis-specific code
 -   User ID comes from Laravel's auth() helper
 -   Consider implementing soft deletes in future
 -   Mapper handles entity ↔ model transformation (TICKET-007)
+-   Caching will be implemented in TICKET-006.1
+-   Service provider pattern allows for better organization and future extensibility
+-   Both CategoryMapper and CategoryRepository are stateless classes (no mutable state)
+-   Using `bind()` instead of `singleton()` for better testability and isolation
+-   See `.development-context/guides/determining-statefulness.md` for state analysis guide
 
 ## Related PRD Sections
 
--   **Repository Implementations:** Lines 431-435
--   **Caching Strategy:** Lines 505-525
--   **Business Rules:** Lines 528-547
--   **Error Handling:** Lines 593-623
+### Repository Implementations (Lines 431-435)
+
+**Repository Implementations:**
+
+-   CategoryRepository: Eloquent implementation with Redis caching
+
+**External Services:**
+
+-   None
+
+**Mappers:**
+
+-   CategoryMapper: Entity ↔ Database model transformation
+
+### Business Rules (Lines 528-547)
+
+#### Rule 1: Unique Category Names
+
+**Description:** Each category name must be unique within the system  
+**Triggers:** Create and update operations  
+**Implementation:** Database unique constraint + application validation  
+**Exceptions:** None
+
+#### Rule 2: Category Deletion Protection
+
+**Description:** Cannot delete categories with associated transactions or recurring transactions  
+**Triggers:** Delete operation  
+**Implementation:** Check foreign key constraints before deletion  
+**Exceptions:** None
+
+#### Rule 3: Category Type Validation
+
+**Description:** Category type must be either 'income' or 'expense'  
+**Triggers:** Create and update operations  
+**Implementation:** Enum constraint + form validation  
+**Exceptions:** None
+
+### Error Handling (Lines 593-623)
+
+#### Exception Hierarchy
+
+```
+CategoryException
+├── CategoryNotFoundException
+├── CategoryAlreadyExistsException
+├── CategoryHasTransactionsException
+├── InvalidCategoryTypeException
+└── CategoryNameEmptyException
+```
+
+#### Error Codes
+
+| Code                      | Exception                        | HTTP Status | Message                                  |
+| ------------------------- | -------------------------------- | ----------- | ---------------------------------------- |
+| CATEGORY_NOT_FOUND        | CategoryNotFoundException        | 404         | Category not found                       |
+| CATEGORY_EXISTS           | CategoryAlreadyExistsException   | 409         | Category name already exists             |
+| CATEGORY_HAS_TRANSACTIONS | CategoryHasTransactionsException | 409         | Cannot delete category with transactions |
+
+#### Error Response Format
+
+```json
+{
+    "error": {
+        "message": "Category name already exists",
+        "code": "CATEGORY_EXISTS",
+        "details": {
+            "name": ["The name has already been taken."]
+        }
+    }
+}
+```
+
+### Validation Rules (Lines 550-590)
+
+#### Entity Validation (Domain Layer)
+
+```php
+class Category {
+    private function validate(): void {
+        // Name validation
+        if (empty($this->name)) {
+            throw new CategoryNameEmptyException('Category name is required');
+        }
+
+        if (strlen($this->name) > 255) {
+            throw new InvalidCategoryNameException('Category name too long');
+        }
+
+        // Type validation
+        if (!in_array($this->type, ['income', 'expense'])) {
+            throw new InvalidCategoryTypeException('Category type must be income or expense');
+        }
+
+        // Notes validation
+        if ($this->notes && strlen($this->notes) > 1000) {
+            throw new InvalidCategoryNotesException('Category notes too long');
+        }
+    }
+}
+```
+
+#### Input Validation (Form Requests)
+
+```php
+class StoreCategoryRequest extends FormRequest {
+    public function rules(): array {
+        return [
+            'name' => 'required|string|max:255|unique:categories,name',
+            'type' => 'required|string|in:income,expense',
+            'notes' => 'nullable|string|max:1000',
+        ];
+    }
+}
+```
+
+### Dependency Injection (Lines 464-485)
+
+#### Service Bindings (Moved to CategoryServiceProvider)
+
+```php
+// In CategoryServiceProvider
+// Both are stateless, so use bind() for per-request instances
+$this->app->bind(CategoryMapper::class);
+
+$this->app->bind(ICategoryRepository::class, function ($app) {
+    return new CategoryRepository(
+        $app->make(CategoryMapper::class)
+    );
+});
+```
+
+#### Action/Service Bindings (Future Implementation)
+
+```php
+// In CategoryServiceProvider (for future use cases)
+$this->app->bind(IndexCategoriesService::class, function ($app) {
+    return new IndexCategoriesService(
+        $app->make(ICategoryRepository::class)
+    );
+});
+```
+
+#### AppServiceProvider Registration
+
+```php
+// In app/Providers/AppServiceProvider.php
+use App\Domains\Categories\Providers\CategoryServiceProvider;
+
+public function register(): void
+{
+    // Register domain service providers
+    $this->app->register(CategoryServiceProvider::class);
+}
+```
