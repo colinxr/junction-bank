@@ -89,6 +89,79 @@ public function register(): void
 }
 ```
 
+### CategoryMapper Structure
+
+```php
+namespace App\Domains\Categories\Infrastructure\Mappers;
+
+use App\Domains\Categories\Entities\Category;
+use App\Models\Category as CategoryModel;
+use Carbon\Carbon;
+
+class CategoryMapper
+{
+    /**
+     * Convert database model to domain entity
+     */
+    public function toEntity(CategoryModel $model): Category
+    {
+        return new Category(
+            id: $model->id,
+            name: $model->name,
+            notes: $model->notes ?? '',
+            createdAt: $model->created_at ? Carbon::parse($model->created_at) : null,
+            updatedAt: $model->updated_at ? Carbon::parse($model->updated_at) : null
+        );
+    }
+
+    /**
+     * Convert domain entity to database model
+     */
+    public function toModel(Category $category): CategoryModel
+    {
+        $model = new CategoryModel();
+
+        if ($category->getId()) {
+            $model->id = $category->getId();
+        }
+
+        $model->name = $category->getName();
+        $model->notes = $category->getNotes();
+
+        if ($category->getCreatedAt()) {
+            $model->created_at = $category->getCreatedAt();
+        }
+
+        if ($category->getUpdatedAt()) {
+            $model->updated_at = $category->getUpdatedAt();
+        }
+
+        return $model;
+    }
+
+    /**
+     * Convert array of models to array of entities
+     */
+    public function toEntityArray(array $models): array
+    {
+        return array_map(
+            fn(CategoryModel $model) => $this->toEntity($model),
+            $models
+        );
+    }
+
+    /**
+     * Convert collection of models to array of entities
+     */
+    public function toEntityCollection($collection): array
+    {
+        return $collection->map(
+            fn(CategoryModel $model) => $this->toEntity($model)
+        )->toArray();
+    }
+}
+```
+
 ### Repository Structure
 
 ```php
@@ -111,7 +184,7 @@ class CategoryRepository implements ICategoryRepository
         private CategoryMapper $mapper
     ) {}
 
-    public function findAll(int $page = 1, int $limit = 20, ?string $type = null): array
+    public function findAll(int $page = 1, int $limit = 20): array
     {
         // Implementation with pagination
     }
@@ -158,14 +231,9 @@ class CategoryRepository implements ICategoryRepository
 #### findAll() - Paginated List
 
 ```php
-public function findAll(int $page = 1, int $limit = 20, ?string $type = null): array
+public function findAll(int $page = 1, int $limit = 20): array
 {
-    $userId = auth()->id(); // Get from authenticated user
-    $query = CategoryModel::where('user_id', $userId);
-
-    if ($type) {
-        $query->where('type', $type);
-    }
+    $query = CategoryModel::query();
 
     $total = $query->count();
     $categories = $query
@@ -175,7 +243,7 @@ public function findAll(int $page = 1, int $limit = 20, ?string $type = null): a
         ->get();
 
     return [
-        'data' => $categories->map(fn($model) => $this->mapper->toEntity($model))->toArray(),
+        'data' => $this->mapper->toEntityCollection($categories),
         'pagination' => [
             'currentPage' => $page,
             'totalPages' => (int) ceil($total / $limit),
@@ -191,13 +259,13 @@ public function findAll(int $page = 1, int $limit = 20, ?string $type = null): a
 ```php
 public function findById(int $id): Category
 {
-    $category = CategoryModel::find($id);
+    $model = CategoryModel::find($id);
 
-    if (!$category) {
+    if (!$model) {
         throw new CategoryNotFoundException("Category with ID {$id} not found");
     }
 
-    return $this->mapper->toEntity($category);
+    return $this->mapper->toEntity($model);
 }
 ```
 
@@ -213,7 +281,6 @@ public function create(Category $category): Category
     }
 
     $model = $this->mapper->toModel($category);
-    $model->user_id = auth()->id();
     $model->save();
 
     return $this->mapper->toEntity($model);
@@ -239,10 +306,9 @@ public function update(Category $category): Category
         );
     }
 
+    // Update model fields from entity
     $model->name = $category->getName();
-    $model->type = $category->getType();
     $model->notes = $category->getNotes();
-    $model->is_recurring = $category->isRecurring();
     $model->save();
 
     return $this->mapper->toEntity($model);
@@ -281,8 +347,7 @@ public function delete(int $id): void
 ```php
 public function existsByName(string $name, ?int $excludeId = null): bool
 {
-    $query = CategoryModel::where('user_id', auth()->id())
-        ->where('name', $name);
+    $query = CategoryModel::where('name', $name);
 
     if ($excludeId) {
         $query->where('id', '!=', $excludeId);
@@ -296,28 +361,48 @@ public function existsByName(string $name, ?int $excludeId = null): bool
 
 1. Create CategoryServiceProvider class
 2. Register CategoryServiceProvider in AppServiceProvider
-3. Create CategoryRepository class
-4. Inject CategoryMapper dependency
-5. Implement findAll with pagination
-6. Implement findById
-7. Implement create with uniqueness check
-8. Implement update with uniqueness check
-9. Implement delete with dependency checks
-10. Implement existsByName
-11. Implement hasTransactions (stub)
-12. Implement hasRecurringTransactions (stub)
-13. Add comprehensive PHPDoc
-14. Write unit tests for all methods
-15. Write integration tests with database
+3. Create CategoryMapper class
+4. Implement CategoryMapper::toEntity() method
+5. Implement CategoryMapper::toModel() method
+6. Implement CategoryMapper::toEntityArray() method
+7. Implement CategoryMapper::toEntityCollection() method
+8. Create CategoryRepository class
+9. Inject CategoryMapper dependency
+10. Implement findAll with pagination
+11. Implement findById
+12. Implement create with uniqueness check
+13. Implement update with uniqueness check
+14. Implement delete with dependency checks
+15. Implement existsByName
+16. Implement hasTransactions (stub)
+17. Implement hasRecurringTransactions (stub)
+18. Add comprehensive PHPDoc
+19. Write unit tests for CategoryMapper
+20. Write unit tests for CategoryRepository
+21. Write integration tests with database
 
 ## Test Cases
+
+### CategoryMapper Tests
+
+```php
+describe('CategoryMapper', function () {
+    it('converts model to entity correctly')
+    it('converts entity to model correctly')
+    it('handles null timestamps in toEntity')
+    it('handles null ID in toModel')
+    it('converts array of models to entities')
+    it('converts collection of models to entities')
+    it('preserves all entity properties in conversion')
+    it('handles empty notes field')
+});
+```
 
 ### Repository CRUD Tests
 
 ```php
 describe('CategoryRepository CRUD Operations', function () {
     it('finds all categories with pagination')
-    it('finds all categories filtered by type')
     it('finds single category by id')
     it('throws exception when category not found')
     it('creates new category')
@@ -356,6 +441,8 @@ describe('CategoryRepository User Isolation', function () {
 
 -   [ ] CategoryServiceProvider created and registered
 -   [ ] CategoryServiceProvider registered in AppServiceProvider
+-   [ ] CategoryMapper class created with all methods
+-   [ ] CategoryMapper registered in service provider
 -   [ ] Repository class implements ICategoryRepository
 -   [ ] All 8 interface methods implemented
 -   [ ] CategoryMapper injected via constructor
@@ -364,19 +451,25 @@ describe('CategoryRepository User Isolation', function () {
 -   [ ] User isolation for all operations
 -   [ ] Pagination logic correct
 -   [ ] PHPDoc on all methods
--   [ ] 100% unit test coverage
+-   [ ] 100% unit test coverage for CategoryMapper
+-   [ ] 100% unit test coverage for CategoryRepository
 -   [ ] All integration tests pass
 
 ## Validation Checklist
 
 -   [ ] CategoryServiceProvider loads without errors
 -   [ ] Container bindings resolve correctly
+-   [ ] CategoryMapper resolves from container
+-   [ ] Test CategoryMapper::toEntity() with sample model
+-   [ ] Test CategoryMapper::toModel() with sample entity
+-   [ ] Test CategoryMapper::toEntityCollection() with collection
 -   [ ] Create category via repository
 -   [ ] Fetch category by ID: verify correct data returned
 -   [ ] Update category: verify changes persisted
 -   [ ] Create duplicate name: verify exception thrown
 -   [ ] Test pagination: create 25 categories, fetch page 2
 -   [ ] Test filtering: create income/expense, filter each
+-   [ ] Run tests: `php artisan test --filter=CategoryMapperTest`
 -   [ ] Run tests: `php artisan test --filter=CategoryRepositoryTest`
 -   [ ] Run tests: `php artisan test --filter=CategoryServiceProviderTest`
 
@@ -384,10 +477,12 @@ describe('CategoryRepository User Isolation', function () {
 
 -   CategoryServiceProvider centralizes all category domain registrations
 -   Repository is infrastructure layer, uses Eloquent and Laravel services
+-   CategoryMapper handles entity ↔ model transformation with proper type handling
+-   CategoryMapper includes helper methods for bulk conversions (arrays/collections)
+-   CategoryMapper handles null values gracefully (timestamps, notes, ID)
 -   hasTransactions() returns false until Transactions domain is implemented
 -   User ID comes from Laravel's auth() helper
 -   Consider implementing soft deletes in future
--   Mapper handles entity ↔ model transformation (TICKET-007)
 -   Caching will be implemented in TICKET-006.1
 -   Service provider pattern allows for better organization and future extensibility
 -   Both CategoryMapper and CategoryRepository are stateless classes (no mutable state)
@@ -396,7 +491,7 @@ describe('CategoryRepository User Isolation', function () {
 
 ## Related PRD Sections
 
-### Repository Implementations (Lines 431-435)
+### Repository Implementations
 
 **Repository Implementations:**
 
@@ -410,7 +505,7 @@ describe('CategoryRepository User Isolation', function () {
 
 -   CategoryMapper: Entity ↔ Database model transformation
 
-### Business Rules (Lines 528-547)
+### Business Rules
 
 #### Rule 1: Unique Category Names
 
@@ -426,14 +521,7 @@ describe('CategoryRepository User Isolation', function () {
 **Implementation:** Check foreign key constraints before deletion  
 **Exceptions:** None
 
-#### Rule 3: Category Type Validation
-
-**Description:** Category type must be either 'income' or 'expense'  
-**Triggers:** Create and update operations  
-**Implementation:** Enum constraint + form validation  
-**Exceptions:** None
-
-### Error Handling (Lines 593-623)
+### Error Handling
 
 #### Exception Hierarchy
 
@@ -442,7 +530,6 @@ CategoryException
 ├── CategoryNotFoundException
 ├── CategoryAlreadyExistsException
 ├── CategoryHasTransactionsException
-├── InvalidCategoryTypeException
 └── CategoryNameEmptyException
 ```
 
@@ -484,11 +571,6 @@ class Category {
             throw new InvalidCategoryNameException('Category name too long');
         }
 
-        // Type validation
-        if (!in_array($this->type, ['income', 'expense'])) {
-            throw new InvalidCategoryTypeException('Category type must be income or expense');
-        }
-
         // Notes validation
         if ($this->notes && strlen($this->notes) > 1000) {
             throw new InvalidCategoryNotesException('Category notes too long');
@@ -504,7 +586,6 @@ class StoreCategoryRequest extends FormRequest {
     public function rules(): array {
         return [
             'name' => 'required|string|max:255|unique:categories,name',
-            'type' => 'required|string|in:income,expense',
             'notes' => 'nullable|string|max:1000',
         ];
     }

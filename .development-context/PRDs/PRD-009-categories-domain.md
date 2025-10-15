@@ -1,4 +1,5 @@
 # Product Requirements Document (PRD)
+
 ## Categories Domain
 
 **Version:** 1.0  
@@ -21,12 +22,15 @@ The Categories domain manages transaction categorization for income and expense 
 ## Background & Context
 
 ### Current State (Next.js)
+
 The Categories domain is implemented with Domain-Driven Design principles using TypeScript entities, repository interfaces, and use case actions. It uses Prisma ORM with PostgreSQL and Redis caching for performance optimization.
 
 ### Target State (Laravel)
+
 The domain will be migrated to Laravel using Eloquent ORM while preserving all business logic and validation rules. The repository pattern will be maintained with Laravel's service container for dependency injection.
 
 ### Migration Rationale
+
 Categories is the simplest domain with no external dependencies, making it an ideal starting point for the Laravel migration. It will establish patterns and infrastructure for other domains.
 
 ---
@@ -34,88 +38,100 @@ Categories is the simplest domain with no external dependencies, making it an id
 ## Objectives & Success Criteria
 
 ### Primary Objectives
+
 1. Preserve all existing business logic and validation rules
 2. Maintain identical API contract for frontend compatibility
 3. Implement comprehensive test coverage using PHPUnit
 4. Establish Laravel patterns for other domain migrations
 
 ### Success Metrics
-| Metric | Current | Target | Measurement Method |
-|--------|---------|--------|-------------------|
-| Test Coverage | 100% | 100% | PHPUnit coverage reports |
-| API Response Time | <50ms | <50ms | Load testing |
-| Cache Hit Rate | 95% | 95% | Redis monitoring |
+
+| Metric            | Current | Target | Measurement Method       |
+| ----------------- | ------- | ------ | ------------------------ |
+| Test Coverage     | 100%    | 100%   | PHPUnit coverage reports |
+| API Response Time | <50ms   | <50ms  | Load testing             |
+| Cache Hit Rate    | 95%     | 95%    | Redis monitoring         |
 
 ### Definition of Done
-- [ ] All unit tests passing
-- [ ] All integration tests passing
-- [ ] API documentation updated
-- [ ] Performance benchmarks met
-- [ ] Security review completed
-- [ ] Code review approved
-- [ ] Deployment successful
+
+-   [ ] All unit tests passing
+-   [ ] All integration tests passing
+-   [ ] API documentation updated
+-   [ ] Performance benchmarks met
+-   [ ] Security review completed
+-   [ ] Code review approved
+-   [ ] Deployment successful
 
 ---
 
 ## User Stories & Use Cases
 
 ### User Story 1: Create Category
+
 **As a** user  
 **I want to** create new income and expense categories  
 **So that** I can organize my transactions
 
 **Acceptance Criteria:**
-- [ ] Can create income category with unique name
-- [ ] Can create expense category with unique name
-- [ ] Cannot create duplicate category names
-- [ ] Category name is required and validated
-- [ ] Category type must be 'income' or 'expense'
+
+-   [ ] Can create income category with unique name
+-   [ ] Can create expense category with unique name
+-   [ ] Cannot create duplicate category names
+-   [ ] Category name is required and validated
+-   [ ] Category type must be 'income' or 'expense'
 
 **Technical Notes:**
-- Uses Laravel Form Request for validation
-- Entity validation preserves business rules
+
+-   Uses Laravel Form Request for validation
+-   Entity validation preserves business rules
 
 ---
 
 ### User Story 2: Manage Categories
+
 **As a** user  
 **I want to** view, update, and delete my categories  
 **So that** I can maintain my transaction organization
 
 **Acceptance Criteria:**
-- [ ] Can list all categories with pagination
-- [ ] Can view single category details
-- [ ] Can update category name and type
-- [ ] Cannot delete category if it has transactions
-- [ ] Proper error messages for business rule violations
+
+-   [ ] Can list all categories with pagination
+-   [ ] Can view single category details
+-   [ ] Can update category name and type
+-   [ ] Cannot delete category if it has transactions
+-   [ ] Proper error messages for business rule violations
 
 ---
 
 ## Functional Requirements
 
 ### FR-1: Category CRUD Operations
+
 **Priority:** Must Have  
 **Description:** Complete CRUD operations for categories with business validation
 
 **Acceptance Criteria:**
-- Create category with name, type, and optional notes
-- Read categories with pagination and filtering
-- Update category properties
-- Delete category only if no associated transactions
+
+-   Create category with name, type, and optional notes
+-   Read categories with pagination and filtering
+-   Update category properties
+-   Delete category only if no associated transactions
 
 **Dependencies:** None
 
 ---
 
 ### FR-2: Category Validation
+
 **Priority:** Must Have  
 **Description:** Comprehensive validation for category data integrity
 
 **Acceptance Criteria:**
-- Name is required and unique
-- Type must be 'income' or 'expense'
-- Notes are optional
-- Cannot delete categories with transactions
+
+-   Name is required and unique
+-   Type must be 'income' or 'expense'
+-   Notes are optional
+-   Cannot delete categories with transactions
 
 **Dependencies:** Transaction domain for dependency checking
 
@@ -124,25 +140,29 @@ Categories is the simplest domain with no external dependencies, making it an id
 ## Non-Functional Requirements
 
 ### Performance
-- **Response Time:** API responses < 50ms for 95th percentile
-- **Throughput:** Handle 1000 requests/second
-- **Scalability:** Support 10,000 concurrent users
+
+-   **Response Time:** API responses < 50ms for 95th percentile
+-   **Throughput:** Handle 1000 requests/second
+-   **Scalability:** Support 10,000 concurrent users
 
 ### Security
-- **Authentication:** Required for all operations
-- **Authorization:** Users can only access their own categories
-- **Data Protection:** Input sanitization and validation
+
+-   **Authentication:** Required for all operations
+-   **Authorization:** Users can only access their own categories
+-   **Data Protection:** Input sanitization and validation
 
 ### Reliability
-- **Availability:** 99.9% uptime
-- **Error Rate:** < 0.1% error rate
-- **Data Integrity:** Enforce unique constraints
+
+-   **Availability:** 99.9% uptime
+-   **Error Rate:** < 0.1% error rate
+-   **Data Integrity:** Enforce unique constraints
 
 ---
 
 ## Domain Model
 
 ### Entities
+
 ```
 Category
 ├── id: int - Primary key
@@ -165,62 +185,70 @@ Validation:
 ```
 
 ### Value Objects
+
 None
 
 ### Aggregates
+
 Category is the aggregate root with no child entities.
 
 ### Domain Events
-- CategoryCreated
-- CategoryUpdated
-- CategoryDeleted (with validation)
+
+-   CategoryCreated
+-   CategoryUpdated
+-   CategoryDeleted (with validation)
 
 ---
 
 ## API Specifications
 
 ### Endpoint 1: List Categories
+
 **Method:** GET  
 **Path:** `/api/categories`  
 **Auth:** Required
 
 **Request:**
+
 ```json
 {
-  "page": 1,
-  "limit": 20,
-  "type": "expense"
+    "page": 1,
+    "limit": 20,
+    "type": "expense"
 }
 ```
 
 **Validation:**
-- `page`: integer, min: 1
-- `limit`: integer, min: 1, max: 100
-- `type`: string, in: income,expense
+
+-   `page`: integer, min: 1
+-   `limit`: integer, min: 1, max: 100
+-   `type`: string, in: income,expense
 
 **Response (200):**
+
 ```json
 {
-  "data": [
-    {
-      "id": 1,
-      "name": "Groceries",
-      "type": "expense",
-      "notes": "Food and household items",
-      "isRecurring": false,
-      "createdAt": "2024-12-19T10:00:00Z"
+    "data": [
+        {
+            "id": 1,
+            "name": "Groceries",
+            "type": "expense",
+            "notes": "Food and household items",
+            "isRecurring": false,
+            "createdAt": "2024-12-19T10:00:00Z"
+        }
+    ],
+    "pagination": {
+        "currentPage": 1,
+        "totalPages": 5,
+        "totalItems": 100,
+        "itemsPerPage": 20
     }
-  ],
-  "pagination": {
-    "currentPage": 1,
-    "totalPages": 5,
-    "totalItems": 100,
-    "itemsPerPage": 20
-  }
 }
 ```
 
 **Business Logic:**
+
 1. Authenticate user
 2. Query categories for user
 3. Apply pagination and filtering
@@ -229,43 +257,49 @@ Category is the aggregate root with no child entities.
 ---
 
 ### Endpoint 2: Create Category
+
 **Method:** POST  
 **Path:** `/api/categories`  
 **Auth:** Required
 
 **Request:**
+
 ```json
 {
-  "name": "Groceries",
-  "type": "expense",
-  "notes": "Food and household items"
+    "name": "Groceries",
+    "type": "expense",
+    "notes": "Food and household items"
 }
 ```
 
 **Validation:**
-- `name`: required, string, max: 255, unique
-- `type`: required, string, in: income,expense
-- `notes`: nullable, string, max: 1000
+
+-   `name`: required, string, max: 255, unique
+-   `type`: required, string, in: income,expense
+-   `notes`: nullable, string, max: 1000
 
 **Response (201):**
+
 ```json
 {
-  "data": {
-    "id": 1,
-    "name": "Groceries",
-    "type": "expense",
-    "notes": "Food and household items",
-    "isRecurring": false,
-    "createdAt": "2024-12-19T10:00:00Z"
-  }
+    "data": {
+        "id": 1,
+        "name": "Groceries",
+        "type": "expense",
+        "notes": "Food and household items",
+        "isRecurring": false,
+        "createdAt": "2024-12-19T10:00:00Z"
+    }
 }
 ```
 
 **Error Responses:**
-- `400`: Validation errors
-- `409`: Category name already exists
+
+-   `400`: Validation errors
+-   `409`: Category name already exists
 
 **Business Logic:**
+
 1. Validate input data
 2. Check name uniqueness
 3. Create category entity
@@ -276,64 +310,72 @@ Category is the aggregate root with no child entities.
 ---
 
 ### Endpoint 3: Get Category
+
 **Method:** GET  
 **Path:** `/api/categories/{id}`  
 **Auth:** Required
 
 **Response (200):**
+
 ```json
 {
-  "data": {
-    "id": 1,
-    "name": "Groceries",
-    "type": "expense",
-    "notes": "Food and household items",
-    "isRecurring": false,
-    "createdAt": "2024-12-19T10:00:00Z"
-  }
+    "data": {
+        "id": 1,
+        "name": "Groceries",
+        "type": "expense",
+        "notes": "Food and household items",
+        "isRecurring": false,
+        "createdAt": "2024-12-19T10:00:00Z"
+    }
 }
 ```
 
 **Error Responses:**
-- `404`: Category not found
+
+-   `404`: Category not found
 
 ---
 
 ### Endpoint 4: Update Category
+
 **Method:** PUT  
 **Path:** `/api/categories/{id}`  
 **Auth:** Required
 
 **Request:**
+
 ```json
 {
-  "name": "Food & Groceries",
-  "notes": "Updated description"
+    "name": "Food & Groceries",
+    "notes": "Updated description"
 }
 ```
 
 **Validation:**
-- `name`: string, max: 255, unique (if changed)
-- `type`: string, in: income,expense
-- `notes`: nullable, string, max: 1000
+
+-   `name`: string, max: 255, unique (if changed)
+-   `type`: string, in: income,expense
+-   `notes`: nullable, string, max: 1000
 
 **Response (200):**
+
 ```json
 {
-  "data": {
-    "id": 1,
-    "name": "Food & Groceries",
-    "type": "expense",
-    "notes": "Updated description",
-    "isRecurring": false,
-    "createdAt": "2024-12-19T10:00:00Z"
-  }
+    "data": {
+        "id": 1,
+        "name": "Food & Groceries",
+        "type": "expense",
+        "notes": "Updated description",
+        "isRecurring": false,
+        "createdAt": "2024-12-19T10:00:00Z"
+    }
 }
 ```
 
 ---
 
 ### Endpoint 5: Delete Category
+
 **Method:** DELETE  
 **Path:** `/api/categories/{id}`  
 **Auth:** Required
@@ -341,10 +383,12 @@ Category is the aggregate root with no child entities.
 **Response (204):** No content
 
 **Error Responses:**
-- `404`: Category not found
-- `409`: Category has associated transactions
+
+-   `404`: Category not found
+-   `409`: Category has associated transactions
 
 **Business Logic:**
+
 1. Find category by ID
 2. Check for associated transactions
 3. Check for associated recurring transactions
@@ -358,6 +402,7 @@ Category is the aggregate root with no child entities.
 ### Database Tables
 
 #### categories
+
 ```sql
 CREATE TABLE categories (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -367,7 +412,7 @@ CREATE TABLE categories (
     is_recurring BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     UNIQUE KEY unique_name (name),
     INDEX idx_type (type),
     INDEX idx_is_recurring (is_recurring)
@@ -386,18 +431,21 @@ CREATE TABLE categories (
 | updated_at | TIMESTAMP | NO | CURRENT_TIMESTAMP | Update time |
 
 **Indexes:**
-- `PRIMARY KEY`: id
-- `UNIQUE KEY`: name
-- `INDEX`: type
-- `INDEX`: is_recurring
+
+-   `PRIMARY KEY`: id
+-   `UNIQUE KEY`: name
+-   `INDEX`: type
+-   `INDEX`: is_recurring
 
 **Relationships:**
-- **Has Many:** transactions
-- **Has Many:** recurring_transactions
+
+-   **Has Many:** transactions
+-   **Has Many:** recurring_transactions
 
 **Constraints:**
-- Name must be unique
-- Type must be 'income' or 'expense'
+
+-   Name must be unique
+-   Type must be 'income' or 'expense'
 
 ---
 
@@ -406,54 +454,70 @@ CREATE TABLE categories (
 ### Layer Architecture
 
 #### Domain Layer
+
 **Entities:**
-- Category: Core business entity with validation
+
+-   Category: Core business entity with validation
 
 **Repository Interfaces:**
-- ICategoryRepository: Contract for data access
+
+-   ICategoryRepository: Contract for data access
 
 **Domain Services:**
-- None
+
+-   None
 
 #### Application Layer
+
 **Use Cases (Actions):**
-- IndexCategories: List categories with pagination
-- ShowCategory: Get single category
-- StoreCategory: Create new category
-- UpdateCategory: Modify existing category
-- DeleteCategory: Remove category
+
+-   IndexCategories: List categories with pagination
+-   ShowCategory: Get single category
+-   StoreCategory: Create new category
+-   UpdateCategory: Modify existing category
+-   DeleteCategory: Remove category
 
 **DTOs:**
-- CategoryDTO: Data transfer object
-- CategoryListDTO: Paginated list response
+
+-   CategoryDTO: Data transfer object
+-   CategoryListDTO: Paginated list response
 
 #### Infrastructure Layer
+
 **Repository Implementations:**
-- CategoryRepository: Eloquent implementation with Redis caching
+
+-   CategoryRepository: Eloquent implementation with Redis caching
 
 **External Services:**
-- None
+
+-   None
 
 **Mappers:**
-- CategoryMapper: Entity ↔ Database model transformation
+
+-   CategoryMapper: Entity ↔ Database model transformation
 
 #### Interface Layer
+
 **Controllers:**
-- CategoryController: Handles all category routes
+
+-   CategoryController: Handles all category routes
 
 **Middleware:**
-- AuthMiddleware: Authentication
-- ValidateCategoryMiddleware: Business rule validation
+
+-   AuthMiddleware: Authentication
+-   ValidateCategoryMiddleware: Business rule validation
 
 **Form Requests:**
-- StoreCategoryRequest: Create validation
-- UpdateCategoryRequest: Update validation
+
+-   StoreCategoryRequest: Create validation
+-   UpdateCategoryRequest: Update validation
 
 ---
 
 ### Design Patterns
 
 **Patterns Used:**
+
 1. **Repository Pattern**: Data access abstraction
 2. **Service Layer**: Business logic encapsulation
 3. **DTO Pattern**: Data transfer objects
@@ -464,6 +528,7 @@ CREATE TABLE categories (
 ### Dependency Injection
 
 **Service Bindings:**
+
 ```php
 // In AppServiceProvider
 $this->app->singleton(ICategoryRepository::class, function ($app) {
@@ -475,6 +540,7 @@ $this->app->singleton(ICategoryRepository::class, function ($app) {
 ```
 
 **Action/Service Bindings:**
+
 ```php
 $this->app->bind(IndexCategoriesService::class, function ($app) {
     return new IndexCategoriesService(
@@ -488,16 +554,19 @@ $this->app->bind(IndexCategoriesService::class, function ($app) {
 ## Integration Points
 
 ### Dependencies (What this depends on)
+
 1. **User Authentication**: For user-scoped operations
 2. **Database**: PostgreSQL for persistence
 3. **Cache**: Redis for performance
 
 ### Dependents (What depends on this)
+
 1. **Transactions Domain**: Uses categories for transaction categorization
 2. **RecurringTransactions Domain**: Uses categories for recurring patterns
 3. **Analytics**: Category-based spending analysis
 
 ### External Services
+
 None
 
 ---
@@ -505,6 +574,7 @@ None
 ## Caching Strategy
 
 ### Cache Keys
+
 ```
 categories:list:{user_id}:{page}:{limit}:{type}    # Paginated lists
 categories:{id}                                     # Single category
@@ -512,34 +582,40 @@ categories:user:{user_id}                          # All user categories
 ```
 
 ### Cache TTL
-- List queries: 1 hour
-- Single category: 24 hours
-- User categories: 1 hour
+
+-   List queries: 1 hour
+-   Single category: 24 hours
+-   User categories: 1 hour
 
 ### Invalidation Rules
+
 **Trigger:** Create, Update, Delete  
 **Invalidate:**
-- `categories:list:{user_id}:*`
-- `categories:{id}`
-- `categories:user:{user_id}`
+
+-   `categories:list:{user_id}:*`
+-   `categories:{id}`
+-   `categories:user:{user_id}`
 
 ---
 
 ## Business Logic & Rules
 
 ### Rule 1: Unique Category Names
+
 **Description:** Each category name must be unique within the system  
 **Triggers:** Create and update operations  
 **Implementation:** Database unique constraint + application validation  
 **Exceptions:** None
 
 ### Rule 2: Category Deletion Protection
+
 **Description:** Cannot delete categories with associated transactions or recurring transactions  
 **Triggers:** Delete operation  
 **Implementation:** Check foreign key constraints before deletion  
 **Exceptions:** None
 
 ### Rule 3: Category Type Validation
+
 **Description:** Category type must be either 'income' or 'expense'  
 **Triggers:** Create and update operations  
 **Implementation:** Enum constraint + form validation  
@@ -550,6 +626,7 @@ categories:user:{user_id}                          # All user categories
 ## Validation Rules
 
 ### Entity Validation (Domain Layer)
+
 ```php
 class Category {
     private function validate(): void {
@@ -557,16 +634,11 @@ class Category {
         if (empty($this->name)) {
             throw new CategoryNameEmptyException('Category name is required');
         }
-        
+
         if (strlen($this->name) > 255) {
             throw new InvalidCategoryNameException('Category name too long');
         }
-        
-        // Type validation
-        if (!in_array($this->type, ['income', 'expense'])) {
-            throw new InvalidCategoryTypeException('Category type must be income or expense');
-        }
-        
+
         // Notes validation
         if ($this->notes && strlen($this->notes) > 1000) {
             throw new InvalidCategoryNotesException('Category notes too long');
@@ -576,6 +648,7 @@ class Category {
 ```
 
 ### Input Validation (Form Requests)
+
 ```php
 class StoreCategoryRequest extends FormRequest {
     public function rules(): array {
@@ -593,6 +666,7 @@ class StoreCategoryRequest extends FormRequest {
 ## Error Handling
 
 ### Exception Hierarchy
+
 ```
 CategoryException
 ├── CategoryNotFoundException
@@ -603,22 +677,24 @@ CategoryException
 ```
 
 ### Error Codes
-| Code | Exception | HTTP Status | Message |
-|------|-----------|-------------|---------|
-| CATEGORY_NOT_FOUND | CategoryNotFoundException | 404 | Category not found |
-| CATEGORY_EXISTS | CategoryAlreadyExistsException | 409 | Category name already exists |
-| CATEGORY_HAS_TRANSACTIONS | CategoryHasTransactionsException | 409 | Cannot delete category with transactions |
+
+| Code                      | Exception                        | HTTP Status | Message                                  |
+| ------------------------- | -------------------------------- | ----------- | ---------------------------------------- |
+| CATEGORY_NOT_FOUND        | CategoryNotFoundException        | 404         | Category not found                       |
+| CATEGORY_EXISTS           | CategoryAlreadyExistsException   | 409         | Category name already exists             |
+| CATEGORY_HAS_TRANSACTIONS | CategoryHasTransactionsException | 409         | Cannot delete category with transactions |
 
 ### Error Response Format
+
 ```json
 {
-  "error": {
-    "message": "Category name already exists",
-    "code": "CATEGORY_EXISTS",
-    "details": {
-      "name": ["The name has already been taken."]
+    "error": {
+        "message": "Category name already exists",
+        "code": "CATEGORY_EXISTS",
+        "details": {
+            "name": ["The name has already been taken."]
+        }
     }
-  }
 }
 ```
 
@@ -627,91 +703,108 @@ CategoryException
 ## Testing Strategy
 
 ### Unit Tests
+
 **Coverage Target:** 100%
 
 **Test Cases:**
+
 1. **Entity Tests**
-   - [ ] Validation rules
-   - [ ] Business methods
-   - [ ] Edge cases
+
+    - [ ] Validation rules
+    - [ ] Business methods
+    - [ ] Edge cases
 
 2. **Use Case Tests**
-   - [ ] Happy path scenarios
-   - [ ] Error conditions
-   - [ ] Boundary conditions
+
+    - [ ] Happy path scenarios
+    - [ ] Error conditions
+    - [ ] Boundary conditions
 
 3. **Repository Tests**
-   - [ ] CRUD operations
-   - [ ] Query methods
-   - [ ] Cache behavior
+    - [ ] CRUD operations
+    - [ ] Query methods
+    - [ ] Cache behavior
 
 ### Integration Tests
+
 **Test Cases:**
+
 1. **API Endpoint Tests**
-   - [ ] Authentication
-   - [ ] Request validation
-   - [ ] Response format
-   - [ ] Error handling
+
+    - [ ] Authentication
+    - [ ] Request validation
+    - [ ] Response format
+    - [ ] Error handling
 
 2. **Database Tests**
-   - [ ] Migrations
-   - [ ] Relationships
-   - [ ] Constraints
+
+    - [ ] Migrations
+    - [ ] Relationships
+    - [ ] Constraints
 
 3. **Cache Tests**
-   - [ ] Cache hits
-   - [ ] Cache misses
-   - [ ] Invalidation
+    - [ ] Cache hits
+    - [ ] Cache misses
+    - [ ] Invalidation
 
 ---
 
 ## Security Considerations
 
 ### Authentication
-- Laravel Sanctum for API authentication
-- User-scoped operations only
+
+-   Laravel Sanctum for API authentication
+-   User-scoped operations only
 
 ### Authorization
-- Users can only access their own categories
-- No cross-user data access
+
+-   Users can only access their own categories
+-   No cross-user data access
 
 ### Input Validation
-- XSS prevention through input sanitization
-- SQL injection prevention through Eloquent ORM
-- CSRF protection for web routes
+
+-   XSS prevention through input sanitization
+-   SQL injection prevention through Eloquent ORM
+-   CSRF protection for web routes
 
 ### Data Protection
-- No sensitive data stored
-- Input validation and sanitization
+
+-   No sensitive data stored
+-   Input validation and sanitization
 
 ---
 
 ## Migration Plan
 
 ### Phase 1: Foundation Setup
+
 **Duration:** 1 day  
 **Goal:** Set up basic Laravel structure
 
 **Tasks:**
+
 1. [ ] Create Laravel project structure
 2. [ ] Set up database migrations
 3. [ ] Configure Redis caching
 4. [ ] Set up testing framework
 
 **Deliverables:**
-- Database schema
-- Basic project structure
-- Testing configuration
+
+-   Database schema
+-   Basic project structure
+-   Testing configuration
 
 **Dependencies:** None
 
 ---
 
 ### Phase 2: Domain Implementation
+
 **Duration:** 2 days  
 **Goal:** Implement core domain logic
 
 **Tasks:**
+
 1. [ ] Create Category entity
 2. [ ] Implement repository interface
 3. [ ] Create Eloquent repository
@@ -719,19 +812,22 @@ CategoryException
 5. [ ] Add validation rules
 
 **Deliverables:**
-- Complete domain layer
-- Repository implementation
-- Business logic validation
+
+-   Complete domain layer
+-   Repository implementation
+-   Business logic validation
 
 **Dependencies:** Phase 1
 
 ---
 
 ### Phase 3: API Implementation
+
 **Duration:** 1 day  
 **Goal:** Create API endpoints
 
 **Tasks:**
+
 1. [ ] Create CategoryController
 2. [ ] Implement form requests
 3. [ ] Add middleware
@@ -739,19 +835,22 @@ CategoryException
 5. [ ] Add API documentation
 
 **Deliverables:**
-- Complete API layer
-- Request validation
-- Route configuration
+
+-   Complete API layer
+-   Request validation
+-   Route configuration
 
 **Dependencies:** Phase 2
 
 ---
 
 ### Phase 4: Testing & Validation
+
 **Duration:** 1 day  
 **Goal:** Comprehensive testing
 
 **Tasks:**
+
 1. [ ] Write unit tests
 2. [ ] Write integration tests
 3. [ ] Performance testing
@@ -759,9 +858,10 @@ CategoryException
 5. [ ] Code review
 
 **Deliverables:**
-- Test suite
-- Performance benchmarks
-- Security validation
+
+-   Test suite
+-   Performance benchmarks
+-   Security validation
 
 **Dependencies:** Phase 3
 
@@ -770,15 +870,18 @@ CategoryException
 ## Data Migration
 
 ### Source Data
+
 **Current System:** Next.js + Prisma  
 **Database:** PostgreSQL  
 **Tables:** categories
 
 ### Transformation Rules
+
 1. **Field mapping**: Direct mapping, no transformation needed
 2. **User association**: Add user_id column for Laravel auth
 
 ### Migration Script
+
 ```bash
 # Create Laravel migration
 php artisan make:migration create_categories_table
@@ -788,53 +891,57 @@ php artisan make:migration add_user_id_to_categories_table
 ```
 
 ### Validation
-- [ ] Record count matches
-- [ ] Data integrity checks
-- [ ] Relationship preservation
-- [ ] No data loss
+
+-   [ ] Record count matches
+-   [ ] Data integrity checks
+-   [ ] Relationship preservation
+-   [ ] No data loss
 
 ---
 
 ## Deployment Plan
 
 ### Pre-Deployment
-- [ ] Code freeze
-- [ ] Final testing in staging
-- [ ] Database backup
-- [ ] Rollback plan ready
+
+-   [ ] Code freeze
+-   [ ] Final testing in staging
+-   [ ] Database backup
+-   [ ] Rollback plan ready
 
 ### Deployment Steps
+
 1. [ ] Deploy Laravel application
 2. [ ] Run database migrations
 3. [ ] Update API endpoints
 4. [ ] Verify functionality
 
 ### Post-Deployment
-- [ ] Smoke tests
-- [ ] Monitor error rates
-- [ ] Performance monitoring
-- [ ] User acceptance testing
+
+-   [ ] Smoke tests
+-   [ ] Monitor error rates
+-   [ ] Performance monitoring
+-   [ ] User acceptance testing
 
 ---
 
 ## Risks & Mitigation
 
-| Risk | Probability | Impact | Mitigation Strategy |
-|------|-------------|--------|---------------------|
-| Data loss during migration | Low | High | Comprehensive backups and testing |
-| Performance degradation | Low | Medium | Load testing and optimization |
-| API contract changes | Low | High | Maintain identical API structure |
+| Risk                       | Probability | Impact | Mitigation Strategy               |
+| -------------------------- | ----------- | ------ | --------------------------------- |
+| Data loss during migration | Low         | High   | Comprehensive backups and testing |
+| Performance degradation    | Low         | Medium | Load testing and optimization     |
+| API contract changes       | Low         | High   | Maintain identical API structure  |
 
 ---
 
 ## Timeline & Milestones
 
-| Milestone | Target Date | Status | Owner |
-|-----------|-------------|--------|-------|
-| Foundation Setup | Day 1 | Not Started | Dev Team |
-| Domain Implementation | Day 3 | Not Started | Dev Team |
-| API Implementation | Day 4 | Not Started | Dev Team |
-| Testing & Validation | Day 5 | Not Started | Dev Team |
+| Milestone             | Target Date | Status      | Owner    |
+| --------------------- | ----------- | ----------- | -------- |
+| Foundation Setup      | Day 1       | Not Started | Dev Team |
+| Domain Implementation | Day 3       | Not Started | Dev Team |
+| API Implementation    | Day 4       | Not Started | Dev Team |
+| Testing & Validation  | Day 5       | Not Started | Dev Team |
 
 **Estimated Effort:** 5 days
 
@@ -843,12 +950,14 @@ php artisan make:migration add_user_id_to_categories_table
 ## Assumptions & Constraints
 
 ### Assumptions
+
 1. Laravel 11.x will be used
 2. PostgreSQL database will be maintained
 3. Redis caching will be preserved
 4. Frontend will remain unchanged initially
 
 ### Constraints
+
 1. Must maintain API compatibility
 2. No data loss during migration
 3. Performance must match or exceed current system
@@ -858,27 +967,30 @@ php artisan make:migration add_user_id_to_categories_table
 ## Appendix
 
 ### Glossary
-- **Category**: A classification for transactions (income or expense)
-- **Repository Pattern**: Data access abstraction layer
-- **Use Case**: Business operation implementation
+
+-   **Category**: A classification for transactions (income or expense)
+-   **Repository Pattern**: Data access abstraction layer
+-   **Use Case**: Business operation implementation
 
 ### References
-- Backend Analysis Report
-- Laravel Documentation
-- Domain-Driven Design Principles
+
+-   Backend Analysis Report
+-   Laravel Documentation
+-   Domain-Driven Design Principles
 
 ### Related Documents
-- PRD-010-transactions-domain.md
-- PRD-012-recurring-transactions-domain.md
-- API specification document
+
+-   PRD-010-transactions-domain.md
+-   PRD-012-recurring-transactions-domain.md
+-   API specification document
 
 ---
 
 ## Change Log
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2024-12-19 | Dev Team | Initial draft |
+| Version | Date       | Author   | Changes       |
+| ------- | ---------- | -------- | ------------- |
+| 1.0     | 2024-12-19 | Dev Team | Initial draft |
 
 ---
 

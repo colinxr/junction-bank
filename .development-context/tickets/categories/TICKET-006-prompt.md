@@ -11,11 +11,6 @@ feature/category-repository-implementation
 ### Phase 1: Foundation & Service Provider
 
 ```
-1. test: add CategoryServiceProvider registration tests
-   - Test provider can be registered
-   - Test provider loads without errors
-   - Test boot() method handles missing files gracefully
-
 2. feat: create CategoryServiceProvider with basic structure
    - Create provider class
    - Add register() method stub
