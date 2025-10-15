@@ -9,6 +9,7 @@
 -   **Coverage**: Domains ≥ 85%, Repositories/API ≥ 75%
 -   **Models**: Always use factories, never manual instantiation
 -   **Assertions**: Use chained `expect()` with `and()` for readability
+-   **Location**: Test files must reside alongside the implementation file they are testing
 
 **Key Constraints**:
 
