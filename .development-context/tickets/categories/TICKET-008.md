@@ -35,21 +35,16 @@ class IndexCategoriesService
      *
      * @param int $page Page number (min: 1)
      * @param int $limit Items per page (min: 1, max: 100)
-     * @param string|null $type Filter by type ('income' or 'expense')
      * @return array CategoryListDTO with data and pagination
      */
-    public function execute(int $page = 1, int $limit = 20, ?string $type = null): array
+    public function execute(int $page = 1, int $limit = 20): array
     {
         // Validate parameters
         $page = max(1, $page);
         $limit = min(100, max(1, $limit));
 
-        if ($type !== null && !in_array($type, ['income', 'expense'])) {
-            throw new \InvalidArgumentException('Type must be income or expense');
-        }
-
         // Get paginated results from repository
-        $result = $this->repository->findAll($page, $limit, $type);
+        $result = $this->repository->findAll($page, $limit);
 
         // Transform entities to DTOs
         $result['data'] = $this->mapper->toDTOCollection($result['data']);
@@ -67,10 +62,9 @@ class IndexCategoriesService
         {
             "id": 1,
             "name": "Groceries",
-            "type": "expense",
             "notes": "Food and household items",
-            "isRecurring": false,
-            "createdAt": "2024-12-19T10:00:00Z"
+            "createdAt": "2024-12-19T10:00:00Z",
+            "updatedAt": "2024-12-19T10:00:00Z"
         }
     ],
     "pagination": {
@@ -86,7 +80,7 @@ class IndexCategoriesService
 
 1. Authenticate user (handled by middleware)
 2. Query categories for user (repository handles user scoping)
-3. Apply pagination and filtering
+3. Apply pagination
 4. Return formatted response
 
 ## Implementation Tasks
@@ -95,7 +89,7 @@ class IndexCategoriesService
 2. Inject repository and mapper dependencies
 3. Implement `execute()` method
 4. Add parameter validation (bounds checking)
-5. Call repository with correct parameters
+5. Call repository with correct parameters (no type filtering)
 6. Transform entity collection to DTO collection
 7. Return response with data and pagination metadata
 8. Add comprehensive PHPDoc
@@ -110,8 +104,7 @@ describe('IndexCategoriesService Happy Path', function () {
     it('returns paginated categories with default parameters');
     it('returns categories for specific page');
     it('returns categories with custom limit');
-    it('returns categories filtered by income type');
-    it('returns categories filtered by expense type');
+    it('returns all categories without filtering');
     it('returns data and pagination metadata');
     it('transforms entities to DTOs correctly');
 });
@@ -133,15 +126,13 @@ describe('IndexCategoriesService Pagination', function () {
 });
 ```
 
-### Filtering Tests
+### No Filtering Tests
 
 ```php
-describe('IndexCategoriesService Filtering', function () {
-    it('returns all categories when type is null');
-    it('returns only income categories when type is income');
-    it('returns only expense categories when type is expense');
-    it('throws exception for invalid type');
-    it('is case-sensitive for type parameter');
+describe('IndexCategoriesService No Filtering', function () {
+    it('returns all categories without type filtering');
+    it('returns categories in creation order');
+    it('maintains consistent ordering across pages');
 });
 ```
 
@@ -152,7 +143,7 @@ describe('IndexCategoriesService Empty Results', function () {
     it('returns empty data array when no categories');
     it('returns zero totalItems when no categories');
     it('returns pagination metadata for empty results');
-    it('returns empty data for filtered type with no matches');
+    it('returns empty data when no categories exist');
 });
 ```
 
@@ -165,8 +156,6 @@ describe('IndexCategoriesService Parameter Validation', function () {
     it('coerces negative limit to 1');
     it('coerces zero limit to 1');
     it('coerces limit over 100 to 100');
-    it('accepts valid type values');
-    it('rejects invalid type values');
 });
 ```
 
@@ -199,7 +188,7 @@ describe('IndexCategoriesService Edge Cases', function () {
 -   [ ] Constructor injects repository and mapper
 -   [ ] `execute()` method implemented with all parameters
 -   [ ] Pagination parameters validated (bounds checking)
--   [ ] Type parameter validated (income/expense only)
+-   [ ] No type parameter (removed per PRD v1.1)
 -   [ ] Repository called with correct parameters
 -   [ ] Entity collection transformed to DTO collection
 -   [ ] Response structure matches PRD specification
@@ -215,8 +204,8 @@ describe('IndexCategoriesService Edge Cases', function () {
 -   [ ] Verify 10 items returned with correct pagination
 -   [ ] Call service with page=3, limit=10
 -   [ ] Verify correct items for page 3
--   [ ] Call service with type='income'
--   [ ] Verify only income categories returned
+-   [ ] Call service with default parameters
+-   [ ] Verify all categories returned
 -   [ ] Call service with page=-1
 -   [ ] Verify coerced to page 1
 -   [ ] Call service with limit=200
@@ -233,10 +222,15 @@ describe('IndexCategoriesService Edge Cases', function () {
 -   Repository handles caching internally
 -   Response format must match frontend expectations exactly
 
+## Changelog
+
+| Version | Date       | Author   | Changes                                                                                                                 |
+| ------- | ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Dev Team | Removed `type` parameter and filtering logic per PRD simplification - categories no longer support type-based filtering |
+
 ## Related PRD Sections
 
 -   **Endpoint 1: List Categories:** Lines 182-228
 -   **Use Cases:** Lines 420-425
 -   **API Response Format:** Lines 202-221
 -   **Pagination Logic:** Lines 213-220
--   **Filtering Logic:** Lines 188-199

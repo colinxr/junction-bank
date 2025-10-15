@@ -26,17 +26,20 @@ class Category
     private string $name;
     private ?string $notes;
     private ?\DateTimeInterface $createdAt;
+    private ?\DateTimeInterface $updatedAt;
 
     public function __construct(
         string $name,
         ?string $notes = null,
         ?int $id = null,
-        ?\DateTimeInterface $createdAt = null
+        ?\DateTimeInterface $createdAt = null,
+        ?\DateTimeInterface $updatedAt = null
     ) {
         $this->name = $name;
         $this->notes = $notes;
         $this->id = $id;
         $this->createdAt = $createdAt;
+        $this->updatedAt = $updatedAt;
 
         $this->validate();
     }
@@ -63,6 +66,11 @@ class Category
 -   **Optional:** Can be null
 -   **Max Length:** 1000 characters if provided
 -   **Exception:** `InvalidCategoryNotesException` if > 1000 chars
+
+#### Timestamps Validation
+
+-   **createdAt:** Optional, set by database
+-   **updatedAt:** Optional, set by database
 
 ### Exception Classes
 
@@ -96,7 +104,7 @@ public function updateNotes(?string $newNotes): void
 5. Add business methods for state changes
 6. Add PHPDoc annotations
 7. Write comprehensive unit tests
-8. update the category db table to remove any refernces to recurring and type. these columns are not needed. I want to move those to the transaction model instead.
+8. Add changelog documenting removal of type and isRecurring fields per PRD v1.1
 
 ## Test Cases
 
@@ -155,7 +163,7 @@ describe('Category Entity Edge Cases', function () {
 -   [ ] 100% unit test coverage
 -   [ ] All 30+ test cases pass
 -   [ ] No infrastructure dependencies (pure domain logic)
--   [ ] no references to Type or Recurring.
+-   [ ] No references to type or isRecurring fields per PRD v1.1
 
 ## Validation Checklist
 
@@ -175,6 +183,12 @@ describe('Category Entity Edge Cases', function () {
 -   Exceptions provide clear error messages
 -   All validation happens in constructor and business methods
 
+## Changelog
+
+| Version | Date       | Author   | Changes                                                                                                                                                     |
+| ------- | ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Dev Team | Removed `type` and `isRecurring` properties from Category entity per PRD simplification - categories now focus on core properties (name, notes, timestamps) |
+
 ## Related PRD Sections
 
 ### Domain Model - Entities (Lines 145-165)
@@ -184,7 +198,8 @@ Category
 ├── id: int - Primary key
 ├── name: string - Category name (unique)
 ├── notes: string|null - Optional description
-└── createdAt: DateTime - Creation timestamp
+├── createdAt: DateTime - Creation timestamp
+└── updatedAt: DateTime - Update timestamp
 
 Business Rules:
 - Name must be unique across all categories
@@ -193,7 +208,6 @@ Business Rules:
 
 Validation:
 - Name required, max 255 characters
-- Type must be one of: 'income', 'expense'
 - Notes optional, max 1000 characters
 ```
 
@@ -216,7 +230,12 @@ Validation:
 ```php
 class Category {
     private function validate(): void {
-        if (empty($this->name) || strlen($this->name) > 255) {
+        // Name validation
+        if (empty($this->name)) {
+            throw new CategoryNameEmptyException('Category name is required');
+        }
+
+        if (strlen($this->name) > 255) {
             throw new InvalidCategoryNameException('Category name too long');
         }
 

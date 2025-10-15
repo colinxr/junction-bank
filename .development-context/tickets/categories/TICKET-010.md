@@ -36,22 +36,18 @@ class StoreCategoryAction
      * Execute the store category use case
      *
      * @param string $name Category name (required, max 255)
-     * @param string $type Category type ('income' or 'expense')
      * @param string|null $notes Optional notes (max 1000)
      * @return array Created category DTO
      * @throws CategoryAlreadyExistsException When name already exists
      * @throws InvalidCategoryNameException When name validation fails
-     * @throws InvalidCategoryTypeException When type validation fails
      * @throws InvalidCategoryNotesException When notes validation fails
      */
-    public function execute(string $name, string $type, ?string $notes = null): array
+    public function execute(string $name, ?string $notes = null): array
     {
         // Create entity (validates in constructor)
         $entity = new Category(
             name: $name,
-            type: $type,
-            notes: $notes,
-            isRecurring: false
+            notes: $notes
         );
 
         // Persist via repository (checks uniqueness and invalidates cache)
@@ -68,7 +64,6 @@ class StoreCategoryAction
 ```json
 {
     "name": "Groceries",
-    "type": "expense",
     "notes": "Food and household items"
 }
 ```
@@ -80,10 +75,9 @@ class StoreCategoryAction
     "data": {
         "id": 1,
         "name": "Groceries",
-        "type": "expense",
         "notes": "Food and household items",
-        "isRecurring": false,
-        "createdAt": "2024-12-19T10:00:00Z"
+        "createdAt": "2024-12-19T10:00:00Z",
+        "updatedAt": "2024-12-19T10:00:00Z"
     }
 }
 ```
@@ -91,7 +85,6 @@ class StoreCategoryAction
 ### Validation Rules (PRD Lines 245-249, 553-575)
 
 -   **name:** required, string, max: 255, unique
--   **type:** required, string, in: income,expense
 -   **notes:** nullable, string, max: 1000
 
 ### Business Logic (PRD Lines 268-275)
@@ -129,7 +122,6 @@ describe('StoreCategoryAction Happy Path', function () {
     it('creates category with all fields');
     it('creates category with minimal fields');
     it('creates category with null notes');
-    it('sets isRecurring to false by default');
     it('returns DTO with generated ID');
     it('returns DTO with createdAt timestamp');
     it('transforms created entity correctly');
@@ -153,10 +145,7 @@ describe('StoreCategoryAction Uniqueness', function () {
 describe('StoreCategoryAction Validation', function () {
     it('throws exception when name is empty');
     it('throws exception when name exceeds 255 characters');
-    it('throws exception when type is invalid');
     it('throws exception when notes exceed 1000 characters');
-    it('accepts valid income type');
-    it('accepts valid expense type');
     it('accepts null notes');
     it('validates data via entity constructor');
 });
@@ -213,7 +202,6 @@ describe('StoreCategoryAction Edge Cases', function () {
 describe('StoreCategoryAction Exception Handling', function () {
     it('propagates CategoryAlreadyExistsException');
     it('propagates InvalidCategoryNameException');
-    it('propagates InvalidCategoryTypeException');
     it('propagates InvalidCategoryNotesException');
     it('includes helpful error messages');
 });
@@ -242,15 +230,13 @@ describe('StoreCategoryAction Exception Handling', function () {
 -   [ ] Create category with valid data
 -   [ ] Verify category persisted with ID
 -   [ ] Verify createdAt timestamp set
--   [ ] Verify isRecurring defaults to false
+-   [ ] Verify updatedAt timestamp set
 -   [ ] Create category with duplicate name
 -   [ ] Verify CategoryAlreadyExistsException thrown
 -   [ ] Create category with empty name
 -   [ ] Verify CategoryNameEmptyException thrown
 -   [ ] Create category with name over 255 chars
 -   [ ] Verify InvalidCategoryNameException thrown
--   [ ] Create category with invalid type 'other'
--   [ ] Verify InvalidCategoryTypeException thrown
 -   [ ] Create category with notes over 1000 chars
 -   [ ] Verify InvalidCategoryNotesException thrown
 -   [ ] Create category as user A
@@ -266,9 +252,14 @@ describe('StoreCategoryAction Exception Handling', function () {
 -   Repository handles cache invalidation automatically
 -   User ID set by repository from auth context
 -   No direct database access in service
--   isRecurring defaults to false for regular categories
 -   Exception messages should be clear and actionable
 -   Response format must match frontend expectations exactly
+
+## Changelog
+
+| Version | Date       | Author   | Changes                                                                                                                                     |
+| ------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Dev Team | Removed `type` parameter and `isRecurring` field per PRD simplification - categories now focus on core properties (name, notes, timestamps) |
 
 ## Related PRD Sections
 

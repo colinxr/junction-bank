@@ -17,3 +17,9 @@
 -   Examples match PRD
 -   OpenAPI spec valid
 -   Error codes documented
+
+## Changelog
+
+| Version | Date       | Changes                                                                                                                                                         |
+| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Reviewed for PRD v1.1. API documentation needs updating to remove `type` and `isRecurring` properties from request/response examples and OpenAPI specification. |

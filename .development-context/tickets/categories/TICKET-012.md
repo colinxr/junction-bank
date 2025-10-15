@@ -271,3 +271,9 @@ describe('DeleteCategoryAction Exception Handling', function () {
 -   **Caching Strategy - Invalidation:** Lines 519-525
 -   **Exception Hierarchy:** Lines 595-603
 -   **Domain Model:** Lines 156-160 (business rules)
+
+## Changelog
+
+| Version | Date       | Changes                                                                                                                        |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 1.1     | 2024-12-19 | Reviewed for PRD v1.1. No changes required - delete operation is unaffected by removal of `type` and `isRecurring` properties. |

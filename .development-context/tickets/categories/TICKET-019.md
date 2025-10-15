@@ -66,7 +66,6 @@ describe('Category Complete CRUD Flow', function () {
             'Authorization' => "Bearer $token"
         ])->postJson('/api/categories', [
             'name' => 'Groceries',
-            'type' => 'expense',
             'notes' => 'Food and household'
         ]);
 
@@ -132,8 +131,7 @@ describe('Category CRUD Authentication', function () {
 
     it('requires authentication for store', function () {
         $response = $this->postJson('/api/categories', [
-            'name' => 'Test',
-            'type' => 'expense'
+            'name' => 'Test'
         ]);
         $response->assertStatus(401);
     });
@@ -172,18 +170,14 @@ describe('Category CRUD Validation Errors', function () {
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer $token"
-        ])->postJson('/api/categories', [
-            'type' => 'expense'
-        ]);
+        ])->postJson('/api/categories', []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['name']);
     });
 
-    it('returns 422 when creating without type');
     it('returns 422 when name exceeds 255 characters');
     it('returns 422 when notes exceed 1000 characters');
-    it('returns 422 when type is invalid');
     it('returns 422 when updating with invalid data');
     it('returns 422 for invalid pagination parameters');
     it('returns validation errors with proper structure');
@@ -204,16 +198,14 @@ describe('Category CRUD Business Rule Violations', function () {
         $this->withHeaders([
             'Authorization' => "Bearer $token"
         ])->postJson('/api/categories', [
-            'name' => 'Groceries',
-            'type' => 'expense'
+            'name' => 'Groceries'
         ])->assertStatus(201);
 
         // Attempt duplicate
         $response = $this->withHeaders([
             'Authorization' => "Bearer $token"
         ])->postJson('/api/categories', [
-            'name' => 'Groceries',
-            'type' => 'income'
+            'name' => 'Groceries'
         ]);
 
         $response->assertStatus(409)
@@ -241,8 +233,7 @@ describe('Category CRUD Pagination and Filtering', function () {
             $this->withHeaders([
                 'Authorization' => "Bearer $token"
             ])->postJson('/api/categories', [
-                'name' => "Category $i",
-                'type' => $i % 2 === 0 ? 'income' : 'expense'
+                'name' => "Category $i"
             ]);
         }
 
@@ -258,8 +249,6 @@ describe('Category CRUD Pagination and Filtering', function () {
             ->assertJsonPath('pagination.totalItems', 25);
     });
 
-    it('filters by income type');
-    it('filters by expense type');
     it('returns correct page of results');
     it('handles page beyond available pages');
     it('respects limit parameter');
@@ -281,8 +270,7 @@ describe('Category CRUD User Isolation', function () {
         $this->withHeaders([
             'Authorization' => "Bearer $token1"
         ])->postJson('/api/categories', [
-            'name' => 'User1 Category',
-            'type' => 'expense'
+            'name' => 'User1 Category'
         ]);
 
         // User 2 should not see User 1's category
@@ -415,3 +403,9 @@ describe('Category CRUD Cache Behavior', function () {
 -   **Cache Tests:** Lines 661-665
 -   **Success Metrics:** Lines 42-48
 -   **All API Endpoints:** Lines 182-353
+
+## Changelog
+
+| Version | Date       | Changes                                                                                                                                                                                                                        |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1.1     | 2024-12-19 | Removed `type` and `isRecurring` properties from integration tests. Categories now focus on core properties: name, notes, and timestamps. Updated test cases, request/response examples, and validation scenarios accordingly. |

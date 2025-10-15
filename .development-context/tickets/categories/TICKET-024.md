@@ -19,3 +19,9 @@
 -   All classes documented
 -   No code duplication
 -   Follows memory preferences
+
+## Changelog
+
+| Version | Date       | Changes                                                                                                                                          |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1.1     | 2024-12-19 | Reviewed for PRD v1.1. No changes required - code review and cleanup processes are unaffected by removal of `type` and `isRecurring` properties. |

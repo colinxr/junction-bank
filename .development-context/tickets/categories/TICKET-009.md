@@ -54,10 +54,9 @@ class ShowCategoryAction
     "data": {
         "id": 1,
         "name": "Groceries",
-        "type": "expense",
         "notes": "Food and household items",
-        "isRecurring": false,
-        "createdAt": "2024-12-19T10:00:00Z"
+        "createdAt": "2024-12-19T10:00:00Z",
+        "updatedAt": "2024-12-19T10:00:00Z"
     }
 }
 ```
@@ -200,6 +199,12 @@ describe('ShowCategoryAction Edge Cases', function () {
 -   Exception handling delegated to controller/exception handler
 -   Service remains thin - just orchestration logic
 -   Response format must match frontend expectations exactly
+
+## Changelog
+
+| Version | Date       | Author   | Changes                                                                                                                                          |
+| ------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1.1     | 2024-12-19 | Dev Team | Removed `type` and `isRecurring` fields from response per PRD simplification - categories now focus on core properties (name, notes, timestamps) |
 
 ## Related PRD Sections
 

@@ -41,7 +41,6 @@ class StoreCategoryRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255|unique:categories,name',
-            'type' => 'required|string|in:income,expense',
             'notes' => 'nullable|string|max:1000',
         ];
     }
@@ -56,8 +55,6 @@ class StoreCategoryRequest extends FormRequest
             'name.string' => 'Category name must be a string.',
             'name.max' => 'Category name cannot exceed 255 characters.',
             'name.unique' => 'A category with this name already exists.',
-            'type.required' => 'Category type is required.',
-            'type.in' => 'Category type must be either income or expense.',
             'notes.max' => 'Category notes cannot exceed 1000 characters.',
         ];
     }
@@ -69,7 +66,6 @@ class StoreCategoryRequest extends FormRequest
     {
         return [
             'name' => 'category name',
-            'type' => 'category type',
             'notes' => 'category notes',
         ];
     }
@@ -102,7 +98,6 @@ class UpdateCategoryRequest extends FormRequest
                 'max:255',
                 Rule::unique('categories', 'name')->ignore($categoryId),
             ],
-            'type' => 'sometimes|string|in:income,expense',
             'notes' => 'nullable|string|max:1000',
         ];
     }
@@ -113,7 +108,6 @@ class UpdateCategoryRequest extends FormRequest
             'name.string' => 'Category name must be a string.',
             'name.max' => 'Category name cannot exceed 255 characters.',
             'name.unique' => 'A category with this name already exists.',
-            'type.in' => 'Category type must be either income or expense.',
             'notes.max' => 'Category notes cannot exceed 1000 characters.',
         ];
     }
@@ -122,7 +116,6 @@ class UpdateCategoryRequest extends FormRequest
     {
         return [
             'name' => 'category name',
-            'type' => 'category type',
             'notes' => 'category notes',
         ];
     }
@@ -148,7 +141,6 @@ class IndexCategoriesRequest extends FormRequest
         return [
             'page' => 'integer|min:1',
             'limit' => 'integer|min:1|max:100',
-            'type' => 'string|in:income,expense',
         ];
     }
 
@@ -160,7 +152,6 @@ class IndexCategoriesRequest extends FormRequest
             'limit.integer' => 'Limit must be an integer.',
             'limit.min' => 'Limit must be at least 1.',
             'limit.max' => 'Limit cannot exceed 100.',
-            'type.in' => 'Type must be either income or expense.',
         ];
     }
 
@@ -169,7 +160,6 @@ class IndexCategoriesRequest extends FormRequest
         return [
             'page' => 'page number',
             'limit' => 'items per page',
-            'type' => 'category type',
         ];
     }
 }
@@ -183,8 +173,7 @@ class IndexCategoriesRequest extends FormRequest
         "message": "Validation failed",
         "code": "VALIDATION_ERROR",
         "details": {
-            "name": ["The name has already been taken."],
-            "type": ["Category type must be either income or expense."]
+            "name": ["The name has already been taken."]
         }
     }
 }
@@ -215,8 +204,6 @@ describe('StoreCategoryRequest Validation', function () {
     it('fails when name is missing');
     it('fails when name exceeds 255 characters');
     it('fails when name is not unique');
-    it('fails when type is missing');
-    it('fails when type is invalid');
     it('passes when notes is null');
     it('fails when notes exceed 1000 characters');
     it('returns custom error messages');
@@ -229,13 +216,11 @@ describe('StoreCategoryRequest Validation', function () {
 describe('UpdateCategoryRequest Validation', function () {
     it('passes with valid partial data');
     it('passes when updating only name');
-    it('passes when updating only type');
     it('passes when updating only notes');
     it('passes with no fields (no-op)');
     it('fails when name exceeds 255 characters');
     it('fails when name conflicts with other category');
     it('passes when name unchanged');
-    it('fails when type is invalid');
     it('fails when notes exceed 1000 characters');
     it('uses sometimes validation for optional fields');
     it('returns custom error messages');
@@ -250,13 +235,11 @@ describe('IndexCategoriesRequest Validation', function () {
     it('passes with no query parameters');
     it('passes with only page parameter');
     it('passes with only limit parameter');
-    it('passes with only type parameter');
     it('fails when page is less than 1');
     it('fails when page is not integer');
     it('fails when limit is less than 1');
     it('fails when limit exceeds 100');
     it('fails when limit is not integer');
-    it('fails when type is invalid');
     it('returns custom error messages');
 });
 ```
@@ -278,7 +261,6 @@ describe('Form Request Uniqueness Validation', function () {
 describe('Form Request Error Messages', function () {
     it('returns clear error message for required name');
     it('returns clear error message for duplicate name');
-    it('returns clear error message for invalid type');
     it('returns clear error message for long name');
     it('returns clear error message for long notes');
     it('returns multiple errors when multiple rules fail');
@@ -322,7 +304,6 @@ describe('Form Request Edge Cases', function () {
 -   [ ] Unique validation excludes self for update
 -   [ ] Update uses `sometimes` for optional fields
 -   [ ] Max length validation works (255, 1000)
--   [ ] Type validation enforces income/expense
 -   [ ] Query parameter validation works
 -   [ ] Error response format matches PRD
 -   [ ] 100% test coverage
@@ -338,8 +319,6 @@ describe('Form Request Edge Cases', function () {
 -   [ ] Verify error: "Category name cannot exceed 255 characters."
 -   [ ] POST /categories with duplicate name
 -   [ ] Verify error: "A category with this name already exists."
--   [ ] POST /categories with invalid type "other"
--   [ ] Verify error: "Category type must be either income or expense."
 -   [ ] PUT /categories/1 with new unique name
 -   [ ] Verify passes validation
 -   [ ] PUT /categories/1 with same name
@@ -373,3 +352,9 @@ describe('Form Request Edge Cases', function () {
 -   **Error Response Format:** Lines 614-623
 -   **Business Rules:** Lines 528-547
 -   **Layer Architecture - Interface Layer:** Lines 440-450
+
+## Changelog
+
+| Version | Date       | Changes                                                                                                                                                                                 |
+| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Removed `type` validation from all Form Request classes. Categories now focus on core properties: name and notes. Updated validation rules, error messages, and test cases accordingly. |

@@ -17,3 +17,9 @@
 -   Error format matches PRD
 -   Proper HTTP status codes
 -   Logs contain context
+
+## Changelog
+
+| Version | Date       | Changes                                                                                                                                   |
+| ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Reviewed for PRD v1.1. No changes required - error handling and logging are unaffected by removal of `type` and `isRecurring` properties. |

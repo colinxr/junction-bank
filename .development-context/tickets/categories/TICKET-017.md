@@ -243,3 +243,9 @@ describe('Category Routes CORS', function () {
 -   **Endpoint 5: Delete Category:** Lines 335-353
 -   **Authentication:** Lines 670-673
 -   **Authorization:** Lines 674-676
+
+## Changelog
+
+| Version | Date       | Changes                                                                                                                                |
+| ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Reviewed for PRD v1.1. No changes required - API routes configuration is unaffected by removal of `type` and `isRecurring` properties. |

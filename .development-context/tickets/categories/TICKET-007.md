@@ -33,9 +33,9 @@ class CategoryMapper
         return new Category(
             name: $model->name,
             notes: $model->notes,
-            isRecurring: $model->is_recurring,
             id: $model->id,
-            createdAt: $model->created_at
+            createdAt: $model->created_at,
+            updatedAt: $model->updated_at
         );
     }
 
@@ -54,7 +54,6 @@ class CategoryMapper
 
         $model->name = $entity->getName();
         $model->notes = $entity->getNotes();
-        $model->is_recurring = $entity->isRecurring();
 
         return $model;
     }
@@ -67,10 +66,9 @@ class CategoryMapper
         return [
             'id' => $entity->getId(),
             'name' => $entity->getName(),
-            'type' => $entity->getType(),
             'notes' => $entity->getNotes(),
-            'isRecurring' => $entity->isRecurring(),
             'createdAt' => $entity->getCreatedAt()?->format('Y-m-d\TH:i:s\Z'),
+            'updatedAt' => $entity->getUpdatedAt()?->format('Y-m-d\TH:i:s\Z'),
         ];
     }
 
@@ -92,10 +90,9 @@ API Response format matches PRD lines 202-221:
 {
     "id": 1,
     "name": "Groceries",
-    "type": "expense",
     "notes": "Food and household items",
-    "isRecurring": false,
-    "createdAt": "2024-12-19T10:00:00Z"
+    "createdAt": "2024-12-19T10:00:00Z",
+    "updatedAt": "2024-12-19T10:00:00Z"
 }
 ```
 
@@ -121,7 +118,7 @@ describe('CategoryMapper toEntity()', function () {
     it('converts model to entity with null notes');
     it('converts model with id to entity');
     it('preserves created_at timestamp');
-    it('converts is_recurring boolean correctly');
+    it('converts updatedAt timestamp correctly');
     it('handles minimal model data');
 });
 ```
@@ -150,7 +147,7 @@ describe('CategoryMapper toDTO()', function () {
     it('handles null notes in DTO');
     it('handles null createdAt in DTO');
     it('uses camelCase for field names');
-    it('converts boolean isRecurring correctly');
+    it('includes updatedAt field in DTO');
 });
 ```
 
@@ -174,6 +171,7 @@ describe('CategoryMapper Null Handling', function () {
     it('handles null notes in toDTO');
     it('handles null id in toModel');
     it('handles null createdAt in toDTO');
+    it('handles null updatedAt in toDTO');
 });
 ```
 
@@ -230,6 +228,12 @@ describe('CategoryMapper Bidirectional Transformation', function () {
 -   Date format must match frontend expectations
 -   DTO field names use camelCase per JavaScript conventions
 -   Consider adding validation that entity data is complete
+
+## Changelog
+
+| Version | Date       | Author   | Changes                                                                                                                                                        |
+| ------- | ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Dev Team | Removed `type` and `isRecurring` fields from mapper transformations per PRD simplification - categories now focus on core properties (name, notes, timestamps) |
 
 ## Related PRD Sections
 

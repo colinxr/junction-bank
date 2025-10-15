@@ -327,3 +327,9 @@ describe('Service Provider Edge Cases', function () {
 -   **Layer Architecture:** Lines 404-450
 -   **Repository Pattern:** Lines 412-414
 -   **Use Cases (Actions):** Lines 418-425
+
+## Changelog
+
+| Version | Date       | Changes                                                                                                                                  |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Reviewed for PRD v1.1. No changes required - service provider bindings are unaffected by removal of `type` and `isRecurring` properties. |

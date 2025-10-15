@@ -43,8 +43,7 @@ class CategoryController extends Controller
     {
         $result = $this->indexService->execute(
             page: $request->input('page', 1),
-            limit: $request->input('limit', 20),
-            type: $request->input('type')
+            limit: $request->input('limit', 20)
         );
 
         return response()->json($result, 200);
@@ -81,9 +80,7 @@ class CategoryController extends Controller
         {
             "id": 1,
             "name": "Groceries",
-            "type": "expense",
             "notes": "Food and household items",
-            "isRecurring": false,
             "createdAt": "2024-12-19T10:00:00Z"
         }
     ],
@@ -103,9 +100,7 @@ class CategoryController extends Controller
     "data": {
         "id": 1,
         "name": "Groceries",
-        "type": "expense",
         "notes": "Food and household items",
-        "isRecurring": false,
         "createdAt": "2024-12-19T10:00:00Z"
     }
 }
@@ -147,8 +142,6 @@ describe('CategoryController Index', function () {
     it('returns paginated categories with default parameters');
     it('returns categories for specific page');
     it('returns categories with custom limit');
-    it('returns categories filtered by income type');
-    it('returns categories filtered by expense type');
     it('returns 200 status code');
     it('includes data and pagination keys');
     it('delegates to IndexCategoriesService');
@@ -179,7 +172,6 @@ describe('CategoryController Index Validation', function () {
     it('validates using IndexCategoriesRequest');
     it('returns 422 for invalid page parameter');
     it('returns 422 for invalid limit parameter');
-    it('returns 422 for invalid type parameter');
     it('returns validation errors in standard format');
 });
 ```
@@ -218,9 +210,7 @@ describe('CategoryController Show Response Format', function () {
     it('uses camelCase for property names');
     it('includes id field');
     it('includes name field');
-    it('includes type field');
     it('includes notes field');
-    it('includes isRecurring field');
     it('includes createdAt field');
 });
 ```
@@ -299,8 +289,6 @@ describe('CategoryController Edge Cases', function () {
 -   [ ] Verify first 20 categories returned
 -   [ ] GET /api/categories?page=2&limit=10
 -   [ ] Verify correct page 2 items with limit 10
--   [ ] GET /api/categories?type=income
--   [ ] Verify only income categories returned
 -   [ ] GET /api/categories/1
 -   [ ] Verify 200 status code
 -   [ ] Verify single category with all fields
@@ -333,3 +321,9 @@ describe('CategoryController Edge Cases', function () {
 -   **Error Response Format:** Lines 612-623
 -   **Authentication:** Lines 670-673
 -   **Authorization:** Lines 674-676
+
+## Changelog
+
+| Version | Date       | Changes                                                                                                                                                                                                                 |
+| ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Removed `type` and `isRecurring` properties from category responses. Categories now focus on core properties: name, notes, and timestamps. Updated controller methods, response structures, and test cases accordingly. |

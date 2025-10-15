@@ -51,13 +51,11 @@ class CategoryCacheKeys
      * @param int $userId User ID
      * @param int $page Page number
      * @param int $limit Items per page
-     * @param string|null $type Filter type
      * @return string Cache key
      */
-    public static function list(int $userId, int $page, int $limit, ?string $type = null): string
+    public static function list(int $page, int $limit): string
     {
-        $typeSegment = $type ? ":{$type}" : '';
-        return "categories:list:{$userId}:{$page}:{$limit}{$typeSegment}";
+        return "categories:list::{$page}:{$limit}";
     }
 
     /**
@@ -69,17 +67,6 @@ class CategoryCacheKeys
     public static function single(int $id): string
     {
         return "categories:{$id}";
-    }
-
-    /**
-     * Generate cache key for user's all categories
-     *
-     * @param int $userId User ID
-     * @return string Cache key
-     */
-    public static function userCategories(int $userId): string
-    {
-        return "categories:user:{$userId}";
     }
 
     /**
@@ -128,9 +115,9 @@ class CategoryCacheKeys
 ### Cache Key Patterns (PRD Lines 507-525)
 
 ```
-categories:list:{user_id}:{page}:{limit}:{type?}   # Paginated lists
+categories:list:{page}:{limit}           # Paginated lists
 categories:{id}                                     # Single category
-categories:user:{user_id}                          # All user categories
+categories:user                          # All user categories
 ```
 
 ### Cache TTL Strategy
@@ -147,9 +134,7 @@ categories:user:{user_id}                          # All user categories
 
 **Invalidate:**
 
--   `categories:list:{user_id}:*` - All paginated lists for user
 -   `categories:{id}` - Specific category
--   `categories:user:{user_id}` - User's full category list
 
 ## Implementation Tasks
 
@@ -169,7 +154,6 @@ categories:user:{user_id}                          # All user categories
 ```php
 describe('CategoryCacheKeys Helper', function () {
     it('generates list cache key with all parameters')
-    it('generates list cache key without type filter')
     it('generates single category cache key')
     it('generates user categories cache key')
     it('generates list invalidation pattern')
@@ -177,7 +161,6 @@ describe('CategoryCacheKeys Helper', function () {
     it('returns correct single TTL')
     it('returns correct user list TTL')
     it('generates unique keys for different pages')
-    it('generates unique keys for different types')
 });
 ```
 
@@ -207,7 +190,7 @@ describe('CategoryCacheKeys Helper', function () {
 // In repository
 use App\Domains\Categories\Infrastructure\Cache\CategoryCacheKeys;
 
-$key = CategoryCacheKeys::list($userId, 1, 20, 'expense');
+$key = CategoryCacheKeys::list($userId, 1, 20);
 $ttl = CategoryCacheKeys::getListTTL();
 
 Cache::remember($key, $ttl, function () {
@@ -226,6 +209,12 @@ $pattern = CategoryCacheKeys::listPattern($userId);
 -   Keys are designed to be human-readable for debugging
 -   Pattern matching used for bulk invalidation
 -   TTL values can be adjusted based on monitoring data
+
+## Changelog
+
+| Version | Date       | Author   | Changes                                                                                                                       |
+| ------- | ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Dev Team | Removed `type` parameter from cache key generation per PRD simplification - categories no longer support type-based filtering |
 
 ## Related PRD Sections
 

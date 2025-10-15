@@ -106,9 +106,7 @@ public function destroy(int $id): JsonResponse
     "data": {
         "id": 1,
         "name": "Food & Groceries",
-        "type": "expense",
         "notes": "Updated description",
-        "isRecurring": false,
         "createdAt": "2024-12-19T10:00:00Z"
     }
 }
@@ -178,7 +176,6 @@ describe('CategoryController Update Happy Path', function () {
     it('updates category with all fields');
     it('updates category with partial fields');
     it('updates only name');
-    it('updates only type');
     it('updates only notes');
     it('updates to null notes');
     it('returns 200 status code');
@@ -194,7 +191,6 @@ describe('CategoryController Update Happy Path', function () {
 describe('CategoryController Update Validation', function () {
     it('validates using UpdateCategoryRequest');
     it('returns 422 when name exceeds 255 characters');
-    it('returns 422 when type is invalid');
     it('returns 422 when notes exceed 1000 characters');
     it('allows partial updates via sometimes rules');
     it('returns validation errors in standard format');
@@ -317,8 +313,6 @@ describe('CategoryController Partial Update', function () {
     it('preserves fields not in request');
     it('handles empty update data');
     it('validates only provided fields');
-    it('allows changing name without type');
-    it('allows changing type without name');
 });
 ```
 
@@ -390,5 +384,11 @@ describe('CategoryController Partial Update', function () {
 -   **Business Rule - Deletion Protection:** Lines 536-541
 -   **Layer Architecture - Interface Layer:** Lines 440-450
 -   **Exception Hierarchy:** Lines 595-603
+
+## Changelog
+
+| Version | Date       | Changes                                                                                                                                                                                                               |
+| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Removed `type` and `isRecurring` properties from category update and delete operations. Categories now focus on core properties: name, notes, and timestamps. Updated response structures and test cases accordingly. |
 
 -   what should happen to transactions when their category is deleted?

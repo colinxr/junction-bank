@@ -18,3 +18,9 @@
 -   Cache hit rate meets 95% target
 -   Performance benchmarks documented
 -   No N+1 queries
+
+## Changelog
+
+| Version | Date       | Changes                                                                                                                           |
+| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Reviewed for PRD v1.1. No changes required - performance testing is unaffected by removal of `type` and `isRecurring` properties. |

@@ -69,16 +69,15 @@ Categories is the simplest domain with no external dependencies, making it an id
 ### User Story 1: Create Category
 
 **As a** user  
-**I want to** create new income and expense categories  
+**I want to** create new categories  
 **So that** I can organize my transactions
 
 **Acceptance Criteria:**
 
--   [ ] Can create income category with unique name
--   [ ] Can create expense category with unique name
+-   [ ] Can create category with unique name
 -   [ ] Cannot create duplicate category names
 -   [ ] Category name is required and validated
--   [ ] Category type must be 'income' or 'expense'
+-   [ ] Notes are optional and validated
 
 **Technical Notes:**
 
@@ -97,7 +96,7 @@ Categories is the simplest domain with no external dependencies, making it an id
 
 -   [ ] Can list all categories with pagination
 -   [ ] Can view single category details
--   [ ] Can update category name and type
+-   [ ] Can update category name and notes
 -   [ ] Cannot delete category if it has transactions
 -   [ ] Proper error messages for business rule violations
 
@@ -112,7 +111,7 @@ Categories is the simplest domain with no external dependencies, making it an id
 
 **Acceptance Criteria:**
 
--   Create category with name, type, and optional notes
+-   Create category with name and optional notes
 -   Read categories with pagination and filtering
 -   Update category properties
 -   Delete category only if no associated transactions
@@ -129,7 +128,6 @@ Categories is the simplest domain with no external dependencies, making it an id
 **Acceptance Criteria:**
 
 -   Name is required and unique
--   Type must be 'income' or 'expense'
 -   Notes are optional
 -   Cannot delete categories with transactions
 
@@ -167,20 +165,16 @@ Categories is the simplest domain with no external dependencies, making it an id
 Category
 ├── id: int - Primary key
 ├── name: string - Category name (unique)
-├── type: string - 'income' or 'expense'
 ├── notes: string|null - Optional description
-├── isRecurring: boolean - Recurring flag
 └── createdAt: DateTime - Creation timestamp
 
 Business Rules:
 - Name must be unique across all categories
-- Type must be 'income' or 'expense'
 - Cannot delete if has associated transactions
 - Cannot delete if has associated recurring transactions
 
 Validation:
 - Name required, max 255 characters
-- Type must be one of: 'income', 'expense'
 - Notes optional, max 1000 characters
 ```
 
@@ -213,8 +207,7 @@ Category is the aggregate root with no child entities.
 ```json
 {
     "page": 1,
-    "limit": 20,
-    "type": "expense"
+    "limit": 20
 }
 ```
 
@@ -222,7 +215,6 @@ Category is the aggregate root with no child entities.
 
 -   `page`: integer, min: 1
 -   `limit`: integer, min: 1, max: 100
--   `type`: string, in: income,expense
 
 **Response (200):**
 
@@ -232,9 +224,7 @@ Category is the aggregate root with no child entities.
         {
             "id": 1,
             "name": "Groceries",
-            "type": "expense",
             "notes": "Food and household items",
-            "isRecurring": false,
             "createdAt": "2024-12-19T10:00:00Z"
         }
     ],
@@ -267,7 +257,6 @@ Category is the aggregate root with no child entities.
 ```json
 {
     "name": "Groceries",
-    "type": "expense",
     "notes": "Food and household items"
 }
 ```
@@ -275,7 +264,6 @@ Category is the aggregate root with no child entities.
 **Validation:**
 
 -   `name`: required, string, max: 255, unique
--   `type`: required, string, in: income,expense
 -   `notes`: nullable, string, max: 1000
 
 **Response (201):**
@@ -285,9 +273,7 @@ Category is the aggregate root with no child entities.
     "data": {
         "id": 1,
         "name": "Groceries",
-        "type": "expense",
         "notes": "Food and household items",
-        "isRecurring": false,
         "createdAt": "2024-12-19T10:00:00Z"
     }
 }
@@ -322,9 +308,7 @@ Category is the aggregate root with no child entities.
     "data": {
         "id": 1,
         "name": "Groceries",
-        "type": "expense",
         "notes": "Food and household items",
-        "isRecurring": false,
         "createdAt": "2024-12-19T10:00:00Z"
     }
 }
@@ -354,7 +338,6 @@ Category is the aggregate root with no child entities.
 **Validation:**
 
 -   `name`: string, max: 255, unique (if changed)
--   `type`: string, in: income,expense
 -   `notes`: nullable, string, max: 1000
 
 **Response (200):**
@@ -364,9 +347,7 @@ Category is the aggregate root with no child entities.
     "data": {
         "id": 1,
         "name": "Food & Groceries",
-        "type": "expense",
         "notes": "Updated description",
-        "isRecurring": false,
         "createdAt": "2024-12-19T10:00:00Z"
     }
 }
@@ -407,15 +388,11 @@ Category is the aggregate root with no child entities.
 CREATE TABLE categories (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
-    type ENUM('income', 'expense') NOT NULL,
-    notes TEXT NULL,
-    is_recurring BOOLEAN DEFAULT FALSE,
+    notes VARCHAR(1000) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    UNIQUE KEY unique_name (name),
-    INDEX idx_type (type),
-    INDEX idx_is_recurring (is_recurring)
+    UNIQUE KEY unique_name (name)
 );
 ```
 
@@ -424,9 +401,7 @@ CREATE TABLE categories (
 |--------|------|------|---------|-------------|
 | id | BIGINT | NO | AUTO | Primary key |
 | name | VARCHAR(255) | NO | - | Category name |
-| type | ENUM | NO | - | income or expense |
-| notes | TEXT | YES | NULL | Optional description |
-| is_recurring | BOOLEAN | NO | FALSE | Recurring flag |
+| notes | VARCHAR(1000) | YES | NULL | Optional description |
 | created_at | TIMESTAMP | NO | CURRENT_TIMESTAMP | Creation time |
 | updated_at | TIMESTAMP | NO | CURRENT_TIMESTAMP | Update time |
 
@@ -434,8 +409,6 @@ CREATE TABLE categories (
 
 -   `PRIMARY KEY`: id
 -   `UNIQUE KEY`: name
--   `INDEX`: type
--   `INDEX`: is_recurring
 
 **Relationships:**
 
@@ -445,7 +418,6 @@ CREATE TABLE categories (
 **Constraints:**
 
 -   Name must be unique
--   Type must be 'income' or 'expense'
 
 ---
 
@@ -614,13 +586,6 @@ categories:user:{user_id}                          # All user categories
 **Implementation:** Check foreign key constraints before deletion  
 **Exceptions:** None
 
-### Rule 3: Category Type Validation
-
-**Description:** Category type must be either 'income' or 'expense'  
-**Triggers:** Create and update operations  
-**Implementation:** Enum constraint + form validation  
-**Exceptions:** None
-
 ---
 
 ## Validation Rules
@@ -654,7 +619,6 @@ class StoreCategoryRequest extends FormRequest {
     public function rules(): array {
         return [
             'name' => 'required|string|max:255|unique:categories,name',
-            'type' => 'required|string|in:income,expense',
             'notes' => 'nullable|string|max:1000',
         ];
     }
@@ -672,8 +636,8 @@ CategoryException
 ├── CategoryNotFoundException
 ├── CategoryAlreadyExistsException
 ├── CategoryHasTransactionsException
-├── InvalidCategoryTypeException
-└── CategoryNameEmptyException
+├── InvalidCategoryNameException
+└── InvalidCategoryNotesException
 ```
 
 ### Error Codes
@@ -988,9 +952,10 @@ php artisan make:migration add_user_id_to_categories_table
 
 ## Change Log
 
-| Version | Date       | Author   | Changes       |
-| ------- | ---------- | -------- | ------------- |
-| 1.0     | 2024-12-19 | Dev Team | Initial draft |
+| Version | Date       | Author   | Changes                                                                                                                             |
+| ------- | ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Dev Team | Updated to reflect current implementation - removed type and isRecurring properties, simplified domain model and API specifications |
+| 1.0     | 2024-12-19 | Dev Team | Initial draft                                                                                                                       |
 
 ---
 

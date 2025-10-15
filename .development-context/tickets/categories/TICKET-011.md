@@ -39,12 +39,11 @@ class UpdateCategoryAction
      * Execute the update category use case
      *
      * @param int $id Category ID
-     * @param array $data Update data ['name', 'type', 'notes']
+     * @param array $data Update data ['name', 'notes']
      * @return array Updated category DTO
      * @throws CategoryNotFoundException When category not found
      * @throws CategoryAlreadyExistsException When new name conflicts
      * @throws InvalidCategoryNameException When name validation fails
-     * @throws InvalidCategoryTypeException When type validation fails
      * @throws InvalidCategoryNotesException When notes validation fails
      */
     public function execute(int $id, array $data): array
@@ -55,10 +54,6 @@ class UpdateCategoryAction
         // Apply updates to entity (validates changes)
         if (isset($data['name'])) {
             $entity->changeName($data['name']);
-        }
-
-        if (isset($data['type'])) {
-            $entity->changeType($data['type']);
         }
 
         if (array_key_exists('notes', $data)) {
@@ -90,9 +85,7 @@ class UpdateCategoryAction
     "data": {
         "id": 1,
         "name": "Food & Groceries",
-        "type": "expense",
         "notes": "Updated description",
-        "isRecurring": false,
         "createdAt": "2024-12-19T10:00:00Z"
     }
 }
@@ -101,7 +94,6 @@ class UpdateCategoryAction
 ### Validation Rules (PRD Lines 315-319)
 
 -   **name:** string, max: 255, unique (if changed, excluding current)
--   **type:** string, in: income,expense
 -   **notes:** nullable, string, max: 1000
 
 ### Business Logic
@@ -140,7 +132,6 @@ class UpdateCategoryAction
 ```php
 describe('UpdateCategoryAction Happy Path', function () {
     it('updates category name only');
-    it('updates category type only');
     it('updates category notes only');
     it('updates all fields at once');
     it('updates to null notes');
@@ -178,10 +169,7 @@ describe('UpdateCategoryAction Not Found', function () {
 describe('UpdateCategoryAction Validation', function () {
     it('throws exception when name is empty');
     it('throws exception when name exceeds 255 characters');
-    it('throws exception when type is invalid');
     it('throws exception when notes exceed 1000 characters');
-    it('accepts valid income type');
-    it('accepts valid expense type');
     it('accepts null notes');
     it('validates via entity business methods');
 });
@@ -195,7 +183,6 @@ describe('UpdateCategoryAction Partial Updates', function () {
     it('preserves fields not in update data');
     it('handles empty update data');
     it('handles update with only notes');
-    it('allows changing only type');
 });
 ```
 
@@ -252,7 +239,6 @@ describe('UpdateCategoryAction Exception Handling', function () {
     it('propagates CategoryNotFoundException');
     it('propagates CategoryAlreadyExistsException');
     it('propagates InvalidCategoryNameException');
-    it('propagates InvalidCategoryTypeException');
     it('propagates InvalidCategoryNotesException');
     it('includes helpful error messages');
 });
@@ -294,8 +280,6 @@ describe('UpdateCategoryAction Exception Handling', function () {
 -   [ ] Verify CategoryNameEmptyException thrown
 -   [ ] Update category with name over 255 chars
 -   [ ] Verify InvalidCategoryNameException thrown
--   [ ] Update category with invalid type 'other'
--   [ ] Verify InvalidCategoryTypeException thrown
 -   [ ] Create category as user A
 -   [ ] Attempt to update as user B
 -   [ ] Verify exception thrown (user isolation)
@@ -313,7 +297,13 @@ describe('UpdateCategoryAction Exception Handling', function () {
 -   Empty update data is valid (no-op)
 -   Exception messages should be clear and actionable
 -   Response format must match frontend expectations exactly
--   isRecurring and createdAt cannot be changed via update
+-   createdAt cannot be changed via update
+
+## Changelog
+
+| Version | Date       | Changes                                                                                                                                                                                                            |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1.1     | 2024-12-19 | Removed `type` and `isRecurring` properties from category updates. Categories now focus on core properties: name, notes, and timestamps. Updated validation rules, response structure, and test cases accordingly. |
 
 ## Related PRD Sections
 

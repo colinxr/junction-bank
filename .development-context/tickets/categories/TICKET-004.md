@@ -33,14 +33,13 @@ use App\Domains\Categories\Exceptions\CategoryAlreadyExistsException;
 interface ICategoryRepository
 {
     /**
-     * Find all categories with optional filtering and pagination
+     * Find all categories with pagination
      *
      * @param int $page Page number (1-indexed)
      * @param int $limit Items per page
-     * @param string|null $type Filter by type ('income' or 'expense')
      * @return array{data: Category[], pagination: array}
      */
-    public function findAll(int $page = 1, int $limit = 20, ?string $type = null): array;
+    public function findAll(int $page = 1, int $limit = 20): array;
 
     /**
      * Find category by ID
@@ -112,9 +111,9 @@ interface ICategoryRepository
 #### findAll()
 
 -   **Purpose:** Retrieve paginated list of categories
--   **Parameters:** page (int), limit (int), type (string|null)
+-   **Parameters:** page (int), limit (int)
 -   **Returns:** Array with 'data' (Category[]) and 'pagination' metadata
--   **Cache Strategy:** Cache by page/limit/type combination
+-   **Cache Strategy:** Cache by page/limit combination
 
 #### findById()
 
@@ -226,6 +225,12 @@ describe('ICategoryRepository Interface', function () {
 -   Will be bound to implementation via dependency injection in AppServiceProvider
 -   Implementation will be done in TICKET-006
 
+## Changelog
+
+| Version | Date       | Author   | Changes                                                                                                               |
+| ------- | ---------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Dev Team | Removed `type` parameter from `findAll()` method per PRD simplification - categories no longer support type filtering |
+
 ## Related PRD Sections
 
 ### Repository Pattern (Lines 412-416)
@@ -269,19 +274,15 @@ $this->app->singleton(ICategoryRepository::class, function ($app) {
 **Triggers:** Delete operation
 **Implementation:** Check foreign key constraints before deletion
 
-### Rule 3: Category Type Validation
-**Description:** Category type must be either 'income' or 'expense'
-**Triggers:** Create and update operations
-**Implementation:** Enum constraint + form validation
 ```
 
 ### Caching Strategy (Lines 505-525)
 
 ```
 ### Cache Keys
-categories:list:{user_id}:{page}:{limit}:{type}    # Paginated lists
+categories:list:{page}:{limit}           # Paginated lists
 categories:{id}                                     # Single category
-categories:user:{user_id}                          # All user categories
+categories:user                          # All user categories
 
 ### Cache TTL
 - List queries: 1 hour
@@ -291,9 +292,9 @@ categories:user:{user_id}                          # All user categories
 ### Invalidation Rules
 **Trigger:** Create, Update, Delete
 **Invalidate:**
-- categories:list:{user_id}:*
+- categories:list:*
 - categories:{id}
-- categories:user:{user_id}
+- categories:user
 ```
 
 ### Domain Model (Lines 143-177)
@@ -302,14 +303,12 @@ categories:user:{user_id}                          # All user categories
 Category
 ├── id: int - Primary key
 ├── name: string - Category name (unique)
-├── type: string - 'income' or 'expense'
 ├── notes: string|null - Optional description
-├── isRecurring: boolean - Recurring flag
-└── createdAt: DateTime - Creation timestamp
+├── createdAt: DateTime - Creation timestamp
+└── updatedAt: DateTime - Update timestamp
 
 Business Rules:
 - Name must be unique across all categories
-- Type must be 'income' or 'expense'
 - Cannot delete if has associated transactions
 - Cannot delete if has associated recurring transactions
 ```
@@ -322,7 +321,6 @@ CategoryException
 ├── CategoryNotFoundException
 ├── CategoryAlreadyExistsException
 ├── CategoryHasTransactionsException
-├── InvalidCategoryTypeException
 └── CategoryNameEmptyException
 
 ### Error Codes

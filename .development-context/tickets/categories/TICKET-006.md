@@ -187,7 +187,6 @@ class CategoryRepository implements ICategoryRepository
     public function findAll(int $page = 1, int $limit = 20): array
     {
         // Implementation with pagination
-    }
 
     public function findById(int $id): Category
     {
@@ -468,7 +467,6 @@ describe('CategoryRepository User Isolation', function () {
 -   [ ] Update category: verify changes persisted
 -   [ ] Create duplicate name: verify exception thrown
 -   [ ] Test pagination: create 25 categories, fetch page 2
--   [ ] Test filtering: create income/expense, filter each
 -   [ ] Run tests: `php artisan test --filter=CategoryMapperTest`
 -   [ ] Run tests: `php artisan test --filter=CategoryRepositoryTest`
 -   [ ] Run tests: `php artisan test --filter=CategoryServiceProviderTest`
@@ -488,6 +486,12 @@ describe('CategoryRepository User Isolation', function () {
 -   Both CategoryMapper and CategoryRepository are stateless classes (no mutable state)
 -   Using `bind()` instead of `singleton()` for better testability and isolation
 -   See `.development-context/guides/determining-statefulness.md` for state analysis guide
+
+## Changelog
+
+| Version | Date       | Author   | Changes                                                                                                                   |
+| ------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Dev Team | Removed type filtering from `findAll()` method per PRD simplification - categories no longer support type-based filtering |
 
 ## Related PRD Sections
 

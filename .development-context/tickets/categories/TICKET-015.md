@@ -37,7 +37,6 @@ public function store(StoreCategoryRequest $request): JsonResponse
     try {
         $category = $this->storeAction->execute(
             name: $request->input('name'),
-            type: $request->input('type'),
             notes: $request->input('notes')
         );
 
@@ -58,7 +57,6 @@ public function store(StoreCategoryRequest $request): JsonResponse
 ```json
 {
     "name": "Groceries",
-    "type": "expense",
     "notes": "Food and household items"
 }
 ```
@@ -70,9 +68,7 @@ public function store(StoreCategoryRequest $request): JsonResponse
     "data": {
         "id": 1,
         "name": "Groceries",
-        "type": "expense",
         "notes": "Food and household items",
-        "isRecurring": false,
         "createdAt": "2024-12-19T10:00:00Z"
     }
 }
@@ -110,7 +106,7 @@ public function store(StoreCategoryRequest $request): JsonResponse
 1. Add StoreCategoryAction to constructor injection
 2. Implement `store()` method
 3. Type-hint StoreCategoryRequest for validation
-4. Extract input parameters (name, type, notes)
+4. Extract input parameters (name, notes)
 5. Call StoreCategoryAction with parameters
 6. Wrap result in 'data' key
 7. Return 201 status code on success
@@ -144,8 +140,6 @@ describe('CategoryController Store Validation', function () {
     it('validates using StoreCategoryRequest');
     it('returns 422 when name is missing');
     it('returns 422 when name exceeds 255 characters');
-    it('returns 422 when type is missing');
-    it('returns 422 when type is invalid');
     it('returns 422 when notes exceed 1000 characters');
     it('returns validation errors in standard format');
     it('returns multiple errors for multiple violations');
@@ -175,9 +169,7 @@ describe('CategoryController Store Response Format', function () {
     it('uses camelCase for property names');
     it('includes generated id field');
     it('includes name field');
-    it('includes type field');
     it('includes notes field');
-    it('includes isRecurring field defaulted to false');
     it('includes createdAt timestamp');
 });
 ```
@@ -258,7 +250,7 @@ describe('CategoryController Store Error Handling', function () {
 -   [ ] `store()` method implemented in CategoryController
 -   [ ] Constructor injects StoreCategoryAction
 -   [ ] StoreCategoryRequest type-hinted for validation
--   [ ] Input parameters extracted (name, type, notes)
+-   [ ] Input parameters extracted (name, notes)
 -   [ ] StoreCategoryAction called with parameters
 -   [ ] Result wrapped in 'data' key
 -   [ ] 201 status returned on success
@@ -280,8 +272,6 @@ describe('CategoryController Store Error Handling', function () {
 -   [ ] POST /api/categories with missing name
 -   [ ] Verify 422 validation error
 -   [ ] Verify error message present
--   [ ] POST /api/categories with invalid type "other"
--   [ ] Verify 422 validation error
 -   [ ] POST /api/categories with name over 255 chars
 -   [ ] Verify 422 validation error
 -   [ ] Create category "Groceries"
@@ -305,7 +295,6 @@ describe('CategoryController Store Error Handling', function () {
 -   Service layer enforces user isolation
 -   Cache invalidation handled by repository
 -   Response format must match frontend expectations exactly
--   isRecurring defaults to false in entity
 
 ## Related PRD Sections
 
@@ -318,3 +307,9 @@ describe('CategoryController Store Error Handling', function () {
 -   **Layer Architecture - Interface Layer:** Lines 440-450
 -   **Error Handling:** Lines 606-623
 -   **Exception Hierarchy:** Lines 595-603
+
+## Changelog
+
+| Version | Date       | Changes                                                                                                                                                                                                                       |
+| ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Removed `type` and `isRecurring` properties from category creation. Categories now focus on core properties: name, notes, and timestamps. Updated controller method, request/response structures, and test cases accordingly. |

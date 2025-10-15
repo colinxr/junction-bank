@@ -24,13 +24,10 @@ class Category extends Model
 
     protected $fillable = [
         'name',
-        'type',
-        'notes',
-        'is_recurring'
+        'notes'
     ];
 
     protected $casts = [
-        'is_recurring' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];
@@ -49,13 +46,10 @@ class Category extends Model
 ### Fillable Attributes
 
 -   `name` - Category name (string)
--   `type` - Category type (string enum: 'income', 'expense')
 -   `notes` - Optional description (string|null)
--   `is_recurring` - Recurring flag (boolean)
 
 ### Type Casting
 
--   `is_recurring` → boolean (stored as tinyint in DB)
 -   `created_at` → datetime object
 -   `updated_at` → datetime object
 
@@ -89,7 +83,6 @@ class Category extends Model
 ## Validation Checklist
 
 -   [ ] Create test category in tinker
--   [ ] Verify boolean casting: `$category->is_recurring === true`
 -   [ ] Verify datetime casting: `$category->created_at instanceof Carbon`
 -   [ ] Verify mass assignment: `Category::create([...])`
 -   [ ] Run model tests: `php artisan test --filter=CategoryModelTest`
@@ -100,6 +93,12 @@ class Category extends Model
 -   Keep relationship methods as empty stubs with TODO comments
 -   Focus on basic model configuration and attributes
 -   Ensure model aligns with migration from TICKET-001
+
+## Changelog
+
+| Version | Date       | Author   | Changes                                                                                                                                                         |
+| ------- | ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1     | 2024-12-19 | Dev Team | Removed `type` and `is_recurring` from fillable attributes and casts per PRD simplification - categories now focus on core properties (name, notes, timestamps) |
 
 ## Related PRD Sections
 
