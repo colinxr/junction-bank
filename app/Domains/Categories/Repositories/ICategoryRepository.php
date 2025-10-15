@@ -25,11 +25,10 @@ interface ICategoryRepository
    *
    * @param int $page Page number (1-indexed), default 1
    * @param int $limit Items per page, default 20, max 100
-   * @param string|null $type Optional filter by 'income' or 'expense'
    * @return array{data: Category[], pagination: array{currentPage: int, totalPages: int, totalItems: int, itemsPerPage: int}}
    * @note Cache by page/limit/type combination
    */
-  public function findAll(int $page = 1, int $limit = 20, ?string $type = null): array;
+  public function findAll(int $page = 1, int $limit = 20): array;
 
   /**
    * Find category by ID

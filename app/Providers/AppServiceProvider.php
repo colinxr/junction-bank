@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use App\Models\User;
 use App\Policies\UserPolicy;
+use App\Domains\Categories\Providers\CategoryServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,7 +27,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register domain service providers
+        $this->app->register(CategoryServiceProvider::class);
     }
 
     /**
