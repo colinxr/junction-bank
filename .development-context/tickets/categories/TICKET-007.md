@@ -32,7 +32,6 @@ class CategoryMapper
     {
         return new Category(
             name: $model->name,
-            type: $model->type,
             notes: $model->notes,
             isRecurring: $model->is_recurring,
             id: $model->id,
@@ -54,7 +53,6 @@ class CategoryMapper
         }
 
         $model->name = $entity->getName();
-        $model->type = $entity->getType();
         $model->notes = $entity->getNotes();
         $model->is_recurring = $entity->isRecurring();
 

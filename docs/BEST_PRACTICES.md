@@ -377,7 +377,6 @@ it('creates a category with valid data', function () {
     // Assert
     expect($category)->toBeInstanceOf(Category::class);
     expect($category->name)->toBe('Groceries');
-    expect($category->type)->toBe('expense');
 });
 ```
 

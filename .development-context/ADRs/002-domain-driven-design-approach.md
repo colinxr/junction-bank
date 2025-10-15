@@ -274,7 +274,6 @@ final class EloquentCategoryRepository implements CategoryRepository
     {
         return Category::create([
             'name' => $data->name,
-            'type' => $data->type,
             'notes' => $data->notes,
         ]);
     }

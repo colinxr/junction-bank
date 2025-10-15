@@ -1,11 +1,19 @@
 ### Rule: Testing Standards
 
-- Test framework: Vitest.
-- Test placement: colocate `*.test.ts` next to the implementation.
-- Coverage targets: domains (entities, actions, mappers) ≥ 85% lines; repositories and API routes ≥ 75% lines.
-- Write focused unit tests for invariants and exception paths; integration tests for repositories and API routes.
+**Comprehensive Guide**: See [Testing Best Practices Guide](../guides/testing-best-practices.md) for detailed standards and examples.
 
-Constraints
-- Mock external services; do not hit real networks in unit tests.
-- Provide factories/builders for domain objects where needed.
+**Quick Reference**:
 
+-   **PHP**: Use PEST with `describe()` and `it()` syntax
+-   **TypeScript**: Use Vitest with colocated `*.test.ts` files
+-   **Coverage**: Domains ≥ 85%, Repositories/API ≥ 75%
+-   **Models**: Always use factories, never manual instantiation
+-   **Assertions**: Use chained `expect()` with `and()` for readability
+-   **Location**: Test files must reside alongside the implementation file they are testing
+
+**Key Constraints**:
+
+-   Mock external services; no real network calls in unit tests
+-   Use factories for all test data creation
+-   Write descriptive test names that explain behavior
+-   Follow AAA pattern (Arrange, Act, Assert)
