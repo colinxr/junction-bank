@@ -11,7 +11,5 @@ parameters:
     excludePaths:
         - app/bootstrap/cache
         - app/storage
-    checkMissingIterableValueType: false
-    checkGenericClassInNonGenericObjectType: false
     reportUnmatchedIgnoredErrors: false
 
